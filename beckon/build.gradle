@@ -1,0 +1,88 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 22
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        warningsAsErrors true
+        abortOnError true // Fail early.
+
+        disable "UnusedResources"              // Unused will be removed on release
+        disable "IconExpectedSize"             // Using the material icons provided from Google
+        disable "GoogleAppIndexingApiWarning"  // We might want to index our app later
+        disable "InvalidPackage"               // Butterknife, Okio and Realm
+        disable "ResourceType"                 // Annotation binding
+        disable "GradleDependency"
+        disable "NewerVersionAvailable"
+    }
+
+    compileOptions {
+        targetCompatibility '1.8'
+        sourceCompatibility '1.8'
+    }
+}
+
+configurations {
+    ktlint
+}
+
+dependencies {
+
+    // Android x
+    api 'androidx.core:core-ktx:1.1.0-alpha05'
+    api 'androidx.annotation:annotation:1.0.0'
+
+    // RxJava
+    api "io.reactivex.rxjava2:rxjava:$rxJava"
+    api "io.reactivex.rxjava2:rxandroid:$rxAndroid"
+
+    // Bluetooth
+    api "no.nordicsemi.android.support.v18:scanner:$nsScannerVersion"
+    api "no.nordicsemi.android:ble:$nsBleVersion"
+    api "no.nordicsemi.android:dfu:$nsDfuVersion"
+
+    // Code quality tools
+    ktlint "com.github.shyiko:ktlint:$ktlint_version"
+
+    implementation "com.jakewharton.timber:timber:$timber"
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+}
+
+task ktlint(type: JavaExec, group: "verification") {
+    description = "Check Kotlin code style."
+    classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
+    args "src/**/*.kt"
+    // to generate report in checkstyle format prepend following args:
+    // "--reporter=plain", "--reporter=checkstyle,output=${buildDir}/ktlint.xml"
+    // see https://github.com/shyiko/ktlint#usage for more
+}
+check.dependsOn ktlint
+
+task ktlintFormat(type: JavaExec, group: "formatting") {
+    description = "Fix Kotlin code style deviations."
+    classpath = configurations.ktlint
+    main = "com.github.shyiko.ktlint.Main"
+    args "-F", "src/**/*.kt"
+}

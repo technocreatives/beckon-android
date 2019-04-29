@@ -1,0 +1,49 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    // all library versions
+    ext.rxJava = '2.2.8'
+    ext.rxAndroid = '2.1.1'
+    ext.kotlin_version = '1.3.31'
+    ext.rxBindingVersion = '3.0.0-alpha2'
+    ext.timber = '4.7.1'
+    ext.sharedPreferences = '1.1.0'
+
+    ext.nsScannerVersion = '1.4.0'
+    ext.nsBleVersion = '2.1.1'
+    ext.nsDfuVersion = '1.9.0'
+
+    // Quality tools
+    ext.ktlint_version = '0.31.0'
+
+    repositories {
+        google()
+        jcenter()
+
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.4.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
+    }
+}
+
+plugins {
+    id "io.gitlab.arturbosch.detekt" version "1.0.0-RC14"
+}
+
+allprojects {
+    apply from: "$rootDir/detekt.gradle"
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        maven { url 'https://oss.jfrog.org/artifactory/oss-snapshot-local/' }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

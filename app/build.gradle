@@ -1,0 +1,103 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.axkid.helios"
+        minSdkVersion 23
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        debug {
+            storeFile rootProject.file('build_system/debug.keystore')
+            storePassword 'android'
+            keyAlias 'android'
+            keyPassword 'android'
+        }
+        release {
+            storeFile rootProject.file('build_system/debug.keystore')
+            storePassword 'android'
+            keyAlias 'android'
+            keyPassword 'android'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        warningsAsErrors false
+        abortOnError false // Fail early.
+
+        disable "UnusedResources"              // Unused will be removed on release
+        disable "IconExpectedSize"             // Using the material icons provided from Google
+        disable "GoogleAppIndexingApiWarning"  // We might want to index our app later
+        disable "InvalidPackage"               // Butterknife, Okio and Realm
+        disable "ResourceType"                 // Annotation binding
+        disable "GradleDependency"
+        disable "NewerVersionAvailable"
+    }
+
+    compileOptions {
+        targetCompatibility '1.8'
+        sourceCompatibility '1.8'
+    }
+
+}
+
+configurations {
+    ktlint
+}
+
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+    // Android x
+    implementation 'androidx.appcompat:appcompat:1.0.0-beta01'
+    implementation 'androidx.core:core-ktx:1.1.0-alpha05'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0-alpha3'
+
+    // RxJava
+    implementation "io.reactivex.rxjava2:rxjava:$rxJava"
+    implementation "io.reactivex.rxjava2:rxandroid:$rxAndroid"
+
+    // rxbinding
+    implementation "com.jakewharton.rxbinding3:rxbinding-core:$rxBindingVersion"
+    implementation "com.jakewharton.rxbinding3:rxbinding-appcompat:$rxBindingVersion"
+    implementation "com.jakewharton.rxbinding3:rxbinding-drawerlayout:$rxBindingVersion"
+    implementation "com.jakewharton.rxbinding3:rxbinding-leanback:$rxBindingVersion"
+    implementation "com.jakewharton.rxbinding3:rxbinding-recyclerview:$rxBindingVersion"
+    implementation "com.jakewharton.rxbinding3:rxbinding-slidingpanelayout:$rxBindingVersion"
+    implementation "com.jakewharton.rxbinding3:rxbinding-swiperefreshlayout:$rxBindingVersion"
+    implementation "com.jakewharton.rxbinding3:rxbinding-viewpager:$rxBindingVersion"
+
+
+    // Bluetooth
+    implementation project(':beckon')
+    implementation "no.nordicsemi.android.support.v18:scanner:$nsScannerVersion"
+    implementation "no.nordicsemi.android:ble:$nsBleVersion"
+    implementation "no.nordicsemi.android:dfu:$nsDfuVersion"
+
+    // Util
+    implementation "com.jakewharton.timber:timber:$timber"
+    implementation "com.inkapplications:android-preferences:$sharedPreferences"
+
+
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test:runner:1.1.0-alpha4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0-alpha4'
+}
