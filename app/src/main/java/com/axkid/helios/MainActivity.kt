@@ -1,5 +1,7 @@
 package com.axkid.helios
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.axkid.helios.common.view.init
@@ -7,8 +9,11 @@ import com.axkid.helios.common.view.verticalLayoutManager
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.ScannerSetting
+import com.technocreatives.beckon.disposedBy
+import com.technocreatives.beckon.states
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.functions.BiFunction
 import kotlinx.android.synthetic.main.activity_test.*
@@ -19,9 +24,9 @@ import timber.log.Timber
 
 class MainActivity : AppCompatActivity() {
 
-    private var disposable: Disposable? = null
+    private val bag = CompositeDisposable()
 
-    private val beckon by lazy { BeckonClient.create(this) }
+    private val beckon by lazy { App[this].beckonClient() }
     private val managers = mutableListOf<BeckonDevice>()
 
     private val connectedAdapter by lazy {
@@ -40,7 +45,8 @@ class MainActivity : AppCompatActivity() {
                 Timber.d("Device state changes $it")
             }
 
-            states(device, mapper, reducer)
+            val defaultState = AxkidState(SeatedState.Unseated, 22, 1L)
+            device.states(mapper, reducer, defaultState)
                     .subscribe {
                         Timber.d("new State $it")
                     }
@@ -60,7 +66,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_test)
         Timber.plant(Timber.DebugTree())
         bindView()
-
+        startBluetoothService()
         val settings = ScanSettings.Builder()
                 .setLegacy(false)
                 .setUseHardwareFilteringIfSupported(false)
@@ -71,13 +77,17 @@ class MainActivity : AppCompatActivity() {
         val filters = listOf(ScanFilter.Builder()
                 .setDeviceName("AXKID").build())
 
-        disposable = beckon.scanList(ScannerSetting(settings, filters))
+        beckon.scanList(ScannerSetting(settings, filters))
                 .distinctUntilChanged()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe {
                     discoveredAdapter.items = it
                     Timber.d("Scan result $it")
-                }
+                }.disposedBy(bag)
+
+        beckon.devices()
+                .subscribe { Timber.d("All devices $it") }.disposedBy(bag)
+
     }
 
     private fun bindView() {
@@ -86,7 +96,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStop() {
-        disposable?.dispose()
+        bag.clear()
         super.onStop()
     }
 
@@ -101,12 +111,15 @@ class MainActivity : AppCompatActivity() {
                 .scan(defaultState, reducer)
     }
 
-    fun states(device: BeckonDevice, mapper: CharacteristicMapper<AxkidChange>, reducer: BiFunction<AxkidState, AxkidChange, AxkidState>): Observable<AxkidState> {
-        val defaultState = AxkidState(SeatedState.Unseated, 22, 1L)
-        return device
-                .changes()
-                .map { mapper(it) }
-                .scan(defaultState, reducer)
+    private fun startBluetoothService() {
+        val intent = Intent(this, BluetoothService::class.java)
+
+        // Check version and start in foreground
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
     }
 }
 

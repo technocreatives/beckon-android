@@ -1,6 +1,10 @@
 package com.technocreatives.beckon
 
 import android.content.Context
+import com.technocreatives.beckon.redux.AddDevice
+import com.technocreatives.beckon.redux.Device
+import com.technocreatives.beckon.redux.RemoveDevice
+import com.technocreatives.beckon.redux.createBeckonStore
 import io.reactivex.Observable
 import io.reactivex.Single
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
@@ -8,9 +12,10 @@ import no.nordicsemi.android.support.v18.scanner.ScanCallback
 import no.nordicsemi.android.support.v18.scanner.ScanResult
 import timber.log.Timber
 
-internal class BeckonClientImpl(val context: Context) : BeckonClient {
+internal class BeckonClientImpl(private val context: Context) : BeckonClient {
 
     private val connectedDevices: MutableMap<MacAddress, BeckonDevice> = HashMap()
+    private val beckonStore by lazy { createBeckonStore() }
 
     override fun scan(setting: ScannerSetting): Observable<BeckonScanResult> {
         val scanner = BluetoothLeScannerCompat.getScanner()
@@ -64,24 +69,22 @@ internal class BeckonClientImpl(val context: Context) : BeckonClient {
         return connectedDevices[macAddress]
     }
 
-    override fun devices(): Observable<List<BeckonDevice>> {
-        // TODO should return a dynamic Observable
-        return Observable.just(connectedDevices.values.toList())
+    override fun devices(): Observable<List<MacAddress>> {
+        return beckonStore.states().map { it.devices }.map { it.map { device -> device.address } }
     }
 
     override fun getDevices(): List<BeckonDevice> {
         return connectedDevices.values.toList()
     }
 
-    override fun states(): Observable<List<DeviceChange>> {
-        // TODO later
-        throw UnsupportedOperationException("not implemented")
-    }
+    override fun states(): Observable<List<DeviceChange>> = TODO("Need to be implemented later")
+//    {
+//        return devices().flatMapIterable { it }
+//                .map { it to getDevice(it) }
+//                .filter { it.second != null }
+//    }
 
-    override fun saveDevices(devices: List<BeckonDevice>): Single<Boolean> {
-        // TODO later
-        throw UnsupportedOperationException("not implemented")
-    }
+    override fun saveDevices(devices: List<BeckonDevice>): Single<Boolean> = TODO("Need to be implemented later")
 
     override fun connect(result: BeckonScanResult, characteristics: List<Characteristic>, autoConnect: Boolean): BeckonDevice {
         Timber.d("Connect $result")
@@ -94,10 +97,12 @@ internal class BeckonClientImpl(val context: Context) : BeckonClient {
         val beckonDevice = BeckonDeviceImpl(context, result.device, characteristics)
         connectedDevices[result.macAddress] = beckonDevice
         beckonDevice.doConnect(autoConnect)
+        beckonStore.dispatch(AddDevice(Device(result.macAddress)))
         return beckonDevice
     }
 
     override fun disconnect(device: BeckonDevice): Observable<ConnectionState> {
+        beckonStore.dispatch(RemoveDevice(Device(device.macAddress())))
         return device.doDisconnect()
     }
 }

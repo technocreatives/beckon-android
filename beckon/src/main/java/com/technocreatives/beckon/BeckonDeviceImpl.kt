@@ -99,10 +99,6 @@ internal class BeckonDeviceImpl(
         return changeSubject.hide()
     }
 
-    override fun states(): Observable<DeviceState> {
-        throw UnsupportedOperationException("not implemented")
-    }
-
     override fun currentStates(): List<Change> {
         throw UnsupportedOperationException("not implemented")
     }

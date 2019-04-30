@@ -17,7 +17,6 @@ val characteristics = listOf(
 )
 
 typealias CharacteristicMapper<T> = (Change) -> T
-typealias Reducer<Change, State> = (Change, State) -> State
 
 //
 sealed class AxkidChange {

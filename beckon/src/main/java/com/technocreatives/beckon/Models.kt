@@ -41,3 +41,5 @@ data class ScannerSetting(
 data class Characteristic(val uuid: UUID, val service: UUID, val notify: Boolean)
 
 class ScanFailureException(val errorCode: Int, message: String? = null) : Exception(message)
+
+typealias CharacteristicMapper<T> = (Change) -> T

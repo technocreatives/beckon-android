@@ -13,8 +13,6 @@ interface BeckonDevice {
 
     fun changes(): Observable<Change>
 
-    fun states(): Observable<DeviceState>
-
     fun currentStates(): List<Change>
 
     fun doConnect(autoConnect: Boolean): Observable<ConnectionState> // [Connecting, connected, Failed, complete]
@@ -22,4 +20,5 @@ interface BeckonDevice {
     fun doDisconnect(): Observable<ConnectionState>
     // future supports operator
     // fun write(data): Observable<Change>
+//    fun states(): Observable<DeviceState>
 }

@@ -8,9 +8,14 @@ import io.reactivex.Single
 interface BeckonClient {
 
     companion object {
-
-        // return singleton instance of client
-        fun create(context: Context): BeckonClient = BeckonClientImpl(context)
+        var beckonClient: BeckonClient? = null
+        // return a singleton instance of client
+        fun create(context: Context): BeckonClient {
+            if (beckonClient == null) {
+                beckonClient = BeckonClientImpl(context)
+            }
+            return beckonClient!!
+        }
     }
 
     // scan available devices
@@ -22,7 +27,7 @@ interface BeckonClient {
 
     fun getDevice(macAddress: String): BeckonDevice?
 
-    fun devices(): Observable<List<BeckonDevice>>
+    fun devices(): Observable<List<MacAddress>>
     fun getDevices(): List<BeckonDevice>
 
     // ??? need a better interface
