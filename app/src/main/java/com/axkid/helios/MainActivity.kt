@@ -14,7 +14,6 @@ import com.technocreatives.beckon.states
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
 import io.reactivex.functions.BiFunction
 import kotlinx.android.synthetic.main.activity_test.*
 import no.nordicsemi.android.support.v18.scanner.ScanFilter
@@ -27,7 +26,6 @@ class MainActivity : AppCompatActivity() {
     private val bag = CompositeDisposable()
 
     private val beckon by lazy { App[this].beckonClient() }
-    private val managers = mutableListOf<BeckonDevice>()
 
     private val connectedAdapter by lazy {
         DeviceAdapter(layoutInflater) {
@@ -50,8 +48,6 @@ class MainActivity : AppCompatActivity() {
                     .subscribe {
                         Timber.d("new State $it")
                     }
-            managers.add(device)
-            update(managers)
         }
     }
 
@@ -66,7 +62,9 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_test)
         Timber.plant(Timber.DebugTree())
         bindView()
+
         startBluetoothService()
+
         val settings = ScanSettings.Builder()
                 .setLegacy(false)
                 .setUseHardwareFilteringIfSupported(false)
@@ -86,8 +84,13 @@ class MainActivity : AppCompatActivity() {
                 }.disposedBy(bag)
 
         beckon.devices()
-                .subscribe { Timber.d("All devices $it") }.disposedBy(bag)
-
+                .map { it.map { address -> beckon.findDevice(address) } }
+                .map { it.filter { device -> device != null } }
+                .map { it.map { device -> device!! } }
+                .subscribe {
+                    Timber.d("All devices $it")
+                    update(it)
+                }.disposedBy(bag)
     }
 
     private fun bindView() {
@@ -103,7 +106,7 @@ class MainActivity : AppCompatActivity() {
     fun states(client: BeckonClient, macAddress: String, mapper: CharacteristicMapper<AxkidChange>, reducer: BiFunction<AxkidState, AxkidChange, AxkidState>): Observable<AxkidState> {
 
         val defaultState = AxkidState(SeatedState.Unseated, 22, 1L)
-        val device = client.getDevice(macAddress) ?: return Observable.empty()
+        val device = client.findDevice(macAddress) ?: return Observable.empty()
 
         return device
                 .changes()

@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.internal
 
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
@@ -10,10 +11,12 @@ import com.technocreatives.beckon.DeviceChange
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.ScanFailureException
 import com.technocreatives.beckon.ScannerSetting
+import androidx.core.content.getSystemService
 import com.technocreatives.beckon.redux.AddDevice
 import com.technocreatives.beckon.redux.Device
 import com.technocreatives.beckon.redux.RemoveDevice
 import com.technocreatives.beckon.redux.createBeckonStore
+import com.technocreatives.beckon.util.findDevice
 import io.reactivex.Observable
 import io.reactivex.Single
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
@@ -25,6 +28,7 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
 
     private val connectedDevices: MutableMap<MacAddress, BeckonDevice> = HashMap()
     private val beckonStore by lazy { createBeckonStore() }
+    private val bluetoothManager by lazy { context.getSystemService<BluetoothManager>()!! }
 
     override fun scan(setting: ScannerSetting): Observable<BeckonScanResult> {
         val scanner = BluetoothLeScannerCompat.getScanner()
@@ -74,7 +78,9 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
                 )
     }
 
-    override fun getDevice(macAddress: String): BeckonDevice? {
+    override fun findDevice(macAddress: String): BeckonDevice? {
+        val bluetoothDevice = bluetoothManager.findDevice(macAddress)
+        Timber.d("findDevice $macAddress $bluetoothDevice")
         return connectedDevices[macAddress]
     }
 
@@ -89,7 +95,7 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
     override fun states(): Observable<List<DeviceChange>> = TODO("Need to be implemented later")
 //    {
 //        return devices().flatMapIterable { it }
-//                .map { it to getDevice(it) }
+//                .map { it to findDevice(it) }
 //                .filter { it.second != null }
 //    }
 

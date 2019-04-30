@@ -61,7 +61,6 @@ internal class BeckonDeviceImpl(
             Timber.d("All services $services")
             bluetoothGatt = gatt
 
-            // bkCharacteristics = isRequiredServiceSupported(gatt, characteristics)
             return true
         }
 
@@ -112,6 +111,14 @@ internal class BeckonDeviceImpl(
         connect(device)
                 .retry(3, 100)
                 .useAutoConnect(false)
+//                .done {
+//                    Timber.d("Device connect Done $it")
+//                }
+//                .fail { device, status ->
+//                    Timber.d("Device connect fail device: $device status: $status")
+//                }.invalid {
+//                    Timber.d("Device connect invalid")
+//                }
                 .enqueue()
         return connectionState()
     }

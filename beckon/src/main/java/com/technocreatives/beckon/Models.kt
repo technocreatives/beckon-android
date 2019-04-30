@@ -26,7 +26,7 @@ sealed class ConnectionState {
     object Disconnected : ConnectionState()
     object Connected : ConnectionState()
     object NotSupported : ConnectionState()
-    object BondinFailed : ConnectionState()
+    object BondingFailed : ConnectionState()
     object Bonded : ConnectionState()
     object Ready : ConnectionState()
     object Connecting : ConnectionState()

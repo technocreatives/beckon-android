@@ -31,7 +31,7 @@ class BeckonManagerCallbacks(private val stateSubject: BehaviorSubject<Connectio
 
     override fun onBondingFailed(device: BluetoothDevice) {
         Timber.d("onBondingFailed ${device.debugInfo()}")
-        stateSubject.onNext(ConnectionState.BondinFailed)
+        stateSubject.onNext(ConnectionState.BondingFailed)
     }
 
     override fun onServicesDiscovered(device: BluetoothDevice, optionalServicesFound: Boolean) {

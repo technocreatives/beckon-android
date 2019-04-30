@@ -26,7 +26,7 @@ interface BeckonClient {
     @MainThread
     fun scanList(setting: ScannerSetting): Observable<List<BeckonScanResult>>
 
-    fun getDevice(macAddress: String): BeckonDevice?
+    fun findDevice(macAddress: String): BeckonDevice?
 
     fun devices(): Observable<List<MacAddress>>
     fun getDevices(): List<BeckonDevice>

@@ -34,9 +34,11 @@ class BluetoothService : Service() {
         super.onCreate()
         Timber.d("onCreate")
 
-        beckon.devices().flatMapIterable { it }
+        beckon.devices()
+                .doOnNext { Timber.d("Connected devices $it") }
+                .flatMapIterable { it }
                 .doOnNext { Timber.d("All devices $it") }
-                .map { it to beckon.getDevice(it) }
+                .map { it to beckon.findDevice(it) }
                 .filter { it.second != null }
                 .flatMap { pair -> pair.second!!.changes().map { DeviceChange(pair.first, it) } }
                 .subscribe { Timber.d("All changes: $it") }
