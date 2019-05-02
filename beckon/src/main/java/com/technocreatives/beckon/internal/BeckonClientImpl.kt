@@ -1,6 +1,15 @@
-package com.technocreatives.beckon
+package com.technocreatives.beckon.internal
 
 import android.content.Context
+import com.technocreatives.beckon.BeckonClient
+import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.BeckonScanResult
+import com.technocreatives.beckon.Characteristic
+import com.technocreatives.beckon.ConnectionState
+import com.technocreatives.beckon.DeviceChange
+import com.technocreatives.beckon.MacAddress
+import com.technocreatives.beckon.ScanFailureException
+import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.redux.AddDevice
 import com.technocreatives.beckon.redux.Device
 import com.technocreatives.beckon.redux.RemoveDevice

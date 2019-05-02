@@ -1,9 +1,13 @@
-package com.technocreatives.beckon
+package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
+import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.Change
+import com.technocreatives.beckon.Characteristic
+import com.technocreatives.beckon.ConnectionState
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.PublishSubject

@@ -1,6 +1,7 @@
-package com.technocreatives.beckon
+package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothDevice
+import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.util.debugInfo
 import io.reactivex.subjects.BehaviorSubject
 import no.nordicsemi.android.ble.BleManagerCallbacks

@@ -2,6 +2,7 @@ package com.technocreatives.beckon
 
 import android.content.Context
 import androidx.annotation.MainThread
+import com.technocreatives.beckon.internal.BeckonClientImpl
 import io.reactivex.Observable
 import io.reactivex.Single
 
