@@ -34,7 +34,7 @@ class DeviceAdapter(
     ) : RecyclerView.ViewHolder(viewItem) {
 
         fun bind(device: BeckonDevice) = with(viewItem) {
-            tvDevice.text = device.macAddress()
+            tvDevice.text = device.toString()
             setOnClickListener {
                 onClick(device)
             }

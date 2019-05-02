@@ -43,3 +43,5 @@ data class Characteristic(val uuid: UUID, val service: UUID, val notify: Boolean
 class ScanFailureException(val errorCode: Int, message: String? = null) : Exception(message)
 
 typealias CharacteristicMapper<T> = (Change) -> T
+
+data class DeviceInfo(val macAddress: MacAddress, val name: String, val characteristics: List<Characteristic>, val keepConnection: Boolean)

@@ -2,10 +2,12 @@ package com.technocreatives.beckon.redux
 
 import io.reactivex.Observable
 
-internal interface Store {
+internal interface Store : Dispatcher {
     fun states(): Observable<BeckonState>
 
-    fun dispatch(action: Action)
-
     fun currentState(): BeckonState
+}
+
+internal interface Dispatcher {
+    fun dispatch(action: Action)
 }

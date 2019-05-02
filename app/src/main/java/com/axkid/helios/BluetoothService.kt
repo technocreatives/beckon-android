@@ -35,6 +35,7 @@ class BluetoothService : Service() {
         Timber.d("onCreate")
 
         beckon.devices()
+                .distinctUntilChanged()
                 .doOnNext { Timber.d("Connected devices $it") }
                 .flatMapIterable { it }
                 .doOnNext { Timber.d("All devices $it") }
@@ -43,9 +44,10 @@ class BluetoothService : Service() {
                 .flatMap { pair -> pair.second!!.changes().map { DeviceChange(pair.first, it) } }
                 .subscribe { Timber.d("All changes: $it") }
                 .disposedBy(bag)
-
         // Start Service in foreground
+        beckon.register(this)
         startForeground()
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -53,7 +55,6 @@ class BluetoothService : Service() {
     }
 
     private fun startForeground() {
-
         val channelId =
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     createNotificationChannel("pansar_service", "Pansar Background Service")
@@ -95,6 +96,7 @@ class BluetoothService : Service() {
 
     override fun onDestroy() {
         bag.clear()
+        beckon.unregister(this)
         super.onDestroy()
     }
 }

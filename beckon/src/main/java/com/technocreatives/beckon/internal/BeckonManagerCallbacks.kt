@@ -57,7 +57,7 @@ class BeckonManagerCallbacks(private val stateSubject: BehaviorSubject<Connectio
     }
 
     override fun onError(device: BluetoothDevice, message: String, errorCode: Int) {
-        Timber.d("onError ${device.debugInfo()} $message $errorCode")
+        Timber.d("onError Device: ${device.debugInfo()} Message: $message ErrorCode: $errorCode")
         stateSubject.onNext(ConnectionState.Failed(message, errorCode))
     }
 

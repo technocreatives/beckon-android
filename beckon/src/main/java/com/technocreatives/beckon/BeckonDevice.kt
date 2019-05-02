@@ -4,20 +4,18 @@ import io.reactivex.Observable
 
 interface BeckonDevice {
 
-    // Device info
-    fun macAddress(): String
-
-    fun name(): String
-
-    fun connectionState(): Observable<ConnectionState>
+    fun connectionStates(): Observable<ConnectionState>
 
     fun changes(): Observable<Change>
 
-    fun currentStates(): List<Change>
+    fun currentState(): ConnectionState
 
-    fun doConnect(autoConnect: Boolean): Observable<ConnectionState> // [Connecting, connected, Failed, complete]
+    fun doConnect(): Observable<ConnectionState>
 
     fun doDisconnect(): Observable<ConnectionState>
+
+    fun deviceData(): DeviceInfo
+
     // future supports operator
     // fun write(data): Observable<Change>
 //    fun states(): Observable<DeviceState>

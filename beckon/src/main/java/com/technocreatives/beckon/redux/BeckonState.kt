@@ -1,5 +1,9 @@
 package com.technocreatives.beckon.redux
 
-internal data class BeckonState(val devices: List<Device>)
+import com.technocreatives.beckon.DeviceInfo
+import com.technocreatives.beckon.internal.BluetoothState
 
-internal data class Device(val address: String)
+internal data class BeckonState(
+    val devices: List<DeviceInfo>,
+    val bluetoothState: BluetoothState
+)

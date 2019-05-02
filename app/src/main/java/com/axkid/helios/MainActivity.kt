@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
 
     private val connectedAdapter by lazy {
         DeviceAdapter(layoutInflater) {
-            Timber.d("Disconnect device ${it.macAddress()}")
+            Timber.d("Disconnect device $it")
             beckon.disconnect(it)
         }
     }
@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
     private val discoveredAdapter by lazy {
         ScanResultAdapter(layoutInflater) {
             Timber.d("Connect to ${it.macAddress}")
-            val device = beckon.connect(it, characteristics, false)
+            val device = beckon.connect(it, characteristics, true)
 
             device.changes().subscribe {
                 Timber.d("Device state changes $it")
@@ -60,7 +60,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_test)
-        Timber.plant(Timber.DebugTree())
         bindView()
 
         startBluetoothService()
