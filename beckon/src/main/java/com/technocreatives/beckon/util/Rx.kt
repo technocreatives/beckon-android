@@ -1,4 +1,4 @@
-package com.technocreatives.beckon
+package com.technocreatives.beckon.util
 
 import io.reactivex.Completable
 import io.reactivex.Observable

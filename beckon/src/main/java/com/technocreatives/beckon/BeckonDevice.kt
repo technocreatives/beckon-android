@@ -10,11 +10,11 @@ interface BeckonDevice {
 
     fun currentState(): ConnectionState
 
-    fun doConnect(): Observable<ConnectionState>
+    fun connect(): Observable<DiscoveredDevice>
 
-    fun doDisconnect(): Observable<ConnectionState>
+    fun disconnect()
 
-    fun deviceData(): DeviceInfo
+    fun deviceInfo(): DeviceInfo
 
     // future supports operator
     // fun write(data): Observable<Change>

@@ -34,7 +34,7 @@ class ScanResultAdapter(
     ) : RecyclerView.ViewHolder(viewItem) {
 
         fun bind(device: BeckonScanResult) = with(viewItem) {
-            tvDevice.text = device.macAddress
+            tvDevice.text = "${device.macAddress} ${device.name}"
             setOnClickListener {
                 onClick(device)
             }

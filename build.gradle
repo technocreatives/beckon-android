@@ -5,10 +5,10 @@ buildscript {
     ext.rxJava = '2.2.8'
     ext.rxAndroid = '2.1.1'
     ext.kotlin_version = '1.3.31'
-    ext.rxBindingVersion = '3.0.0-alpha2'
+    ext.arrow_version = "0.9.1-SNAPSHOT"
     ext.timber = '4.7.1'
     ext.sharedPreferences = '1.1.0'
-
+    ext.rxBindingVersion = '3.0.0-alpha2'
     ext.nsScannerVersion = '1.4.0'
     ext.nsBleVersion = '2.1.1'
     ext.nsDfuVersion = '1.9.0'

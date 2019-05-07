@@ -8,7 +8,7 @@ interface BeckonClient {
 
     companion object {
         // todo using by lazy
-        var beckonClient: BeckonClient? = null
+        private var beckonClient: BeckonClient? = null
 
         // return a singleton instance of client
         fun create(context: Context): BeckonClient {
@@ -20,21 +20,24 @@ interface BeckonClient {
     }
 
     fun scan(setting: ScannerSetting): Observable<BeckonScanResult>
-
     fun scanList(setting: ScannerSetting): Observable<List<BeckonScanResult>>
 
-    fun findDevice(macAddress: String): BeckonDevice?
+    fun scanAndConnect(descriptor: Descriptor): Observable<DiscoveredDevice>
 
-    fun devices(): Observable<List<MacAddress>>
+    fun save(device: BeckonDevice): Observable<Boolean>
+    fun remove(device: BeckonDevice): Observable<Boolean>
+
+    fun findDevice(macAddress: String): Observable<BeckonDevice>
+
+    fun devices(): Observable<List<DeviceInfo>>
     fun getDevices(): List<BeckonDevice>
 
     fun connect(
         result: BeckonScanResult,
-        characteristics: List<Characteristic>,
-        autoConnect: Boolean
-    ): BeckonDevice
+        characteristics: List<Characteristic>
+    ): Observable<DiscoveredDevice>
 
-    fun disconnect(device: BeckonDevice): Observable<ConnectionState>
+    fun disconnect(device: DeviceInfo): Boolean
 
     fun register(context: Context)
     fun unregister(context: Context)

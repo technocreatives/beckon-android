@@ -63,6 +63,9 @@ dependencies {
     ktlint "com.github.shyiko:ktlint:$ktlint_version"
 
     implementation "com.jakewharton.timber:timber:$timber"
+    // Arrows
+    implementation "io.arrow-kt:arrow-core-data:$arrow_version"
+    implementation "io.arrow-kt:arrow-core-extensions:$arrow_version"
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
