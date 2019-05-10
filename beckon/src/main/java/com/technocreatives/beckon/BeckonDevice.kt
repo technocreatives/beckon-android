@@ -14,7 +14,7 @@ interface BeckonDevice {
 
     fun disconnect()
 
-    fun deviceInfo(): DeviceInfo
+    fun metadata(): DeviceMetadata
 
     // future supports operator
     // fun write(data): Observable<Change>

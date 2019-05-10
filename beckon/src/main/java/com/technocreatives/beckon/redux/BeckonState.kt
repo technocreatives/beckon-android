@@ -13,11 +13,11 @@ internal data class BeckonState(
     val bluetoothState: BluetoothState
 ) {
     fun findSavedDevice(macAddress: MacAddress): Option<BeckonDevice> {
-        return saved.find { it.deviceInfo().macAddress == macAddress }.toOption()
+        return saved.find { it.metadata().macAddress == macAddress }.toOption()
     }
 
     fun findDiscoveredDevice(macAddress: MacAddress): Option<BeckonDevice> {
-        return discovered.find { it.deviceInfo().macAddress == macAddress }.toOption()
+        return discovered.find { it.metadata().macAddress == macAddress }.toOption()
     }
 
     fun findDevice(macAddress: MacAddress): Option<BeckonDevice> {

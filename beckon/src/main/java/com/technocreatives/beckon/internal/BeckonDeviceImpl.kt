@@ -7,23 +7,28 @@ import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicResult
 import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.DeviceInfo
+import com.technocreatives.beckon.DeviceMetadata
 import com.technocreatives.beckon.DiscoveredDevice
 import io.reactivex.Observable
 import timber.log.Timber
 
 internal class BeckonDeviceImpl(
-    val info: DeviceInfo,
     private val context: Context,
+    private val metadata: DeviceMetadata,
     private val bluetoothDevice: BluetoothDevice
 ) : BeckonDevice {
 
-    private var manager: BeckonBleManager = BeckonBleManager(context, info.characteristics)
+    private var manager: BeckonBleManager = BeckonBleManager(context, metadata.characteristics)
 
     companion object {
-        fun create(context: Context, bluetoothDevice: BluetoothDevice, characteristics: List<Characteristic>): BeckonDevice {
-            val info = DeviceInfo(bluetoothDevice.address, bluetoothDevice.name, characteristics)
-            return BeckonDeviceImpl(info, context, bluetoothDevice)
+        fun create(
+            context: Context,
+            bluetoothDevice: BluetoothDevice,
+            characteristics: List<Characteristic>
+        ): BeckonDevice {
+            val metadata =
+                DeviceMetadata(bluetoothDevice.address, bluetoothDevice.name, characteristics)
+            return BeckonDeviceImpl(context, metadata, bluetoothDevice)
         }
     }
 
@@ -33,7 +38,7 @@ internal class BeckonDeviceImpl(
 
     override fun changes(): Observable<Change> {
         return manager.changes().map {
-            Change(info, it.first, it.second)
+            Change(metadata, it.first, it.second)
         }
     }
 
@@ -44,10 +49,10 @@ internal class BeckonDeviceImpl(
     override fun connect(): Observable<DiscoveredDevice> {
         Timber.d("connect $bluetoothDevice")
         val request = manager.connect(bluetoothDevice)
-                .retry(3, 100)
-                .useAutoConnect(true)
+            .retry(3, 100)
+            .useAutoConnect(true)
 
-        return manager.connect(request).map { toDiscoveredDevice(it, info) }
+        return manager.connect(request).map { toDiscoveredDevice(it, metadata) }
     }
 
     override fun disconnect() {
@@ -59,15 +64,15 @@ internal class BeckonDeviceImpl(
         return bluetoothDevice
     }
 
-    override fun deviceInfo(): DeviceInfo {
-        return info
+    override fun metadata(): DeviceMetadata {
+        return metadata
     }
 
     override fun toString(): String {
-        return info.toString()
+        return metadata.toString()
     }
 
-    private fun toDiscoveredDevice(results: List<CharacteristicResult>, info: DeviceInfo): DiscoveredDevice {
+    private fun toDiscoveredDevice(results: List<CharacteristicResult>, info: DeviceMetadata): DiscoveredDevice {
         val success = results.any { it is CharacteristicResult.Failed && it.characteristic.required }
         return if (success) {
             DiscoveredDevice.FailureDevice(info, results)

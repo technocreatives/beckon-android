@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 28
@@ -44,10 +45,14 @@ configurations {
     ktlint
 }
 
+androidExtensions {
+    experimental = true
+}
+
 dependencies {
 
     // Android x
-    api 'androidx.core:core-ktx:1.1.0-alpha05'
+    api 'androidx.core:core-ktx:1.2.0-alpha01'
     api 'androidx.annotation:annotation:1.0.2'
 
     // RxJava
@@ -63,6 +68,8 @@ dependencies {
     ktlint "com.github.shyiko:ktlint:$ktlint_version"
 
     implementation "com.jakewharton.timber:timber:$timber"
+    implementation "com.squareup.moshi:moshi:$moshi"
+
     // Arrows
     implementation "io.arrow-kt:arrow-core-data:$arrow_version"
     implementation "io.arrow-kt:arrow-core-extensions:$arrow_version"

@@ -19,30 +19,37 @@ interface BeckonClient {
         }
     }
 
-    fun scan(setting: ScannerSetting): Observable<BeckonScanResult>
-    fun scanList(setting: ScannerSetting): Observable<List<BeckonScanResult>>
+    fun startScan(setting: ScannerSetting)
+    fun stopScan()
 
-    fun scanAndConnect(descriptor: Descriptor): Observable<DiscoveredDevice>
+    fun scan(): Observable<BeckonScanResult>
+    fun scanAndConnect(characteristics: List<Characteristic>): Observable<DiscoveredDevice>
 
-    fun save(device: BeckonDevice): Observable<Boolean>
-    fun remove(device: BeckonDevice): Observable<Boolean>
+    fun disconnectAllConnectedDevicesButNotSavedDevices()
 
+    // single
+    fun save(macAddress: String): Observable<Unit>
+    // single
+    fun remove(macAddress: String): Observable<Unit>
+
+    // single
     fun findDevice(macAddress: String): Observable<BeckonDevice>
+    fun devices(): Observable<List<DeviceMetadata>>
+    fun currentDevices(): List<DeviceMetadata>
 
-    fun devices(): Observable<List<DeviceInfo>>
-    fun getDevices(): List<BeckonDevice>
-
+    // single
     fun connect(
         result: BeckonScanResult,
         characteristics: List<Characteristic>
     ): Observable<DiscoveredDevice>
 
-    fun disconnect(device: DeviceInfo): Boolean
+    fun disconnect(macAddress: String): Boolean
 
     fun register(context: Context)
     fun unregister(context: Context)
-
-    //    fun saveDevices(devices: List<BeckonDevice>): Single<Boolean>
-    // ??? need a better interface
-//    fun states(): Observable<List<DeviceChange>>
 }
+
+// BeckonScanConnectHelper(client: BeckonClient) {
+//     fun scanAndConnect(characteristics: List<Characteristic>): Observable<DiscoveredDevice>
+//     fun connect(device: DiscoveredDevice, List<DiscoveredDevice>): Observable<Unit>
+// }

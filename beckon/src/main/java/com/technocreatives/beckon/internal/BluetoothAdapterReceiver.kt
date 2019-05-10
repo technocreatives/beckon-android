@@ -28,7 +28,7 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : Br
 }
 
 enum class BluetoothState {
-    UN_KNOWN,
+    UNKNOWN,
     TURNING_ON,
     TURNING_OFF,
     ON,
@@ -41,6 +41,6 @@ private fun Int.toBluetoothState(): BluetoothState {
         BluetoothAdapter.STATE_OFF -> BluetoothState.OFF
         BluetoothAdapter.STATE_TURNING_ON -> BluetoothState.TURNING_ON
         BluetoothAdapter.STATE_TURNING_OFF -> BluetoothState.TURNING_OFF
-        else -> BluetoothState.UN_KNOWN
+        else -> BluetoothState.UNKNOWN
     }
 }

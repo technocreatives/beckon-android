@@ -10,10 +10,8 @@ import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.DiscoveredDevice
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.beckon.states
 import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.BiFunction
 import kotlinx.android.synthetic.main.activity_test.*
@@ -30,7 +28,7 @@ class MainActivity : AppCompatActivity() {
     private val connectedAdapter by lazy {
         DeviceAdapter(layoutInflater) {
             Timber.d("Disconnect device $it")
-            beckon.disconnect(it.deviceInfo())
+//            beckon.disconnect(it.deviceInfo())
         }
     }
 
@@ -77,6 +75,15 @@ class MainActivity : AppCompatActivity() {
 
         startBluetoothService()
 
+    }
+
+    private fun bindView() {
+        rvDiscoveredDevices.init(discoveredAdapter, verticalLayoutManager())
+        rvConnectedDevices.init(connectedAdapter, verticalLayoutManager())
+    }
+
+    override fun onResume() {
+        super.onResume()
         val settings = ScanSettings.Builder()
                 .setLegacy(false)
                 .setUseHardwareFilteringIfSupported(false)
@@ -86,19 +93,12 @@ class MainActivity : AppCompatActivity() {
 
         val filters = listOf(DeviceFilter(deviceName = "AXKID", deviceAddress = null))
 
-        beckon.scanList(ScannerSetting(settings, filters))
-                .distinctUntilChanged()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe {
-                    discoveredAdapter.items = it
-                    Timber.d("Scan result $it")
-                }.disposedBy(bag)
-
+        beckon.startScan(ScannerSetting(settings, filters))
     }
 
-    private fun bindView() {
-        rvDiscoveredDevices.init(discoveredAdapter, verticalLayoutManager())
-        rvConnectedDevices.init(connectedAdapter, verticalLayoutManager())
+    override fun onPause() {
+        beckon.stopScan()
+        super.onPause()
     }
 
     override fun onStop() {
