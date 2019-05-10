@@ -1,10 +1,9 @@
-package com.axkid.helios
+package com.technocreatives.example
 
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.DiscoveredDevice
 import kotlinx.android.synthetic.main.view_item_device.view.*
 

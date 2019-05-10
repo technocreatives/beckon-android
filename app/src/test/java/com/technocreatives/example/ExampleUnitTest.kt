@@ -1,4 +1,4 @@
-package com.axkid.helios
+package com.technocreatives.example
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

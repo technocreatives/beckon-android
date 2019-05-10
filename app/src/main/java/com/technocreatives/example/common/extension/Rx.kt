@@ -1,4 +1,4 @@
-package com.axkid.helios.common.extension
+package com.technocreatives.example.common.extension
 
 import io.reactivex.disposables.Disposable
 import io.reactivex.internal.disposables.DisposableContainer

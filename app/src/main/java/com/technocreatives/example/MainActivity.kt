@@ -1,16 +1,18 @@
-package com.axkid.helios
+package com.technocreatives.example
 
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.axkid.helios.common.view.init
-import com.axkid.helios.common.view.verticalLayoutManager
+import com.technocreatives.example.common.view.init
+import com.technocreatives.example.common.view.verticalLayoutManager
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.DiscoveredDevice
 import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.states
+import com.technocreatives.example.common.extension.disposedBy
+import com.technocreatives.example.domain.ScanDeviceUseCase
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.BiFunction
@@ -24,6 +26,8 @@ class MainActivity : AppCompatActivity() {
     private val bag = CompositeDisposable()
 
     private val beckon by lazy { App[this].beckonClient() }
+
+    private val scanDeviceUseCase by lazy { ScanDeviceUseCase(beckon) }
 
     private val connectedAdapter by lazy {
         DeviceAdapter(layoutInflater) {
@@ -94,6 +98,12 @@ class MainActivity : AppCompatActivity() {
         val filters = listOf(DeviceFilter(deviceName = "AXKID", deviceAddress = null))
 
         beckon.startScan(ScannerSetting(settings, filters))
+
+        scanDeviceUseCase.execute(characteristics)
+                .subscribe {
+                    Timber.d("Found $it")
+                    beckon.save(it.metadata.macAddress)
+                }.disposedBy(bag)
     }
 
     override fun onPause() {

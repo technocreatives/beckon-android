@@ -1,6 +1,6 @@
-package com.axkid.helios
+package com.technocreatives.example
 
-import com.axkid.helios.common.extension.toUuid
+import com.technocreatives.example.common.extension.toUuid
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.Type

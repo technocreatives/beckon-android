@@ -1,4 +1,4 @@
-package com.axkid.helios.common.rx
+package com.technocreatives.example.common.rx
 
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers

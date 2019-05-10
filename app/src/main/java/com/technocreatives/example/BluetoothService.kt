@@ -1,4 +1,4 @@
-package com.axkid.helios
+package com.technocreatives.example
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -12,9 +12,9 @@ import android.os.IBinder
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.DeviceChange
 import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.beckon.states
+import com.technocreatives.example.domain.FetchDevicesUseCase
 import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
 
@@ -22,6 +22,8 @@ import timber.log.Timber
 class BluetoothService : Service() {
 
     private val beckon by lazy { App[this].beckonClient() }
+
+    private val fetchDevicesUseCase by lazy { FetchDevicesUseCase(beckon) }
 
     private val bag = CompositeDisposable()
 
@@ -34,6 +36,10 @@ class BluetoothService : Service() {
         super.onCreate()
         Timber.d("onCreate")
 
+        // Start Service in foreground
+        beckon.register(this)
+        startForeground()
+
         beckon.devices()
                 .distinctUntilChanged()
                 .doOnNext { Timber.d("Connected devices $it") }
@@ -43,10 +49,10 @@ class BluetoothService : Service() {
                 .flatMap { device -> device.changes() }
                 .subscribe { Timber.d("All changes: $it") }
                 .disposedBy(bag)
-        // Start Service in foreground
-        beckon.register(this)
-        startForeground()
 
+        fetchDevicesUseCase.execute()
+                .subscribe { Timber.d("All devices State: $it") }
+                .disposedBy(bag)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {

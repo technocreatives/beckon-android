@@ -1,4 +1,4 @@
-package com.axkid.helios.common.view
+package com.technocreatives.example.common.view
 
 import android.app.Activity
 import android.content.Context
