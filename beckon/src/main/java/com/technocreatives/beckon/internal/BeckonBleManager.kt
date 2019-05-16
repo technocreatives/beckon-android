@@ -2,6 +2,7 @@ package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothGatt
 import android.content.Context
+import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicFailureException
 import com.technocreatives.beckon.CharacteristicResult
@@ -23,17 +24,21 @@ internal class BeckonBleManager(
 
     private var bluetoothGatt: BluetoothGatt? = null
 
-    private val connectionSubject: BehaviorSubject<ConnectionState> = BehaviorSubject.createDefault(ConnectionState.NotStarted)
+    private val stateSubject: BehaviorSubject<ConnectionState> = BehaviorSubject.createDefault(ConnectionState.NotStarted)
+    private val bondStateSubject: BehaviorSubject<BondState> = BehaviorSubject.createDefault(BondState.NotStarted)
     private val changeSubject = PublishSubject.create<Pair<Characteristic, Data>>()
     private val discoveredDevice = PublishSubject.create<List<CharacteristicResult>>()
+    private val bondSubject by lazy {
+        PublishSubject.create<Boolean>()
+    }
 
     init {
-        mCallbacks = BeckonManagerCallbacks(connectionSubject)
+        mCallbacks = BeckonManagerCallbacks(stateSubject, bondStateSubject)
     }
 
     fun connect(request: ConnectRequest): Observable<List<CharacteristicResult>> {
         request.enqueue()
-        return discoveredDevice.hide()
+        return discoveredDevice.hide().take(1)
     }
 
     private val gattCallback = object : BleManagerGattCallback() {
@@ -104,16 +109,26 @@ internal class BeckonBleManager(
         }
     }
 
+    fun doCreateBond() {
+        createBond().enqueue()
+        bondStateSubject.onNext(BondState.Bonding)
+    }
+
+    fun doRemoveBond() {
+        removeBond().enqueue()
+        bondStateSubject.onNext(BondState.Bonding)
+    }
+
     override fun getGattCallback(): BleManagerGattCallback {
         return gattCallback
     }
 
-    override fun log(priority: Int, message: String) {
-        Timber.d(message)
+    fun connectionState(): Observable<ConnectionState> {
+        return stateSubject.hide()
     }
 
-    fun connectionState(): Observable<ConnectionState> {
-        return connectionSubject.hide()
+    fun bondStates(): Observable<BondState> {
+        return bondStateSubject.hide()
     }
 
     fun changes(): Observable<Pair<Characteristic, Data>> {
@@ -121,6 +136,14 @@ internal class BeckonBleManager(
     }
 
     fun currentState(): ConnectionState {
-        return connectionSubject.value!!
+        return stateSubject.value!!
+    }
+
+    override fun log(priority: Int, message: String) {
+        Timber.d(message)
+    }
+
+    override fun toString(): String {
+        return "Connection state: ${stateSubject.value}, bond State: ${bondStateSubject.value}"
     }
 }

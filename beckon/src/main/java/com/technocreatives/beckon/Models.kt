@@ -41,11 +41,17 @@ sealed class ConnectionState {
     object Disconnected : ConnectionState()
     object Connected : ConnectionState()
     object NotSupported : ConnectionState()
-    object BondingFailed : ConnectionState()
-    object Bonded : ConnectionState()
     object Ready : ConnectionState()
     object Connecting : ConnectionState()
     class Failed(val message: String, val errorCode: Int) : ConnectionState()
+}
+
+sealed class BondState {
+    object NotStarted : BondState()
+    object Bonding : BondState()
+    object RemovingBond : BondState()
+    object Bonded : BondState()
+    object BondingFailed : BondState()
 }
 
 data class ScannerSetting(
@@ -58,7 +64,7 @@ data class Characteristic(val uuid: UUID, val service: UUID, val types: List<Typ
 enum class Type {
     //    WRITE, // don't support
 //    READ, // don't support
-    NOTIFY
+    NOTIFY // read & notify
 }
 
 class ScanFailureException(val errorCode: Int, message: String? = null) : Exception(message)
@@ -70,10 +76,13 @@ data class DeviceMetadata(val macAddress: MacAddress, val name: String, val char
 sealed class CharacteristicResult {
     class Success(val characteristic: Characteristic, val gatt: BluetoothGattCharacteristic) : CharacteristicResult()
     class Failed(val characteristic: Characteristic, val reason: CharacteristicFailureException) :
-        CharacteristicResult()
+            CharacteristicResult()
 }
 
 class CharacteristicFailureException(message: String) : Exception(message)
+class DeviceNotFoundException(val macAddress: String) : Exception()
+class BluetoothDeviceNotFoundException(val macAddress: String) : Exception()
+class BondFailureException(val macAddress: String) : Exception()
 
 data class DeviceFilter(
     val deviceName: String?,

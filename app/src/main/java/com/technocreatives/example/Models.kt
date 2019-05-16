@@ -13,11 +13,12 @@ const val seatUuId = "0000fff3-0000-1000-8000-00805f9b34fb"
 const val temperatureUuid = "0000fff2-0000-1000-8000-00805f9b34fb"
 const val randomUUID = "1111fff3-0000-1000-8000-00805f9b34fb"
 
-val characteristics = listOf(
-        Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
-        Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
-        Characteristic(randomUUID.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = false)
-)
+val characteristics =// emptyList<Characteristic>()
+        listOf(
+                Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
+                Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
+                Characteristic(randomUUID.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = false)
+        )
 
 typealias CharacteristicMapper<T> = (Change) -> T
 

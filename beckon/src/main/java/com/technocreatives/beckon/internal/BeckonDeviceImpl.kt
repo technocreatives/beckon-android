@@ -3,6 +3,7 @@ package com.technocreatives.beckon.internal
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicResult
@@ -18,7 +19,9 @@ internal class BeckonDeviceImpl(
     private val bluetoothDevice: BluetoothDevice
 ) : BeckonDevice {
 
-    private var manager: BeckonBleManager = BeckonBleManager(context, metadata.characteristics)
+    private val manager by lazy {
+        BeckonBleManager(context, metadata.characteristics)
+    }
 
     companion object {
         fun create(
@@ -27,7 +30,7 @@ internal class BeckonDeviceImpl(
             characteristics: List<Characteristic>
         ): BeckonDevice {
             val metadata =
-                DeviceMetadata(bluetoothDevice.address, bluetoothDevice.name, characteristics)
+                    DeviceMetadata(bluetoothDevice.address, bluetoothDevice.name, characteristics)
             return BeckonDeviceImpl(context, metadata, bluetoothDevice)
         }
     }
@@ -49,8 +52,8 @@ internal class BeckonDeviceImpl(
     override fun connect(): Observable<DiscoveredDevice> {
         Timber.d("connect $bluetoothDevice")
         val request = manager.connect(bluetoothDevice)
-            .retry(3, 100)
-            .useAutoConnect(true)
+                .retry(3, 100)
+                .useAutoConnect(true)
 
         return manager.connect(request).map { toDiscoveredDevice(it, metadata) }
     }
@@ -66,6 +69,18 @@ internal class BeckonDeviceImpl(
 
     override fun metadata(): DeviceMetadata {
         return metadata
+    }
+
+    override fun bondStates(): Observable<BondState> {
+        return manager.bondStates()
+    }
+
+    override fun createBond() {
+        manager.doCreateBond()
+    }
+
+    override fun removeBond() {
+        manager.doRemoveBond()
     }
 
     override fun toString(): String {

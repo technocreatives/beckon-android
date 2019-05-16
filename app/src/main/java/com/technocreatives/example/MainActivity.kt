@@ -4,15 +4,15 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.technocreatives.example.common.view.init
-import com.technocreatives.example.common.view.verticalLayoutManager
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.DiscoveredDevice
 import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.states
 import com.technocreatives.example.common.extension.disposedBy
-import com.technocreatives.example.domain.ScanDeviceUseCase
+import com.technocreatives.example.common.view.init
+import com.technocreatives.example.common.view.verticalLayoutManager
+import com.technocreatives.example.domain.ScanAndConnectDeviceUseCase
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.functions.BiFunction
@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
 
     private val beckon by lazy { App[this].beckonClient() }
 
-    private val scanDeviceUseCase by lazy { ScanDeviceUseCase(beckon) }
+    private val scanDeviceUseCase by lazy { ScanAndConnectDeviceUseCase(beckon) }
 
     private val connectedAdapter by lazy {
         DeviceAdapter(layoutInflater) {
@@ -100,10 +100,14 @@ class MainActivity : AppCompatActivity() {
         beckon.startScan(ScannerSetting(settings, filters))
 
         scanDeviceUseCase.execute(characteristics)
-                .subscribe {
-                    Timber.d("Found $it")
-                    beckon.save(it.metadata.macAddress)
-                }.disposedBy(bag)
+                .doOnNext { Timber.d("Found $it") }
+                .flatMap { beckon.save(it.metadata.macAddress) }
+                .subscribe(
+                        { result -> Timber.d("Save device correctly") },
+                        { error -> Timber.e(error, "Save device error") },
+                        { Timber.d("completed") }
+                )
+                .disposedBy(bag)
     }
 
     override fun onPause() {
