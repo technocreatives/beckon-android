@@ -31,6 +31,7 @@ import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
 
 internal class BeckonClientImpl(private val context: Context) : BeckonClient {
+
     private val beckonStore by lazy { createBeckonStore() }
     private val bluetoothManager by lazy { context.getSystemService<BluetoothManager>()!! }
     private val receiver by lazy { BluetoothAdapterReceiver(beckonStore) }
@@ -44,7 +45,12 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
     }
 
     override fun stopScan() {
-        scanner.stopScan()
+        if (bluetoothManager.adapter.isEnabled) {
+            scanner.stopScan()
+        } else {
+            // TODO Callback to application? Notify failure
+            Timber.e("Stopped scan but adapter is not turned on!")
+        }
     }
 
     override fun disconnectAllConnectedDevicesButNotSavedDevices() {
@@ -200,5 +206,9 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
         receiver.unregister(context)
         // todo disconnect all devices???
         bag.clear()
+    }
+
+    override fun bluetoothState(): Observable<BluetoothState> {
+        return beckonStore.states().map { it.bluetoothState }.distinctUntilChanged()
     }
 }

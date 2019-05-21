@@ -20,6 +20,9 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : Br
     fun register(context: Context) {
         context.registerReceiver(this,
                 IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+
+        // Post initial state
+        dispatcher.dispatch(ChangeBluetoothState(BluetoothAdapter.getDefaultAdapter().state.toBluetoothState()))
     }
 
     fun unregister(context: Context) {

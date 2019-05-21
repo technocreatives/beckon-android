@@ -2,6 +2,7 @@ package com.technocreatives.beckon
 
 import android.content.Context
 import com.technocreatives.beckon.internal.BeckonClientImpl
+import com.technocreatives.beckon.internal.BluetoothState
 import io.reactivex.Observable
 
 interface BeckonClient {
@@ -47,6 +48,8 @@ interface BeckonClient {
 
     fun register(context: Context)
     fun unregister(context: Context)
+
+    fun bluetoothState(): Observable<BluetoothState>
 }
 
 // BeckonScanConnectHelper(client: BeckonClient) {
