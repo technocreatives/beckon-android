@@ -17,15 +17,18 @@ buildscript {
     // Quality tools
     ext.ktlint_version = '0.31.0'
 
+    // test tools
+    ext.spek_version = '2.0.5'
+
     repositories {
         google()
         jcenter()
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.0'
+        classpath 'com.android.tools.build:gradle:3.4.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "org.jetbrains.kotlin:kotlin-android-extensions:$kotlin_version"
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.4.2.1"
     }
 }
 

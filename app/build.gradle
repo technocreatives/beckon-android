@@ -88,6 +88,7 @@ dependencies {
 
     // Bluetooth
     implementation project(':beckon')
+    implementation project(':beckon-mock')
     implementation "no.nordicsemi.android.support.v18:scanner:$nsScannerVersion"
     implementation "no.nordicsemi.android:ble:$nsBleVersion"
     implementation "no.nordicsemi.android:dfu:$nsDfuVersion"
