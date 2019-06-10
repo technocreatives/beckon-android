@@ -15,7 +15,9 @@ private const val KEY_DEVICES = "key.saved.devices"
 
 internal class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
 
-    private val devicesSubject = BehaviorSubject.createDefault(currentDevices())
+    private val devicesSubject by lazy {
+        BehaviorSubject.createDefault(currentDevices())
+    }
 
     private val sharedPreferences by lazy {
         context.getSharedPreferences(
