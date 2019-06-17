@@ -49,6 +49,7 @@ class BeckonManagerCallbacks(
 
     override fun onLinkLossOccurred(device: BluetoothDevice) {
         Timber.d("onLinkLossOccurred ${device.debugInfo()}")
+        stateSubject.onNext(ConnectionState.Disconnected)
     }
 
     override fun onBonded(device: BluetoothDevice) {
