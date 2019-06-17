@@ -21,7 +21,7 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
 
     private val sharedPreferences by lazy {
         context.getSharedPreferences(
-                "com.technocreative.beckon",
+                "com.technocreatives.beckon",
                 Context.MODE_PRIVATE
         )
     }
