@@ -122,7 +122,9 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
     private fun createBond(device: BeckonDevice): Observable<BondState> {
         // todo check if a device is bonded if not try to create bond
         device.createBond()
-        return device.bondStates()
+        // TODO temporary fix for working with non bond devices
+        // return device.bondStates()
+        return Observable.just(BondState.Bonded)
     }
 
     private fun saveDevice(device: BeckonDevice): Observable<Unit> {
