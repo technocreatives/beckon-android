@@ -67,7 +67,7 @@ internal class BeckonBleManager(
                 Timber.d("DataReceivedCallback $device $data")
                 changeSubject.onNext(success.characteristic to data)
             }
-
+            readCharacteristic(success.gatt).with(callback).enqueue()
             setNotificationCallback(success.gatt).with(callback)
             enableNotifications(success.gatt).enqueue()
             return success
