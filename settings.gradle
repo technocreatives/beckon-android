@@ -1,1 +1,1 @@
-include ':app', ':beckon', ':beckon-mock', ':beckon-noop'
+include ':app', ':beckon', ':beckon-noop'

@@ -5,8 +5,8 @@ import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonScanResult
 import com.technocreatives.beckon.Characteristic
+import com.technocreatives.beckon.WritableDeviceMetadata
 import com.technocreatives.beckon.DeviceMetadata
-import com.technocreatives.beckon.DiscoveredDevice
 import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.internal.BluetoothState
 import com.technocreatives.beckon.justever
@@ -26,11 +26,14 @@ class MockBeckonClient(
         return Observable.empty()
     }
 
-    override fun scanAndConnect(characteristics: List<Characteristic>): Observable<DiscoveredDevice> {
+    override fun scanAndConnect(characteristics: List<Characteristic>): Observable<DeviceMetadata> {
         return Observable.empty()
     }
 
-    override fun disconnectAllConnectedDevicesButNotSavedDevices() {
+    override fun disconnectAllConnectedButNotSavedDevices() {
+    }
+
+    override fun disconnectAllExcept(addresses: List<String>) {
     }
 
     override fun save(macAddress: String): Observable<Unit> {
@@ -49,15 +52,15 @@ class MockBeckonClient(
         }
     }
 
-    override fun devices(): Observable<List<DeviceMetadata>> {
+    override fun savedDevices(): Observable<List<WritableDeviceMetadata>> {
         return devices.map { it.metadata() }.justever()
     }
 
-    override fun currentDevices(): List<DeviceMetadata> {
+    override fun currentDevices(): List<WritableDeviceMetadata> {
         return devices.map { it.metadata() }
     }
 
-    override fun connect(result: BeckonScanResult, characteristics: List<Characteristic>): Observable<DiscoveredDevice> {
+    override fun connect(result: BeckonScanResult, characteristics: List<Characteristic>): Observable<DeviceMetadata> {
         return Observable.empty()
     }
 

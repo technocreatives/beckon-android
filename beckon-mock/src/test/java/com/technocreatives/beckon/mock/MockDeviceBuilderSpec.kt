@@ -8,7 +8,7 @@ import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicResult
 import com.technocreatives.beckon.DeviceMetadata
-import com.technocreatives.beckon.DiscoveredDevice
+import com.technocreatives.beckon.WritableDeviceMetadata
 import com.technocreatives.beckon.Type
 import io.reactivex.observers.TestObserver
 import io.reactivex.schedulers.TestScheduler
@@ -35,10 +35,10 @@ object MockDeviceBuilderSpec : Spek({
                 Characteristic(randomUUID.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = false)
         )
 
-        val metadata = DeviceMetadata("macaddress", "axkid", characteristics)
+        val metadata = WritableDeviceMetadata("macaddress", "axkid", characteristics)
         val characteristicResults =
                 characteristics.map { CharacteristicResult.Success(it, BluetoothGattCharacteristic(it.uuid, 0, 0)) }
-        val discoveredDevice = DiscoveredDevice.SuccessDevice(metadata, characteristicResults)
+        val discoveredDevice = DeviceMetadata(metadata.macAddress, metadata.name, characteristicResults)
         val c1 = byteArrayOf(1.toByte(), 0.toByte(), 0.toByte(), 0.toByte())
         val c2 = byteArrayOf(0.toByte(), 0.toByte(), 0.toByte(), 0.toByte())
 
@@ -101,8 +101,8 @@ object MockDeviceBuilderSpec : Spek({
         val byte = ByteArray(4) { i -> i.toByte() }
         val change = Change(mock(), mock(), Data(byte))
 
-        val metadata = mock<DeviceMetadata>()
-        val discoveredDevice = mock<DiscoveredDevice.SuccessDevice>()
+        val metadata = mock<WritableDeviceMetadata>()
+        val discoveredDevice = mock<DeviceMetadata>()
 
         val mockDeviceBuilder by memoized { MockDeviceBuilder() }
 
@@ -138,8 +138,8 @@ object MockDeviceBuilderSpec : Spek({
             ChangeWithDelay(change, it)
         }
 
-        val metadata = mock<DeviceMetadata>()
-        val discoveredDevice = mock<DiscoveredDevice.SuccessDevice>()
+        val metadata = mock<WritableDeviceMetadata>()
+        val discoveredDevice = mock<DeviceMetadata>()
 
         val mockDeviceBuilder by memoized { MockDeviceBuilder() }
 

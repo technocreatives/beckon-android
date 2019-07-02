@@ -3,6 +3,12 @@ package com.technocreatives.beckon
 import io.reactivex.Observable
 import io.reactivex.functions.BiFunction
 import timber.log.Timber
+import java.util.UUID
+
+fun <Change> BeckonDevice.changes(characteristicUUID: UUID, mapper: CharacteristicMapper<Change>): Observable<Change> {
+    return changes().filter { it.characteristic.uuid == characteristicUUID }
+        .map { mapper(it) }
+}
 
 fun <Change, State> BeckonDevice.states(
     mapper: CharacteristicMapper<Change>,
@@ -23,10 +29,20 @@ fun <Change, State> BeckonDevice.deviceStates(
     return Observable.combineLatest(
         states,
         this.connectionStates(),
-        BiFunction<State, ConnectionState, DeviceState<State>> { t1, t2 -> DeviceState(this.metadata(), t2, t1) })
+        BiFunction<State, ConnectionState, DeviceState<State>> { t1, t2 ->
+            DeviceState(
+                this.metadata().metadata(),
+                t2,
+                t1
+            )
+        })
 }
 
-data class DeviceState<State>(val metadata: DeviceMetadata, val connectionState: ConnectionState, val state: State)
+data class DeviceState<State>(
+    val metadata: WritableDeviceMetadata,
+    val connectionState: ConnectionState,
+    val state: State
+)
 
 fun <Change, State> BeckonClient.deviceStates(
     addresses: List<String>,
@@ -34,7 +50,10 @@ fun <Change, State> BeckonClient.deviceStates(
     reducer: BiFunction<State, Change, State>,
     defaultState: State
 ): Observable<List<DeviceState<State>>> {
-    val devices = addresses.map { address -> this.findDevice(address).flatMap { it.deviceStates(mapper, reducer, defaultState) } }
+    val devices = addresses.map { address ->
+        findDevice(address)
+            .flatMapObservable { it.deviceStates(mapper, reducer, defaultState) }
+    }
     Timber.d("deviceStates $devices")
     return Observable.combineLatest(devices) {
         Timber.d("combineLatest ${it.get(0)}")

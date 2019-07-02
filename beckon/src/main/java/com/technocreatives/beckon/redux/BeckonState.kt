@@ -9,18 +9,19 @@ import com.technocreatives.beckon.internal.BluetoothState
 
 internal data class BeckonState(
     val saved: List<BeckonDevice>,
-    val discovered: List<BeckonDevice>,
+    val connected: List<BeckonDevice>,
     val bluetoothState: BluetoothState
 ) {
+    fun allDevices(): List<BeckonDevice> = saved + connected
     fun findSavedDevice(macAddress: MacAddress): Option<BeckonDevice> {
         return saved.find { it.metadata().macAddress == macAddress }.toOption()
     }
 
-    fun findDiscoveredDevice(macAddress: MacAddress): Option<BeckonDevice> {
-        return discovered.find { it.metadata().macAddress == macAddress }.toOption()
+    fun findConnectedDevice(macAddress: MacAddress): Option<BeckonDevice> {
+        return connected.find { it.metadata().macAddress == macAddress }.toOption()
     }
 
     fun findDevice(macAddress: MacAddress): Option<BeckonDevice> {
-        return findSavedDevice(macAddress) or findDiscoveredDevice(macAddress)
+        return findSavedDevice(macAddress) or findConnectedDevice(macAddress)
     }
 }

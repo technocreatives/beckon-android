@@ -1,20 +1,21 @@
 package com.technocreatives.beckon.data
 
-import com.technocreatives.beckon.DeviceMetadata
+import com.technocreatives.beckon.WritableDeviceMetadata
 import io.reactivex.Observable
+import io.reactivex.Single
 
 internal interface DeviceRepository {
 
-    fun currentDevices(): List<DeviceMetadata>
+    fun currentDevices(): List<WritableDeviceMetadata>
 
     // single
-    fun addDevice(metadata: DeviceMetadata): Observable<List<DeviceMetadata>>
+    fun addDevice(metadata: WritableDeviceMetadata): Single<List<WritableDeviceMetadata>>
 
     // single
-    fun removeDevice(macAddress: String): Observable<List<DeviceMetadata>>
+    fun removeDevice(macAddress: String): Single<List<WritableDeviceMetadata>>
 
     // single
-    fun saveDevices(devices: List<DeviceMetadata>): Observable<List<DeviceMetadata>>
+    fun saveDevices(devices: List<WritableDeviceMetadata>): Single<List<WritableDeviceMetadata>>
 
-    fun devices(): Observable<List<DeviceMetadata>>
+    fun devices(): Observable<List<WritableDeviceMetadata>>
 }

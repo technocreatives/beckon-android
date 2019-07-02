@@ -3,7 +3,11 @@ package com.technocreatives.beckon
 import android.content.Context
 import com.technocreatives.beckon.internal.BeckonClientImpl
 import com.technocreatives.beckon.internal.BluetoothState
+import io.reactivex.Completable
 import io.reactivex.Observable
+import io.reactivex.Single
+import no.nordicsemi.android.ble.data.Data
+import java.util.UUID
 
 interface BeckonClient {
 
@@ -20,39 +24,64 @@ interface BeckonClient {
         }
     }
 
+    /*===========================Scanning and connecting==========================*/
+
     fun startScan(setting: ScannerSetting)
+
     fun stopScan()
 
+    /**
+     * return stream of BeckonScanResult
+     * it works dependent from startScan, stop Scan
+     */
     fun scan(): Observable<BeckonScanResult>
-    fun scanAndConnect(characteristics: List<Characteristic>): Observable<DiscoveredDevice>
 
-    fun disconnectAllConnectedDevicesButNotSavedDevices()
+    fun scanAndConnect(characteristics: List<Characteristic>): Observable<DeviceMetadata>
 
-    // single
-    fun save(macAddress: String): Observable<Unit>
-    // single
-    fun remove(macAddress: String): Observable<Unit>
+    fun disconnectAllConnectedButNotSavedDevices()
+    fun disconnectAllExcept(addresses: List<String>)
 
-    // single
-    fun findDevice(macAddress: String): Observable<BeckonDevice>
-    fun devices(): Observable<List<DeviceMetadata>>
-    fun currentDevices(): List<DeviceMetadata>
-
-    // single
     fun connect(
         result: BeckonScanResult,
         characteristics: List<Characteristic>
-    ): Observable<DiscoveredDevice>
+    ): Single<DeviceMetadata>
 
     fun disconnect(macAddress: String): Boolean
+
+    /*===========================Device management==========================*/
+
+    /**
+     * Save a connected device for longer use
+     * - find the device in set of connected device (return a device or DeviceNotFoundException)
+     * - create bond if necessary (Bonded success or BondFailureException)
+     * - save to database ( Complete or return SaveDeviceException)
+     */
+    fun save(macAddress: String): Completable
+
+    /**
+     * Remove a saved device
+     * - Remove Bond ???
+     * - Remove from database
+     * - Remove from store
+     */
+    fun remove(macAddress: String): Completable
+
+    // find a connected device
+    fun findDevice(macAddress: MacAddress): Single<BeckonDevice>
+
+    fun devices(): Observable<List<DeviceMetadata>>
+    fun savedDevices(): Observable<List<DeviceMetadata>>
+    fun currentDevices(): List<DeviceMetadata>
+    fun connectedDevices(): Observable<List<DeviceMetadata>>
 
     fun register(context: Context)
     fun unregister(context: Context)
 
     fun bluetoothState(): Observable<BluetoothState>
-}
 
-// BeckonScanConnectHelper(client: BeckonClient) {
-//     fun scanAndConnect(characteristics: List<Characteristic>): Observable<DiscoveredDevice>
-//     fun connect(device: DiscoveredDevice, List<DiscoveredDevice>): Observable<Unit>
-// }
+    /*===========================Work with devices==========================*/
+
+    fun write(macAddress: MacAddress, characteristic: CharacteristicResult.Write, data: Data): Single<Change>
+    fun write(macAddress: MacAddress, characteristicUuid: UUID, data: Data): Single<Change>
+    fun read(macAddress: MacAddress, characteristic: CharacteristicResult.Read): Single<Change>
+}

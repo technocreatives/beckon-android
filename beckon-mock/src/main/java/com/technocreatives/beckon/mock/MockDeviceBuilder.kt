@@ -1,8 +1,8 @@
 package com.technocreatives.beckon.mock
 
 import com.technocreatives.beckon.Change
+import com.technocreatives.beckon.WritableDeviceMetadata
 import com.technocreatives.beckon.DeviceMetadata
-import com.technocreatives.beckon.DiscoveredDevice
 import io.reactivex.Observable
 import io.reactivex.Scheduler
 import io.reactivex.schedulers.Schedulers
@@ -11,12 +11,12 @@ import java.util.concurrent.TimeUnit
 class MockDeviceBuilder {
 
     var changesQueue = mutableListOf<ChangeWithDelay>()
-    private lateinit var metadata: DeviceMetadata
-    private lateinit var discoveredDevice: DiscoveredDevice
+    private lateinit var metadata: WritableDeviceMetadata
+    private lateinit var discoveredDevice: DeviceMetadata
     private var scheduler: Scheduler? = null
 
-    fun metadata(metadata: DeviceMetadata) = apply { this.metadata = metadata }
-    fun discoveredDevice(discoveredDevice: DiscoveredDevice) = apply { this.discoveredDevice = discoveredDevice }
+    fun metadata(metadata: WritableDeviceMetadata) = apply { this.metadata = metadata }
+    fun discoveredDevice(discoveredDevice: DeviceMetadata) = apply { this.discoveredDevice = discoveredDevice }
     fun scheduler(scheduler: Scheduler) = apply { this.scheduler = scheduler }
 
     fun enqueue(change: Change, delayInSecond: Long = 0) = apply { changesQueue.add(ChangeWithDelay(change, delayInSecond)) }
@@ -38,8 +38,8 @@ class MockDeviceBuilder {
 }
 
 data class MockDeviceData(
-    val metadata: DeviceMetadata,
-    val discoveredDevice: DiscoveredDevice,
+    val metadata: WritableDeviceMetadata,
+    val discoveredDevice: DeviceMetadata,
     val changesQueue: List<ChangeWithDelay>
 )
 

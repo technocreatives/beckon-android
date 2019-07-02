@@ -6,11 +6,11 @@ import com.technocreatives.beckon.internal.BluetoothState
 internal fun createBeckonStore(): Store {
     val reducer: Reducer = { state, action ->
         when (action) {
-            is AddSavedDevice -> state.copy(saved = addDevice(state.saved, action.device), discovered = removeDevice(state.discovered, action.device))
-            is RemoveSavedDevice -> state.copy(saved = removeDevice(state.saved, action.device))
-            is AddDiscoveredDevice -> state.copy(discovered = addDevice(state.discovered, action.device))
-            is RemoveDiscoveredDevice -> state.copy(discovered = removeDevice(state.discovered, action.device))
-            is ChangeBluetoothState -> state.copy(bluetoothState = action.state)
+            is Action.AddSavedDevice -> state.copy(saved = addDevice(state.saved, action.device), connected = removeDevice(state.connected, action.device))
+            is Action.RemoveSavedDevice -> state.copy(saved = removeDevice(state.saved, action.device))
+            is Action.AddConnectedDevice -> state.copy(connected = addDevice(state.connected, action.device))
+            is Action.RemoveConnectedDevice -> state.copy(connected = removeDevice(state.connected, action.device))
+            is Action.ChangeBluetoothState -> state.copy(bluetoothState = action.state)
         }
     }
     return BeckonStore(reducer, BeckonState(emptyList(), emptyList(), BluetoothState.UNKNOWN))

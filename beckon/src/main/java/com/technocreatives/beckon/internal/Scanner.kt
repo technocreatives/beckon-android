@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.internal
 
 import com.technocreatives.beckon.BeckonScanResult
-import com.technocreatives.beckon.ScanFailureException
+import com.technocreatives.beckon.ScanFailedException
 import com.technocreatives.beckon.ScannerSetting
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
@@ -21,7 +21,7 @@ class Scanner {
         object : ScanCallback() {
             override fun onScanFailed(errorCode: Int) {
                 Timber.d("onScanFailed $errorCode")
-                scanSubject.onError(ScanFailureException(errorCode))
+                scanSubject.onError(ScanFailedException(errorCode))
             }
 
             override fun onScanResult(callbackType: Int, result: ScanResult) {

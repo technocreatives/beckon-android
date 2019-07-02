@@ -3,12 +3,36 @@ package com.technocreatives.beckon.noop
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
+import com.technocreatives.beckon.CharacteristicResult
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.DeviceMetadata
-import com.technocreatives.beckon.DiscoveredDevice
+import io.reactivex.Completable
 import io.reactivex.Observable
+import io.reactivex.Single
+import no.nordicsemi.android.ble.data.Data
+import java.util.UUID
 
 class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
+
+    override fun createBond(): Completable {
+        return Completable.never()
+    }
+
+    override fun removeBond(): Completable {
+        return Completable.never()
+    }
+
+    override fun read(characteristic: CharacteristicResult.Read): Single<Change> {
+        return Single.never()
+    }
+
+    override fun read(characteristicUUID: UUID): Single<Change> {
+        return Single.never()
+    }
+
+    override fun write(data: Data, characteristicUUID: UUID): Single<Change> {
+        return Single.never()
+    }
 
     override fun connectionStates(): Observable<ConnectionState> {
         return Observable.never()
@@ -26,10 +50,6 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return ConnectionState.Connected
     }
 
-    override fun connect(): Observable<DiscoveredDevice> {
-        return Observable.never()
-    }
-
     override fun disconnect() {
     }
 
@@ -37,9 +57,7 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return metadata
     }
 
-    override fun createBond() {
-    }
-
-    override fun removeBond() {
+    override fun write(data: Data, characteristic: CharacteristicResult.Write): Single<Change> {
+        return Single.never()
     }
 }

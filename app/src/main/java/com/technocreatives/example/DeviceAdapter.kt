@@ -4,17 +4,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.technocreatives.beckon.DiscoveredDevice
+import com.technocreatives.beckon.DeviceMetadata
 import kotlinx.android.synthetic.main.view_item_device.view.*
 
-typealias OnSelectDevice = (DiscoveredDevice) -> Unit
+typealias OnSelectDevice = (DeviceMetadata) -> Unit
 
 class DeviceAdapter(
         private val layoutInflater: LayoutInflater,
         private val onClick: OnSelectDevice
 ) : RecyclerView.Adapter<DeviceAdapter.DeviceVH>() {
 
-    var items = emptyList<DiscoveredDevice>()
+    var items = emptyList<DeviceMetadata>()
         set(value) {
             field = value
             notifyDataSetChanged()
@@ -33,7 +33,7 @@ class DeviceAdapter(
             private val onClick: OnSelectDevice
     ) : RecyclerView.ViewHolder(viewItem) {
 
-        fun bind(device: DiscoveredDevice) = with(viewItem) {
+        fun bind(device: DeviceMetadata) = with(viewItem) {
             tvDevice.text = device.toString()
             setOnClickListener {
                 onClick(device)

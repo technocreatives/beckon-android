@@ -12,8 +12,8 @@ import android.os.IBinder
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.beckon.states
+import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.example.domain.FetchDevicesUseCase
 import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
@@ -45,7 +45,7 @@ class BluetoothService : Service() {
                 .doOnNext { Timber.d("Connected devices $it") }
                 .flatMapIterable { it }
                 .doOnNext { Timber.d("All devices $it") }
-                .flatMap { beckon.findDevice(it.macAddress) }
+                .flatMapSingle { beckon.findDevice(it.macAddress) }
                 .flatMap { device -> device.changes() }
                 .subscribe { Timber.d("All changes: $it") }
                 .disposedBy(bag)
