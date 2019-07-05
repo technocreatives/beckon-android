@@ -7,7 +7,7 @@ import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicFailedException
-import com.technocreatives.beckon.CharacteristicResult
+import com.technocreatives.beckon.CharacteristicDetail
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.CreateBondFailedException
 import com.technocreatives.beckon.ReadDataEXception
@@ -38,7 +38,7 @@ internal class BeckonBleManager(
         BehaviorSubject.createDefault(ConnectionState.NotStarted)
     private val bondStateSubject: BehaviorSubject<BondState> = BehaviorSubject.createDefault(BondState.NotBonded)
     private val changeSubject = PublishSubject.create<Change>()
-    private val discoveredDevice by lazy { SingleSubject.create<List<CharacteristicResult>>() }
+    private val discoveredDevice by lazy { SingleSubject.create<List<CharacteristicDetail>>() }
     private val bondSubject by lazy {
         PublishSubject.create<Boolean>()
     }
@@ -47,7 +47,7 @@ internal class BeckonBleManager(
         mCallbacks = BeckonManagerCallbacks(stateSubject, bondStateSubject)
     }
 
-    fun connect(request: ConnectRequest): Single<List<CharacteristicResult>> {
+    fun connect(request: ConnectRequest): Single<List<CharacteristicDetail>> {
         request.enqueue()
         return discoveredDevice.hide()
     }
@@ -63,14 +63,14 @@ internal class BeckonBleManager(
             }
         }
 
-        private fun setupCallback(result: CharacteristicResult): CharacteristicResult {
-            if (result is CharacteristicResult.Notify) {
+        private fun setupCallback(result: CharacteristicDetail): CharacteristicDetail {
+            if (result is CharacteristicDetail.Notify) {
                 setupNotificationCallback(result)
             }
             return result
         }
 
-        private fun setupNotificationCallback(success: CharacteristicResult.Notify): CharacteristicResult {
+        private fun setupNotificationCallback(success: CharacteristicDetail.Notify): CharacteristicDetail {
             Timber.d("setNotification callback $success")
             val callback = DataReceivedCallback { device, data ->
                 Timber.d("DataReceivedCallback $device $data")
@@ -98,7 +98,7 @@ internal class BeckonBleManager(
         private fun findBluetoothGattCharacteristic(
             gatt: BluetoothGatt,
             characteristic: Characteristic
-        ): List<CharacteristicResult> {
+        ): List<CharacteristicDetail> {
 
             Timber.d("isRequiredServiceSupported $gatt $characteristic")
 
@@ -110,7 +110,7 @@ internal class BeckonBleManager(
                 val bluetoothGattCharacteristic = service.getCharacteristic(characteristic.uuid)
                 if (bluetoothGattCharacteristic == null) {
                     listOf(
-                        CharacteristicResult.Failed(
+                        CharacteristicDetail.Failed(
                             characteristic,
                             CharacteristicFailedException("BluetoothGatt not found!")
                         )
@@ -120,7 +120,7 @@ internal class BeckonBleManager(
                 }
             } else {
                 listOf(
-                    CharacteristicResult.Failed(
+                    CharacteristicDetail.Failed(
                         characteristic,
                         CharacteristicFailedException("Service ${characteristic.service} not found!")
                     )
@@ -132,16 +132,16 @@ internal class BeckonBleManager(
     private fun checkRequiredServiceSupported(
         characteristic: Characteristic,
         bluetoothGattCharacteristic: BluetoothGattCharacteristic
-    ): List<CharacteristicResult> {
+    ): List<CharacteristicDetail> {
         val rxProperties = bluetoothGattCharacteristic.properties
 
         return characteristic.types.map {
             if (it == Type.NOTIFY) {
                 val notifyAbility = rxProperties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
                 if (notifyAbility) {
-                    CharacteristicResult.Notify(characteristic, bluetoothGattCharacteristic)
+                    CharacteristicDetail.Notify(characteristic, bluetoothGattCharacteristic)
                 } else {
-                    CharacteristicResult.Failed(
+                    CharacteristicDetail.Failed(
                         characteristic,
                         CharacteristicFailedException("This characteristic does not support notify!")
                     )
@@ -149,9 +149,9 @@ internal class BeckonBleManager(
             } else if (it == Type.READ) {
                 val readAbility = rxProperties and BluetoothGattCharacteristic.PROPERTY_READ > 0
                 if (readAbility) {
-                    CharacteristicResult.Read(characteristic, bluetoothGattCharacteristic)
+                    CharacteristicDetail.Read(characteristic, bluetoothGattCharacteristic)
                 } else {
-                    CharacteristicResult.Failed(
+                    CharacteristicDetail.Failed(
                         characteristic,
                         CharacteristicFailedException("This characteristic does not support read!")
                     )
@@ -159,9 +159,9 @@ internal class BeckonBleManager(
             } else {
                 val writeAbility = rxProperties and BluetoothGattCharacteristic.PROPERTY_WRITE > 0
                 if (writeAbility) {
-                    CharacteristicResult.Write(characteristic, bluetoothGattCharacteristic)
+                    CharacteristicDetail.Write(characteristic, bluetoothGattCharacteristic)
                 } else {
-                    CharacteristicResult.Failed(
+                    CharacteristicDetail.Failed(
                         characteristic,
                         CharacteristicFailedException("This characteristic does not support write!")
                     )

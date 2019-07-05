@@ -6,7 +6,7 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonScanResult
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
-import com.technocreatives.beckon.CharacteristicResult
+import com.technocreatives.beckon.CharacteristicDetail
 import com.technocreatives.beckon.DeviceMetadata
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.ScannerSetting
@@ -57,7 +57,7 @@ class NoopBeckonClient() : BeckonClient {
         return Observable.empty()
     }
 
-    override fun write(macAddress: MacAddress, characteristic: CharacteristicResult.Write, data: Data): Single<Change> {
+    override fun write(macAddress: MacAddress, characteristic: CharacteristicDetail.Write, data: Data): Single<Change> {
         return Single.never()
     }
 
@@ -65,7 +65,7 @@ class NoopBeckonClient() : BeckonClient {
         return Single.never()
     }
 
-    override fun read(macAddress: MacAddress, characteristic: CharacteristicResult.Read): Single<Change> {
+    override fun read(macAddress: MacAddress, characteristic: CharacteristicDetail.Read): Single<Change> {
         return Single.never()
     }
 

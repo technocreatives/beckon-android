@@ -32,7 +32,8 @@ interface BeckonClient {
 
     /**
      * return stream of BeckonScanResult
-     * it works dependent from startScan, stop Scan
+     * it should be a stream that never complete
+     * but it only may emit item only after startScan is called and before stopScan is called
      */
     fun scan(): Observable<BeckonScanResult>
 
@@ -81,7 +82,7 @@ interface BeckonClient {
 
     /*===========================Work with devices==========================*/
 
-    fun write(macAddress: MacAddress, characteristic: CharacteristicResult.Write, data: Data): Single<Change>
+    fun write(macAddress: MacAddress, characteristic: CharacteristicDetail.Write, data: Data): Single<Change>
     fun write(macAddress: MacAddress, characteristicUuid: UUID, data: Data): Single<Change>
-    fun read(macAddress: MacAddress, characteristic: CharacteristicResult.Read): Single<Change>
+    fun read(macAddress: MacAddress, characteristic: CharacteristicDetail.Read): Single<Change>
 }

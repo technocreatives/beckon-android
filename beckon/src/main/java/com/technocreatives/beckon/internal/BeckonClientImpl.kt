@@ -11,7 +11,7 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonScanResult
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
-import com.technocreatives.beckon.CharacteristicResult
+import com.technocreatives.beckon.CharacteristicDetail
 import com.technocreatives.beckon.DeviceMetadata
 import com.technocreatives.beckon.DeviceNotFoundException
 import com.technocreatives.beckon.MacAddress
@@ -157,7 +157,7 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
 
     private fun saveDevice(device: BeckonDevice): Completable {
         beckonStore.dispatch(Action.AddSavedDevice(device))
-        return deviceRepository.addDevice(device.metadata().metadata()).ignoreElement()
+        return deviceRepository.addDevice(device.metadata().writableDeviceMetadata()).ignoreElement()
     }
 
     private fun removeSavedDevice(device: BeckonDevice): Completable {
@@ -243,7 +243,7 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
         return beckonStore.states().map { it.bluetoothState }.distinctUntilChanged()
     }
 
-    override fun write(macAddress: MacAddress, characteristic: CharacteristicResult.Write, data: Data): Single<Change> {
+    override fun write(macAddress: MacAddress, characteristic: CharacteristicDetail.Write, data: Data): Single<Change> {
         return findDevice(macAddress).flatMap { it.write(data, characteristic) }
     }
 
@@ -251,7 +251,7 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
         return findDevice(macAddress).flatMap { it.write(data, characteristicUuid) }
     }
 
-    override fun read(macAddress: MacAddress, characteristic: CharacteristicResult.Read): Single<Change> {
+    override fun read(macAddress: MacAddress, characteristic: CharacteristicDetail.Read): Single<Change> {
         return findDevice(macAddress).flatMap { it.read(characteristic) }
     }
 }

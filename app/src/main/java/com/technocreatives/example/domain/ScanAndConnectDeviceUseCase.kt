@@ -13,12 +13,12 @@ import io.reactivex.Observable
 
 typealias ScanResult = DeviceState<AxkidState>
 
-class ScanAndConnectDeviceUseCase(val beckonClient: BeckonClient) {
+class ScanAndConnectDeviceUseCase(private val beckonClient: BeckonClient) {
 
     fun execute(characteristics: List<Characteristic>): Observable<ScanResult> {
         return beckonClient.scanAndConnect(characteristics)
                 .filter { it.success() }
-                .flatMapSingle { beckonClient.findDevice(it.metadata().macAddress) }
+                .flatMapSingle { beckonClient.findDevice(it.macAddress) }
                 .flatMap { it.deviceStates(mapper, reducer, AxkidState(SeatedState.Unseated, -1, 0)) }
                 .filter { it.state.seatedState is SeatedState.Seated }
                 .take(1)

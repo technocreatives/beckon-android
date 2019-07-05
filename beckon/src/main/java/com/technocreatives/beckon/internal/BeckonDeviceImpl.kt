@@ -5,7 +5,7 @@ import arrow.core.Either
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicResult
+import com.technocreatives.beckon.CharacteristicDetail
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.DeviceMetadata
 import io.reactivex.Completable
@@ -58,7 +58,7 @@ internal class BeckonDeviceImpl(
         return manager.doRemoveBond()
     }
 
-    override fun read(characteristic: CharacteristicResult.Read): Single<Change> {
+    override fun read(characteristic: CharacteristicDetail.Read): Single<Change> {
         return manager.read(characteristic.characteristic, characteristic.gatt)
     }
 
@@ -70,7 +70,7 @@ internal class BeckonDeviceImpl(
         }
     }
 
-    override fun write(data: Data, characteristic: CharacteristicResult.Write): Single<Change> {
+    override fun write(data: Data, characteristic: CharacteristicDetail.Write): Single<Change> {
         return manager.write(data, characteristic.characteristic, characteristic.gatt)
     }
 

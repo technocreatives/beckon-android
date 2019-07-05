@@ -31,7 +31,7 @@ fun <Change, State> BeckonDevice.deviceStates(
         this.connectionStates(),
         BiFunction<State, ConnectionState, DeviceState<State>> { t1, t2 ->
             DeviceState(
-                this.metadata().metadata(),
+                this.metadata().writableDeviceMetadata(),
                 t2,
                 t1
             )

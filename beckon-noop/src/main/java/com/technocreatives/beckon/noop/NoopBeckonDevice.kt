@@ -3,7 +3,7 @@ package com.technocreatives.beckon.noop
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicResult
+import com.technocreatives.beckon.CharacteristicDetail
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.DeviceMetadata
 import io.reactivex.Completable
@@ -22,7 +22,7 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return Completable.never()
     }
 
-    override fun read(characteristic: CharacteristicResult.Read): Single<Change> {
+    override fun read(characteristic: CharacteristicDetail.Read): Single<Change> {
         return Single.never()
     }
 
@@ -57,7 +57,7 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return metadata
     }
 
-    override fun write(data: Data, characteristic: CharacteristicResult.Write): Single<Change> {
+    override fun write(data: Data, characteristic: CharacteristicDetail.Write): Single<Change> {
         return Single.never()
     }
 }

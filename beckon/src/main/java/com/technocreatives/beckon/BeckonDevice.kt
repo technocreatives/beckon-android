@@ -22,9 +22,9 @@ interface BeckonDevice {
     fun createBond(): Completable
     fun removeBond(): Completable
 
-    fun read(characteristic: CharacteristicResult.Read): Single<Change>
+    fun read(characteristic: CharacteristicDetail.Read): Single<Change>
     fun read(characteristicUUID: UUID): Single<Change>
 
-    fun write(data: Data, characteristic: CharacteristicResult.Write): Single<Change>
+    fun write(data: Data, characteristic: CharacteristicDetail.Write): Single<Change>
     fun write(data: Data, characteristicUUID: UUID): Single<Change>
 }
