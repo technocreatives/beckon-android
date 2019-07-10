@@ -92,13 +92,13 @@ class MainActivity : AppCompatActivity() {
                 .setUseHardwareBatchingIfSupported(false)
                 .build()
 
-        val filters = listOf(DeviceFilter(deviceName = "AXKID", deviceAddress = null))
+        val filters = listOf(DeviceFilter(deviceName = "AXKID", deviceAddress = null, serviceUuid = null))
 
         beckon.startScan(ScannerSetting(settings, filters))
 
         scanDeviceUseCase.execute(characteristics)
                 .doOnNext { Timber.d("Found $it") }
-                .flatMap { beckon.save(it.metadata.macAddress).toObservable<Unit>() }
+                .flatMap { beckon.save(it.metadata.macAddress).toObservable() }
                 .subscribe(
                         { result -> Timber.d("Save device correctly") },
                         { error -> Timber.e(error, "Save device error") },

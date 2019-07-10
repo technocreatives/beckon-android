@@ -8,6 +8,7 @@ import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicDetail
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.DeviceMetadata
+import com.technocreatives.beckon.DisconnectDeviceFailedException
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -33,9 +34,14 @@ internal class BeckonDeviceImpl(
         return manager.currentState()
     }
 
-    override fun disconnect() {
+    override fun disconnect(): Completable {
         Timber.d("disconnect")
-        manager.disconnect().enqueue()
+        return Completable.create { emitter ->
+            manager.disconnect()
+                .done { emitter.onComplete() }
+                .fail { device, status -> emitter.onError(DisconnectDeviceFailedException(device.address, status)) }
+                .enqueue()
+        }
     }
 
     internal fun bluetoothDevice(): BluetoothDevice {

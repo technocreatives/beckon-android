@@ -39,7 +39,7 @@ class Scanner {
     }
 
     fun scan(setting: ScannerSetting) {
-        Timber.d("Bluetooth scanning starting")
+        Timber.d("Bluetooth scanning start")
         scanner.stopScan(callback)
 
         val scanFilters = setting.filters.map { it.toScanFilter() }

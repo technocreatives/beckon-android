@@ -60,3 +60,25 @@ fun <Change, State> BeckonClient.deviceStates(
         it.map { it as DeviceState<State> }.toList()
     }
 }
+
+fun BeckonClient.scanAndConnect(characteristics: List<Characteristic>): Observable<DeviceMetadata> {
+    return scan()
+        .distinct { it.macAddress }
+        .flatMapSingle { connect(it, characteristics) }
+}
+
+fun <Change, State> BeckonClient.scanAndSave(
+    characteristics: List<Characteristic>,
+    mapper: CharacteristicMapper<Change>,
+    reducer: BiFunction<State, Change, State>,
+    defaultState: State,
+    filter: (State) -> Boolean
+): Observable<String> {
+    return scanAndConnect(characteristics)
+        .filter { it.success() }
+        .flatMapSingle { findDevice(it.macAddress) }
+        .flatMap { it.deviceStates(mapper, reducer, defaultState) }
+        .doOnNext { Timber.d("Scan device state $it") }
+        .filter { deviceState -> filter(deviceState.state) }
+        .flatMapSingle { save(it.metadata.macAddress) }
+}

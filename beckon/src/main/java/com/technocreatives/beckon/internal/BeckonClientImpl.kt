@@ -53,28 +53,24 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
         }
     }
 
-    override fun disconnectAllConnectedButNotSavedDevices() {
-        beckonStore.currentState().connected.forEach {
-            it.disconnect()
-        }
+    override fun disconnectAllConnectedButNotSavedDevices(): Completable {
+        val completables = beckonStore.currentState().connected
+            .map {
+                it.disconnect()
+            }.toTypedArray()
+        return Completable.mergeArray(*completables)
     }
 
     override fun disconnectAllExcept(addresses: List<String>) {
         beckonStore.currentState().connected.filter {
             it.metadata().macAddress !in addresses
-        }.forEach {
+        }.map {
             it.disconnect()
         }
     }
 
     override fun scan(): Observable<BeckonScanResult> {
         return scanner.scan()
-    }
-
-    override fun scanAndConnect(characteristics: List<Characteristic>): Observable<DeviceMetadata> {
-        return scan()
-                .distinct { it.macAddress }
-                .flatMapSingle { connect(it, characteristics) }
     }
 
     override fun findDevice(macAddress: String): Single<BeckonDevice> {
@@ -113,31 +109,32 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
 
         val manager = BeckonBleManager(context, characteristics)
         val request = manager.connect(result.device)
-                .retry(3, 100)
-                .useAutoConnect(true)
+            .retry(3, 100)
+            .useAutoConnect(true)
 
         return manager.connect(request)
-                .map { DeviceMetadata(result.device.address, result.device.name, it) }
-                .map {
-                    val beckonDevice = BeckonDeviceImpl(result.device, manager, it)
-                    beckonStore.dispatch(Action.AddConnectedDevice(beckonDevice))
-                    it
-                }
+            .map { DeviceMetadata(result.device.address, result.device.name, it) }
+            .map {
+                val beckonDevice = BeckonDeviceImpl(result.device, manager, it)
+                beckonStore.dispatch(Action.AddConnectedDevice(beckonDevice))
+                it // should we return beckon device here?
+            }
     }
 
-    override fun disconnect(macAddress: String): Boolean {
-        // disconnect a saved device or discovered device??
-        return beckonStore.currentState()
-                .findDevice(macAddress)
-                .map { it.disconnect() }
-                .nonEmpty()
+    override fun disconnect(macAddress: String): Completable {
+        return beckonStore.currentState().findSavedDevice(macAddress).fold({
+            Completable.error(DeviceNotFoundException(macAddress))
+        }, { device ->
+            device.disconnect()
+        })
     }
 
-    override fun save(macAddress: String): Completable {
-        return when (val device = beckonStore.currentState().findDevice(macAddress)) {
-            is None -> Completable.error(DeviceNotFoundException(macAddress))
-            is Some -> createBond(device.t).andThen(saveDevice(device.t))
-        }
+    override fun save(macAddress: String): Single<String> {
+        return beckonStore.currentState().findDevice(macAddress).fold({
+            Single.error(DeviceNotFoundException(macAddress))
+        }, { device ->
+            createBond(device).andThen(saveDevice(device))
+        })
     }
 
     /***
@@ -155,21 +152,23 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
         return device.removeBond()
     }
 
-    private fun saveDevice(device: BeckonDevice): Completable {
+    private fun saveDevice(device: BeckonDevice): Single<MacAddress> {
         beckonStore.dispatch(Action.AddSavedDevice(device))
-        return deviceRepository.addDevice(device.metadata().writableDeviceMetadata()).ignoreElement()
+        return deviceRepository.addDevice(device.metadata().writableDeviceMetadata())
+            .map { device.metadata().macAddress }
     }
 
-    private fun removeSavedDevice(device: BeckonDevice): Completable {
+    private fun removeSavedDevice(device: BeckonDevice): Single<MacAddress> {
         beckonStore.dispatch(Action.RemoveSavedDevice(device))
-        return deviceRepository.removeDevice(device.metadata().macAddress).ignoreElement()
+        return deviceRepository.removeDevice(device.metadata().macAddress).map { device.metadata().macAddress }
     }
 
-    override fun remove(macAddress: String): Completable {
-        return when (val device = beckonStore.currentState().findSavedDevice(macAddress)) {
-            is None -> Completable.error(DeviceNotFoundException(macAddress))
-            is Some -> removeBond(device.t).andThen(removeSavedDevice(device.t))
-        }
+    override fun remove(macAddress: String): Single<MacAddress> {
+        return beckonStore.currentState().findSavedDevice(macAddress).fold({
+            Single.error(DeviceNotFoundException(macAddress))
+        }, { device ->
+            device.disconnect().andThen(removeSavedDevice(device))
+        })
     }
 
     override fun register(context: Context) {
@@ -180,32 +179,32 @@ internal class BeckonClientImpl(private val context: Context) : BeckonClient {
         }.disposedBy(bag)
 
         beckonStore.states()
-                .map { it.saved }
-                .doOnNext { Timber.d("All saved devices $it") }
-                .map { it.map { it.currentState() } }
-                .distinctUntilChanged()
-                .subscribe {
-                    // process devices states
-                    Timber.d("State of saved devices $it")
-                }.disposedBy(bag)
+            .map { it.saved }
+            .doOnNext { Timber.d("All saved devices $it") }
+            .map { it.map { it.currentState() } }
+            .distinctUntilChanged()
+            .subscribe {
+                // process devices states
+                Timber.d("State of saved devices $it")
+            }.disposedBy(bag)
 
         beckonStore.states()
-                .map { it.connected }
-                .doOnNext { Timber.d("All discovered devices $it") }
-                .distinctUntilChanged()
-                .subscribe {
-                    Timber.d("State of discovered devices $it")
-                }.disposedBy(bag)
+            .map { it.connected }
+            .doOnNext { Timber.d("All discovered devices $it") }
+            .distinctUntilChanged()
+            .subscribe {
+                Timber.d("State of discovered devices $it")
+            }.disposedBy(bag)
 
         // do scan to check if bluetooth turn on from off state
         beckonStore.states()
-                .map { it.bluetoothState }
-                .distinctUntilChanged()
-                .filter { it == BluetoothState.ON }
-                .switchMap { deviceRepository.devices().take(1) }
-                .subscribe {
-                    reconnectSavedDevices(it)
-                }.disposedBy(bag)
+            .map { it.bluetoothState }
+            .distinctUntilChanged()
+            .filter { it == BluetoothState.ON }
+            .switchMap { deviceRepository.devices().take(1) }
+            .subscribe {
+                reconnectSavedDevices(it)
+            }.disposedBy(bag)
     }
 
     private fun reconnectSavedDevices(devices: List<WritableDeviceMetadata>) {

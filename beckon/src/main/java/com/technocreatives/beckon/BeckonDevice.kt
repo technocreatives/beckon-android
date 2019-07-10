@@ -15,7 +15,7 @@ interface BeckonDevice {
 
     fun currentState(): ConnectionState
 
-    fun disconnect()
+    fun disconnect(): Completable
 
     fun metadata(): DeviceMetadata
 

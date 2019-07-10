@@ -37,9 +37,7 @@ interface BeckonClient {
      */
     fun scan(): Observable<BeckonScanResult>
 
-    fun scanAndConnect(characteristics: List<Characteristic>): Observable<DeviceMetadata>
-
-    fun disconnectAllConnectedButNotSavedDevices()
+    fun disconnectAllConnectedButNotSavedDevices(): Completable
     fun disconnectAllExcept(addresses: List<String>)
 
     fun connect(
@@ -47,7 +45,7 @@ interface BeckonClient {
         characteristics: List<Characteristic>
     ): Single<DeviceMetadata>
 
-    fun disconnect(macAddress: String): Boolean
+    fun disconnect(macAddress: String): Completable
 
     /*===========================Device management==========================*/
 
@@ -57,7 +55,7 @@ interface BeckonClient {
      * - create bond if necessary (Bonded success or BondFailureException)
      * - save to database ( Complete or return SaveDeviceException)
      */
-    fun save(macAddress: String): Completable
+    fun save(macAddress: String): Single<String>
 
     /**
      * Remove a saved device
@@ -65,7 +63,7 @@ interface BeckonClient {
      * - Remove from database
      * - Remove from store
      */
-    fun remove(macAddress: String): Completable
+    fun remove(macAddress: String): Single<String>
 
     // find a connected device
     fun findDevice(macAddress: MacAddress): Single<BeckonDevice>

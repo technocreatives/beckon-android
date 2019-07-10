@@ -9,7 +9,8 @@ typealias MacAddress = String
 
 data class DeviceFilter(
     val deviceName: String?,
-    val deviceAddress: String?
+    val deviceAddress: String?,
+    val serviceUuid: String?
 )
 
 data class ScannerSetting(

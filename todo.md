@@ -37,11 +37,10 @@ A Bluetooth library which should be easy and stable.
 
 ## Doing
 
-- Make findCharacteristic code shorter
-- Solve connect and disconnect devices when scanning
+- Solve connect and disconnect devices when scanning => scan connect and save in one screen
 
 
 ## Done
 - Support Read on Characteristic
 - Use Maybe, Single, Compeletable to make sense the api.
-
+- Make findCharacteristic code shorter

@@ -50,7 +50,8 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return ConnectionState.Connected
     }
 
-    override fun disconnect() {
+    override fun disconnect(): Completable {
+        return Completable.never()
     }
 
     override fun metadata(): DeviceMetadata {

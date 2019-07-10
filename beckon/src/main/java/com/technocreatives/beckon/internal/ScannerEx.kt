@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.internal
 
+import android.os.ParcelUuid
 import com.technocreatives.beckon.BeckonScanResult
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScanFailedException
@@ -10,6 +11,7 @@ import no.nordicsemi.android.support.v18.scanner.ScanFilter
 import no.nordicsemi.android.support.v18.scanner.ScanResult
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import timber.log.Timber
+import java.util.UUID
 
 internal fun BluetoothLeScannerCompat.scan(setting: ScanSettings, filters: List<DeviceFilter>): Observable<BeckonScanResult> {
 
@@ -60,7 +62,10 @@ internal fun BluetoothLeScannerCompat.scanList(setting: ScanSettings, filters: L
 }
 
 fun DeviceFilter.toScanFilter(): ScanFilter {
+    val serviceUuid = serviceUuid?.toUuid()?.let { ParcelUuid(it) }
     return ScanFilter.Builder()
             .setDeviceName(deviceName)
+            // .setServiceUuid(serviceUuid)
             .build()
 }
+fun String.toUuid(): UUID = UUID.fromString(this)

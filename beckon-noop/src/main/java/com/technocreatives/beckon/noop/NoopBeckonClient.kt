@@ -29,20 +29,16 @@ class NoopBeckonClient() : BeckonClient {
         }
     }
 
-    override fun scanAndConnect(characteristics: List<Characteristic>): Observable<DeviceMetadata> {
-        return Observable.empty()
-    }
-
     override fun connect(result: BeckonScanResult, characteristics: List<Characteristic>): Single<DeviceMetadata> {
         return Single.never()
     }
 
-    override fun save(macAddress: String): Completable {
-        return Completable.never()
+    override fun save(macAddress: String): Single<String> {
+        return Single.never()
     }
 
-    override fun remove(macAddress: String): Completable {
-        return Completable.never()
+    override fun remove(macAddress: String): Single<String> {
+        return Single.never()
     }
 
     override fun findDevice(macAddress: MacAddress): Single<BeckonDevice> {
@@ -79,7 +75,8 @@ class NoopBeckonClient() : BeckonClient {
         return Observable.never()
     }
 
-    override fun disconnectAllConnectedButNotSavedDevices() {
+    override fun disconnectAllConnectedButNotSavedDevices(): Completable {
+        return Completable.never()
     }
 
     override fun disconnectAllExcept(addresses: List<String>) {
@@ -93,8 +90,8 @@ class NoopBeckonClient() : BeckonClient {
         return emptyList()
     }
 
-    override fun disconnect(macAddress: String): Boolean {
-        return true
+    override fun disconnect(macAddress: String): Completable {
+        return Completable.never()
     }
 
     override fun register(context: Context) {
