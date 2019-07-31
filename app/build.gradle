@@ -93,6 +93,11 @@ dependencies {
     implementation "no.nordicsemi.android:ble:$nsBleVersion"
     implementation "no.nordicsemi.android:dfu:$nsDfuVersion"
 
+
+    // Arrows
+    implementation "io.arrow-kt:arrow-core:$arrow_version"
+    implementation "io.arrow-kt:arrow-syntax:$arrow_version"
+
     // Util
     implementation "com.jakewharton.timber:timber:$timber"
     implementation "com.inkapplications:android-preferences:$sharedPreferences"

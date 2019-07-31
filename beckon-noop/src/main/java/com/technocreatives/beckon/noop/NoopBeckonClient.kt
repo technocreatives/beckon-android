@@ -3,21 +3,33 @@ package com.technocreatives.beckon.noop
 import android.content.Context
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.BeckonScanResult
+import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.Characteristic
-import com.technocreatives.beckon.CharacteristicDetail
+import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceMetadata
 import com.technocreatives.beckon.MacAddress
+import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.internal.BluetoothState
+import com.technocreatives.beckon.WritableDeviceMetadata
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import no.nordicsemi.android.ble.data.Data
-import java.util.UUID
 
 class NoopBeckonClient() : BeckonClient {
+
+    override fun startScan(setting: ScannerSetting): Observable<ScanResult> {
+        return Observable.empty()
+    }
+
+    override fun connect(result: ScanResult, descriptor: Descriptor): Single<BeckonDevice> {
+        return Single.never()
+    }
+
+    override fun findSavedDevice(macAddress: MacAddress): Single<WritableDeviceMetadata> {
+        return Single.never()
+    }
 
     companion object {
         private var beckonClient: NoopBeckonClient? = null
@@ -29,10 +41,6 @@ class NoopBeckonClient() : BeckonClient {
         }
     }
 
-    override fun connect(result: BeckonScanResult, characteristics: List<Characteristic>): Single<DeviceMetadata> {
-        return Single.never()
-    }
-
     override fun save(macAddress: String): Single<String> {
         return Single.never()
     }
@@ -41,53 +49,31 @@ class NoopBeckonClient() : BeckonClient {
         return Single.never()
     }
 
-    override fun findDevice(macAddress: MacAddress): Single<BeckonDevice> {
+    override fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDevice> {
         return Single.never()
-    }
-
-    override fun savedDevices(): Observable<List<DeviceMetadata>> {
-        return Observable.empty()
     }
 
     override fun connectedDevices(): Observable<List<DeviceMetadata>> {
         return Observable.empty()
     }
 
-    override fun write(macAddress: MacAddress, characteristic: CharacteristicDetail.Write, data: Data): Single<Change> {
+    override fun write(macAddress: MacAddress, characteristic: CharacteristicSuccess.Write, data: Data): Single<Change> {
         return Single.never()
     }
 
-    override fun write(macAddress: MacAddress, characteristicUuid: UUID, data: Data): Single<Change> {
+    override fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Single<Change> {
         return Single.never()
-    }
-
-    override fun read(macAddress: MacAddress, characteristic: CharacteristicDetail.Read): Single<Change> {
-        return Single.never()
-    }
-
-    override fun startScan(setting: ScannerSetting) {
     }
 
     override fun stopScan() {
-    }
-
-    override fun scan(): Observable<BeckonScanResult> {
-        return Observable.never()
     }
 
     override fun disconnectAllConnectedButNotSavedDevices(): Completable {
         return Completable.never()
     }
 
-    override fun disconnectAllExcept(addresses: List<String>) {
-    }
-
-    override fun devices(): Observable<List<DeviceMetadata>> {
-        return Observable.never()
-    }
-
-    override fun currentDevices(): List<DeviceMetadata> {
-        return emptyList()
+    override fun savedDevices(): Observable<List<WritableDeviceMetadata>> {
+        throw UnsupportedOperationException("not implemented")
     }
 
     override fun disconnect(macAddress: String): Completable {

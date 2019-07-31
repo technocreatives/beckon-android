@@ -1,9 +1,8 @@
 package com.technocreatives.example
 
-import com.technocreatives.example.common.extension.toUuid
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
-import com.technocreatives.beckon.Type
+import com.technocreatives.example.common.extension.toUuid
 import io.reactivex.functions.BiFunction
 import java.util.Date
 
@@ -15,9 +14,9 @@ const val randomUUID = "1111fff3-0000-1000-8000-00805f9b34fb"
 
 val characteristics =// emptyList<Characteristic>()
         listOf(
-                Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
-                Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
-                Characteristic(randomUUID.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = false)
+                Characteristic(seatUuId.toUuid(), serviceUUID.toUuid()),
+                Characteristic(seatUuId.toUuid(), serviceUUID.toUuid()),
+                Characteristic(randomUUID.toUuid(), serviceUUID.toUuid())
         )
 
 typealias CharacteristicMapper<T> = (Change) -> T
@@ -37,8 +36,8 @@ sealed class SeatedState {
 
 val mapper: CharacteristicMapper<AxkidChange> = {
     when {
-        seatUuId.toUuid() == it.characteristic.uuid -> AxkidChange.Seated(true)
-        temperatureUuid.toUuid() == it.characteristic.uuid -> AxkidChange.Temperature(30)
+        seatUuId.toUuid() == it.uuid -> AxkidChange.Seated(true)
+        temperatureUuid.toUuid() == it.uuid -> AxkidChange.Temperature(30)
         else -> AxkidChange.UFO
     }
 }

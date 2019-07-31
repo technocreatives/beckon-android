@@ -12,7 +12,7 @@ import android.os.IBinder
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.states
+import com.technocreatives.beckon.extension.states
 import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.example.domain.FetchDevicesUseCase
 import io.reactivex.disposables.CompositeDisposable
@@ -40,12 +40,12 @@ class BluetoothService : Service() {
         beckon.register(this)
         startForeground()
 
-        beckon.devices()
+        beckon.connectedDevices()
                 .distinctUntilChanged()
                 .doOnNext { Timber.d("Connected devices $it") }
                 .flatMapIterable { it }
                 .doOnNext { Timber.d("All devices $it") }
-                .flatMapSingle { beckon.findDevice(it.macAddress) }
+                .flatMapSingle { beckon.findConnectedDevice(it.macAddress) }
                 .flatMap { device -> device.changes() }
                 .subscribe { Timber.d("All changes: $it") }
                 .disposedBy(bag)

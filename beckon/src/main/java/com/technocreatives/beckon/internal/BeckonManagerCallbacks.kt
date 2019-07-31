@@ -2,36 +2,36 @@ package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothDevice
 import com.technocreatives.beckon.BondState
-import com.technocreatives.beckon.ConnectionState
+import com.technocreatives.beckon.BleConnectionState
 import com.technocreatives.beckon.util.debugInfo
 import io.reactivex.subjects.BehaviorSubject
 import no.nordicsemi.android.ble.BleManagerCallbacks
 import timber.log.Timber
 
-class BeckonManagerCallbacks(
-    private val stateSubject: BehaviorSubject<ConnectionState>,
-    private val bondStateSubject: BehaviorSubject<BondState>
+internal class BeckonManagerCallbacks(
+    private val bondStateSubject: BehaviorSubject<BondState>,
+    private val stateCallback: (BleConnectionState) -> Unit
 ) : BleManagerCallbacks {
 
     override fun onDeviceDisconnected(device: BluetoothDevice) {
         Timber.d("onDeviceDisconnected $device")
-        stateSubject.onNext(ConnectionState.Disconnected)
+        stateCallback(BleConnectionState.Disconnected)
     }
 
     override fun onDeviceDisconnecting(device: BluetoothDevice) {
         Timber.d("onDeviceDisconnecting $device")
-        stateSubject.onNext(ConnectionState.Disconnecting)
+        stateCallback(BleConnectionState.Disconnecting)
     }
 
     override fun onDeviceConnected(device: BluetoothDevice) {
         Timber.d("onDeviceConnected $device")
         Timber.d("Connect to ${device.debugInfo()}")
-        stateSubject.onNext(ConnectionState.Connected)
+        stateCallback(BleConnectionState.Connected)
     }
 
     override fun onDeviceNotSupported(device: BluetoothDevice) {
         Timber.d("onDeviceNotSupported ${device.debugInfo()}")
-        stateSubject.onNext(ConnectionState.NotSupported)
+        stateCallback(BleConnectionState.NotSupported)
     }
 
     override fun onBondingFailed(device: BluetoothDevice) {
@@ -49,7 +49,7 @@ class BeckonManagerCallbacks(
 
     override fun onLinkLossOccurred(device: BluetoothDevice) {
         Timber.d("onLinkLossOccurred ${device.debugInfo()}")
-        stateSubject.onNext(ConnectionState.Disconnected)
+        stateCallback(BleConnectionState.Disconnected)
     }
 
     override fun onBonded(device: BluetoothDevice) {
@@ -59,16 +59,16 @@ class BeckonManagerCallbacks(
 
     override fun onDeviceReady(device: BluetoothDevice) {
         Timber.d("onDeviceReady ${device.debugInfo()}")
-        stateSubject.onNext(ConnectionState.Ready)
+        stateCallback(BleConnectionState.Ready)
     }
 
     override fun onError(device: BluetoothDevice, message: String, errorCode: Int) {
         Timber.d("onError Device: ${device.debugInfo()} Message: $message ErrorCode: $errorCode")
-        stateSubject.onNext(ConnectionState.Failed(message, errorCode))
+        stateCallback(BleConnectionState.Failed(message, errorCode))
     }
 
     override fun onDeviceConnecting(device: BluetoothDevice) {
         Timber.d("onDeviceConnecting ${device.debugInfo()}")
-        stateSubject.onNext(ConnectionState.Connecting)
+        stateCallback(BleConnectionState.Connecting)
     }
 }

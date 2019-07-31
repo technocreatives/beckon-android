@@ -2,16 +2,25 @@ package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattService
 import android.content.Context
+import arrow.core.Option
+import arrow.core.k
+import arrow.core.left
+import arrow.core.right
+import com.technocreatives.beckon.BeckonResult
+import com.technocreatives.beckon.BleConnectionState
+import com.technocreatives.beckon.BluetoothGattNullException
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.Characteristic
-import com.technocreatives.beckon.CharacteristicFailedException
-import com.technocreatives.beckon.CharacteristicDetail
+import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.ConnectFailedException
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.CreateBondFailedException
-import com.technocreatives.beckon.ReadDataEXception
+import com.technocreatives.beckon.DeviceDetail
+import com.technocreatives.beckon.ReadDataException
 import com.technocreatives.beckon.RemoveBondFailedException
+import com.technocreatives.beckon.SubscribeDataException
 import com.technocreatives.beckon.Type
 import com.technocreatives.beckon.WriteDataException
 import io.reactivex.Completable
@@ -26,60 +35,50 @@ import no.nordicsemi.android.ble.callback.DataReceivedCallback
 import no.nordicsemi.android.ble.callback.DataSentCallback
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
+import java.util.UUID
 
-internal class BeckonBleManager(
-    context: Context,
-    private val characteristics: List<Characteristic>
-) : BleManager<BeckonManagerCallbacks>(context) {
+internal class BeckonBleManager(context: Context) : BleManager<BeckonManagerCallbacks>(context) {
 
     private var bluetoothGatt: BluetoothGatt? = null
 
-    private val stateSubject: BehaviorSubject<ConnectionState> =
-        BehaviorSubject.createDefault(ConnectionState.NotStarted)
+    private val stateSubject: BehaviorSubject<ConnectionState> = BehaviorSubject.createDefault(ConnectionState.NotConnected)
     private val bondStateSubject: BehaviorSubject<BondState> = BehaviorSubject.createDefault(BondState.NotBonded)
     private val changeSubject = PublishSubject.create<Change>()
-    private val discoveredDevice by lazy { SingleSubject.create<List<CharacteristicDetail>>() }
+    private val devicesSubject by lazy { SingleSubject.create<BeckonResult<DeviceDetail>>() }
+
     private val bondSubject by lazy {
         PublishSubject.create<Boolean>()
     }
 
     init {
-        mCallbacks = BeckonManagerCallbacks(stateSubject, bondStateSubject)
+        val onStateChange: (BleConnectionState) -> Unit = {
+            val newState = processState(it, stateSubject.value!!)
+            stateSubject.onNext(newState)
+        }
+        mCallbacks = BeckonManagerCallbacks(bondStateSubject, onStateChange)
     }
 
-    fun connect(request: ConnectRequest): Single<List<CharacteristicDetail>> {
-        request.enqueue()
-        return discoveredDevice.hide()
+    fun connect(request: ConnectRequest): Single<BeckonResult<DeviceDetail>> {
+        request
+                .fail { device, status ->
+                    devicesSubject.onSuccess(ConnectFailedException(device.address, status).left())
+                }
+                .enqueue()
+
+        return devicesSubject.hide()
     }
 
     private val gattCallback = object : BleManagerGattCallback() {
 
         override fun initialize() {
             Timber.d("initialize")
-            bluetoothGatt?.let { gatt ->
-                val result = characteristics.flatMap { findBluetoothGattCharacteristic(gatt, it) }
-                    .map { setupCallback(it) }
-                discoveredDevice.onSuccess(result)
+            if (bluetoothGatt != null) {
+                val services = bluetoothGatt!!.services.map { it.uuid }
+                val characteristics = allCharacteristics(bluetoothGatt!!)
+                devicesSubject.onSuccess(DeviceDetail(services, characteristics).right())
+            } else {
+                devicesSubject.onSuccess(BluetoothGattNullException.left())
             }
-        }
-
-        private fun setupCallback(result: CharacteristicDetail): CharacteristicDetail {
-            if (result is CharacteristicDetail.Notify) {
-                setupNotificationCallback(result)
-            }
-            return result
-        }
-
-        private fun setupNotificationCallback(success: CharacteristicDetail.Notify): CharacteristicDetail {
-            Timber.d("setNotification callback $success")
-            val callback = DataReceivedCallback { device, data ->
-                Timber.d("DataReceivedCallback $device $data")
-                changeSubject.onNext(Change(success.characteristic, data))
-            }
-            readCharacteristic(success.gatt).with(callback).enqueue()
-            setNotificationCallback(success.gatt).with(callback)
-            enableNotifications(success.gatt).enqueue()
-            return success
         }
 
         override fun onDeviceDisconnected() {
@@ -95,77 +94,67 @@ internal class BeckonBleManager(
             return true
         }
 
-        private fun findBluetoothGattCharacteristic(
-            gatt: BluetoothGatt,
-            characteristic: Characteristic
-        ): List<CharacteristicDetail> {
+        private fun allCharacteristics(gatt: BluetoothGatt): List<CharacteristicSuccess> {
+            return gatt.services.flatMap { allCharacteristics(it) }
+        }
 
-            Timber.d("isRequiredServiceSupported $gatt $characteristic")
-
-            val service = gatt.getService(characteristic.service)
-
-            return if (service != null) {
-                Timber.d("All characteristic $service ${service.characteristics.map { it.descriptors + " " + it.uuid }}")
-
-                val bluetoothGattCharacteristic = service.getCharacteristic(characteristic.uuid)
-                if (bluetoothGattCharacteristic == null) {
-                    listOf(
-                        CharacteristicDetail.Failed(
-                            characteristic,
-                            CharacteristicFailedException("BluetoothGatt not found!")
-                        )
-                    )
-                } else {
-                    checkRequiredServiceSupported(characteristic, bluetoothGattCharacteristic)
-                }
-            } else {
-                listOf(
-                    CharacteristicDetail.Failed(
-                        characteristic,
-                        CharacteristicFailedException("Service ${characteristic.service} not found!")
-                    )
-                )
+        private fun allCharacteristics(service: BluetoothGattService): List<CharacteristicSuccess> {
+            return service.characteristics.flatMap {
+                allCharacteristics(service, it)
             }
         }
-    }
 
-    private fun checkRequiredServiceSupported(
-        characteristic: Characteristic,
-        bluetoothGattCharacteristic: BluetoothGattCharacteristic
-    ): List<CharacteristicDetail> {
-        val rxProperties = bluetoothGattCharacteristic.properties
+        fun allCharacteristics(
+            service: BluetoothGattService,
+            char: BluetoothGattCharacteristic
+        ): List<CharacteristicSuccess> {
+            return Type.values().toList().k().filterMap { findCharacteristic(service, char, it) }
+        }
 
-        return characteristic.types.map {
-            if (it == Type.NOTIFY) {
-                val notifyAbility = rxProperties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0
-                if (notifyAbility) {
-                    CharacteristicDetail.Notify(characteristic, bluetoothGattCharacteristic)
-                } else {
-                    CharacteristicDetail.Failed(
-                        characteristic,
-                        CharacteristicFailedException("This characteristic does not support notify!")
-                    )
-                }
-            } else if (it == Type.READ) {
-                val readAbility = rxProperties and BluetoothGattCharacteristic.PROPERTY_READ > 0
-                if (readAbility) {
-                    CharacteristicDetail.Read(characteristic, bluetoothGattCharacteristic)
-                } else {
-                    CharacteristicDetail.Failed(
-                        characteristic,
-                        CharacteristicFailedException("This characteristic does not support read!")
-                    )
-                }
+        private fun findCharacteristic(
+            service: BluetoothGattService,
+            char: BluetoothGattCharacteristic,
+            type: Type
+        ): Option<CharacteristicSuccess> {
+            return when (type) {
+                Type.WRITE -> writeCharacteristic(service, char)
+                Type.READ -> readCharacteristic(service, char)
+                Type.NOTIFY -> notifyCharacteristic(service, char)
+            }
+        }
+
+        private fun notifyCharacteristic(
+            service: BluetoothGattService,
+            char: BluetoothGattCharacteristic
+        ): Option<CharacteristicSuccess.Notify> {
+            return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
+                    char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
+            ) {
+                Option.just(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
             } else {
-                val writeAbility = rxProperties and BluetoothGattCharacteristic.PROPERTY_WRITE > 0
-                if (writeAbility) {
-                    CharacteristicDetail.Write(characteristic, bluetoothGattCharacteristic)
-                } else {
-                    CharacteristicDetail.Failed(
-                        characteristic,
-                        CharacteristicFailedException("This characteristic does not support write!")
-                    )
-                }
+                Option.empty()
+            }
+        }
+
+        private fun readCharacteristic(
+            service: BluetoothGattService,
+            char: BluetoothGattCharacteristic
+        ): Option<CharacteristicSuccess.Read> {
+            return if (char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
+                Option.just(CharacteristicSuccess.Read(char.uuid, service.uuid, char))
+            } else {
+                Option.empty()
+            }
+        }
+
+        private fun writeCharacteristic(
+            service: BluetoothGattService,
+            char: BluetoothGattCharacteristic
+        ): Option<CharacteristicSuccess.Write> {
+            return if (char.properties and BluetoothGattCharacteristic.PERMISSION_WRITE > 0) {
+                Option.just(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
+            } else {
+                Option.empty()
             }
         }
     }
@@ -174,9 +163,9 @@ internal class BeckonBleManager(
         bondStateSubject.onNext(BondState.CreatingBond)
         return Completable.create { emitter ->
             createBond()
-                .done { emitter.onComplete() }
-                .fail { device, status -> emitter.onError(CreateBondFailedException(device.address, status)) }
-                .enqueue()
+                    .done { emitter.onComplete() }
+                    .fail { device, status -> emitter.onError(CreateBondFailedException(device.address, status)) }
+                    .enqueue()
         }
     }
 
@@ -185,9 +174,9 @@ internal class BeckonBleManager(
 
         return Completable.create { emitter ->
             removeBond()
-                .done { emitter.onComplete() }
-                .fail { device, status -> emitter.onError(RemoveBondFailedException(device.address, status)) }
-                .enqueue()
+                    .done { emitter.onComplete() }
+                    .fail { device, status -> emitter.onError(RemoveBondFailedException(device.address, status)) }
+                    .enqueue()
         }
     }
 
@@ -211,45 +200,58 @@ internal class BeckonBleManager(
         return stateSubject.value!!
     }
 
-    fun write(data: Data, characteristic: Characteristic, gatt: BluetoothGattCharacteristic): Single<Change> {
+    fun write(data: Data, uuid: UUID, gatt: BluetoothGattCharacteristic): Single<Change> {
         return Single.create { emitter ->
             val callback = DataSentCallback { device, data ->
-                Timber.d("write DataSentCallback characteristic: $characteristic device: $device data: $data")
-                emitter.onSuccess(Change(characteristic, data))
+                Timber.d("write DataSentCallback uuid: $uuid device: $device data: $data")
+                emitter.onSuccess(Change(uuid, data))
             }
             writeCharacteristic(gatt, data)
-                .with(callback)
-                .fail { device, status ->
-                    emitter.onError(
-                        WriteDataException(
-                            device.address,
-                            status,
-                            characteristic
-                        )
-                    )
-                }
-                .enqueue()
+                    .with(callback)
+                    .fail { device, status ->
+                        emitter.onError(WriteDataException(device.address, uuid, status))
+                    }
+                    .enqueue()
         }
     }
 
-    fun read(characteristic: Characteristic, gatt: BluetoothGattCharacteristic): Single<Change> {
+    fun read(uuid: UUID, gatt: BluetoothGattCharacteristic): Single<Change> {
         return Single.create { emitter ->
             val callback = DataReceivedCallback { device, data ->
-                Timber.d("read DataReceivedCallback characteristic: $characteristic device: $device data: $data")
-                emitter.onSuccess(Change(characteristic, data))
+                Timber.d("read DataReceivedCallback uuid: $uuid device: $device data: $data")
+                emitter.onSuccess(Change(uuid, data))
             }
             readCharacteristic(gatt)
-                .with(callback)
-                .fail { device, status ->
-                    emitter.onError(
-                        ReadDataEXception(
-                            device.address,
-                            status,
-                            characteristic
-                        )
-                    )
-                }
-                .enqueue()
+                    .with(callback)
+                    .fail { device, status ->
+                        emitter.onError(ReadDataException(device.address, uuid, status))
+                    }
+                    .enqueue()
+        }
+    }
+
+    fun subscribe(notify: CharacteristicSuccess.Notify): Completable {
+        return Completable.create { emitter ->
+            Timber.d("setNotification callback $notify")
+            val callback = DataReceivedCallback { device, data ->
+                Timber.d("DataReceivedCallback $device $data")
+                changeSubject.onNext(Change(notify.id, data))
+            }
+            readCharacteristic(notify.gatt).with(callback).enqueue()
+            setNotificationCallback(notify.gatt).with(callback)
+            enableNotifications(notify.gatt)
+                    .fail { device, status -> emitter.onError(SubscribeDataException(device.address, notify.id, status)) }
+                    .done { emitter.onComplete() }
+                    .enqueue()
+        }
+    }
+
+    fun unsubscribe(notify: CharacteristicSuccess.Notify): Completable {
+        return Completable.create { emitter ->
+            disableNotifications(notify.gatt)
+                    .fail { device, status -> emitter.onError(SubscribeDataException(device.address, notify.id, status)) }
+                    .done { emitter.onComplete() }
+                    .enqueue()
         }
     }
 
@@ -259,5 +261,14 @@ internal class BeckonBleManager(
 
     override fun toString(): String {
         return "Connection state: ${stateSubject.value}, bond State: ${bondStateSubject.value}"
+    }
+
+    private fun processState(new: BleConnectionState, current: ConnectionState): ConnectionState {
+        return when (new) {
+            BleConnectionState.Disconnected, BleConnectionState.NotStarted, BleConnectionState.NotSupported, is BleConnectionState.Failed -> ConnectionState.NotConnected
+            BleConnectionState.Disconnecting -> ConnectionState.Disconnecting
+            BleConnectionState.Connecting -> ConnectionState.Connecting
+            BleConnectionState.Connected, BleConnectionState.Ready -> ConnectionState.Connected
+        }
     }
 }

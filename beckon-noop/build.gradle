@@ -63,7 +63,7 @@ dependencies {
 
     // Arrows
     implementation "io.arrow-kt:arrow-core-data:$arrow_version"
-    implementation "io.arrow-kt:arrow-core-extensions:$arrow_version"
+    implementation "io.arrow-kt:arrow-syntax:$arrow_version"
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

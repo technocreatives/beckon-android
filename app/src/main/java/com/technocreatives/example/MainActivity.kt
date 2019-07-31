@@ -4,14 +4,18 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.technocreatives.beckon.Characteristic
+import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.DeviceMetadata
+import com.technocreatives.beckon.Requirement
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.states
-import com.technocreatives.example.common.extension.disposedBy
+import com.technocreatives.beckon.Type
+import com.technocreatives.beckon.extension.deviceStates
+import com.technocreatives.example.common.extension.toUuid
 import com.technocreatives.example.common.view.init
 import com.technocreatives.example.common.view.verticalLayoutManager
-import com.technocreatives.example.domain.ScanAndConnectDeviceUseCase
+import com.technocreatives.example.domain.ScanDeviceUseCase
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.activity_test.*
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
@@ -24,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     private val beckon by lazy { App[this].beckonClient() }
 
-    private val scanDeviceUseCase by lazy { ScanAndConnectDeviceUseCase(beckon) }
+    private val scanDeviceUseCase by lazy { ScanDeviceUseCase(beckon) }
 
     private val connectedAdapter by lazy {
         DeviceAdapter(layoutInflater) {
@@ -36,27 +40,30 @@ class MainActivity : AppCompatActivity() {
     private val discoveredAdapter by lazy {
         ScanResultAdapter(layoutInflater) {
             Timber.d("Connect to ${it.macAddress}")
-            beckon.connect(it, characteristics)
-                    .subscribe { device ->
-                        update(device)
-                        when (device.success()) {
-                            true -> {
-                                Timber.d("success $device")
-                                beckon.findDevice(device.macAddress)
-                                        .flatMapObservable { it.changes() }
-                                        .subscribe { change ->
-                                            Timber.d("Device state changes $change")
-                                        }
 
-                                val defaultState = AxkidState(SeatedState.Unseated, 22, 1L)
-                                beckon.findDevice(device.macAddress)
-                                        .flatMapObservable { it.states(mapper, reducer, defaultState) }
-                                        .subscribe {
-                                            Timber.d("new State $it")
-                                        }
-                            }
-                            false -> Timber.d("failure $device")
-                        }
+            val requirements = listOf(
+                    Requirement(seatUuId.toUuid(), serviceUUID.toUuid(), Type.NOTIFY),
+                    Requirement(temperatureUuid.toUuid(), serviceUUID.toUuid(), Type.NOTIFY)
+            )
+            val subscribeList = listOf(
+                    Characteristic(seatUuId.toUuid(), serviceUUID.toUuid()),
+                    Characteristic(temperatureUuid.toUuid(), serviceUUID.toUuid())
+            )
+            val descriptor = Descriptor(requirements, subscribeList)
+            beckon.connect(it, descriptor)
+                    .subscribe { device ->
+                        update(device.metadata())
+                        Timber.d("success $device")
+                        device.changes()
+                                .subscribe { change ->
+                                    Timber.d("Device state changes $change")
+                                }
+
+                        val defaultState = AxkidState(SeatedState.Unseated, 22, 1L)
+                        device.deviceStates(mapper, reducer, defaultState)
+                                .subscribe {
+                                    Timber.d("new State $it")
+                                }
                     }
 
         }
@@ -96,15 +103,15 @@ class MainActivity : AppCompatActivity() {
 
         beckon.startScan(ScannerSetting(settings, filters))
 
-        scanDeviceUseCase.execute(characteristics)
-                .doOnNext { Timber.d("Found $it") }
-                .flatMap { beckon.save(it.metadata.macAddress).toObservable() }
-                .subscribe(
-                        { result -> Timber.d("Save device correctly") },
-                        { error -> Timber.e(error, "Save device error") },
-                        { Timber.d("completed") }
-                )
-                .disposedBy(bag)
+//        scanDeviceUseCase(characteristics)
+//                .doOnNext { Timber.d("Found $it") }
+//                .flatMap { beckon.save(it.metadata.macAddress).toObservable() }
+//                .subscribe(
+//                        { result -> Timber.d("Save device correctly") },
+//                        { error -> Timber.e(error, "Save device error") },
+//                        { Timber.d("completed") }
+//                )
+//                .disposedBy(bag)
     }
 
     override fun onPause() {

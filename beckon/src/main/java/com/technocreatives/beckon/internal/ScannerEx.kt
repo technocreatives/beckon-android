@@ -1,7 +1,6 @@
 package com.technocreatives.beckon.internal
 
 import android.os.ParcelUuid
-import com.technocreatives.beckon.BeckonScanResult
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScanFailedException
 import io.reactivex.Observable
@@ -13,9 +12,9 @@ import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import timber.log.Timber
 import java.util.UUID
 
-internal fun BluetoothLeScannerCompat.scan(setting: ScanSettings, filters: List<DeviceFilter>): Observable<BeckonScanResult> {
+internal fun BluetoothLeScannerCompat.startScan(setting: ScanSettings, filters: List<DeviceFilter>): Observable<com.technocreatives.beckon.ScanResult> {
 
-    return Observable.create<BeckonScanResult> { observer ->
+    return Observable.create { observer ->
         val callback: ScanCallback = object : ScanCallback() {
             override fun onScanFailed(errorCode: Int) {
                 Timber.d("onScanFailed $errorCode")
@@ -24,13 +23,13 @@ internal fun BluetoothLeScannerCompat.scan(setting: ScanSettings, filters: List<
 
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 Timber.d("onScanResult $callbackType $result")
-                observer.onNext(BeckonScanResult(result.device, result.rssi))
+                observer.onNext(com.technocreatives.beckon.ScanResult(result.device, result.rssi))
             }
 
             override fun onBatchScanResults(results: MutableList<ScanResult>) {
                 Timber.d("onBatchScanResults $results")
                 results.forEach { result ->
-                    observer.onNext(BeckonScanResult(result.device, result.rssi))
+                    observer.onNext(com.technocreatives.beckon.ScanResult(result.device, result.rssi))
                 }
             }
         }
@@ -46,9 +45,9 @@ internal fun BluetoothLeScannerCompat.scan(setting: ScanSettings, filters: List<
     }
 }
 
-internal fun BluetoothLeScannerCompat.scanList(setting: ScanSettings, filters: List<DeviceFilter>): Observable<List<BeckonScanResult>> {
+internal fun BluetoothLeScannerCompat.scanList(setting: ScanSettings, filters: List<DeviceFilter>): Observable<List<com.technocreatives.beckon.ScanResult>> {
     // need to filter connected devices or saved devices
-    return this.scan(setting, filters)
+    return this.startScan(setting, filters)
             .doOnNext { Timber.d("New Device $it") }
             .scan(emptyList(),
                     { t1, t2 ->

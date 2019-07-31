@@ -1,24 +1,32 @@
 package com.technocreatives.beckon
 
 import android.content.Context
+import com.technocreatives.beckon.data.DeviceRepositoryImpl
 import com.technocreatives.beckon.internal.BeckonClientImpl
-import com.technocreatives.beckon.internal.BluetoothState
+import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
+import com.technocreatives.beckon.internal.ScannerImpl
+import com.technocreatives.beckon.redux.createBeckonStore
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import no.nordicsemi.android.ble.data.Data
-import java.util.UUID
 
 interface BeckonClient {
 
     companion object {
         // todo using by lazy
+
         private var beckonClient: BeckonClient? = null
 
         // return a singleton instance of client
         fun create(context: Context): BeckonClient {
+            val beckonStore = createBeckonStore()
+            val deviceRepository = DeviceRepositoryImpl(context)
+            val receiver = BluetoothAdapterReceiver(beckonStore)
+            val scanner = ScannerImpl()
+
             if (beckonClient == null) {
-                beckonClient = BeckonClientImpl(context)
+                beckonClient = BeckonClientImpl(context, beckonStore, deviceRepository, receiver, scanner)
             }
             return beckonClient!!
         }
@@ -26,24 +34,25 @@ interface BeckonClient {
 
     /*===========================Scanning and connecting==========================*/
 
-    fun startScan(setting: ScannerSetting)
+    /**
+     * return stream of @ScanResult
+     * this may emit exception is something go wrong
+     */
+
+    fun startScan(setting: ScannerSetting): Observable<ScanResult>
 
     fun stopScan()
 
-    /**
-     * return stream of BeckonScanResult
-     * it should be a stream that never complete
-     * but it only may emit item only after startScan is called and before stopScan is called
-     */
-    fun scan(): Observable<BeckonScanResult>
-
     fun disconnectAllConnectedButNotSavedDevices(): Completable
-    fun disconnectAllExcept(addresses: List<String>)
 
+    /*
+    * Connect to a scanned device and then verify if all characteristics work
+    * Return @BeckonDevice or ConnectFailedException when it fails
+    * */
     fun connect(
-        result: BeckonScanResult,
-        characteristics: List<Characteristic>
-    ): Single<DeviceMetadata>
+        result: ScanResult,
+        descriptor: Descriptor
+    ): Single<BeckonDevice>
 
     fun disconnect(macAddress: String): Completable
 
@@ -66,21 +75,24 @@ interface BeckonClient {
     fun remove(macAddress: String): Single<String>
 
     // find a connected device
-    fun findDevice(macAddress: MacAddress): Single<BeckonDevice>
-
-    fun devices(): Observable<List<DeviceMetadata>>
-    fun savedDevices(): Observable<List<DeviceMetadata>>
-    fun currentDevices(): List<DeviceMetadata>
+    fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDevice>
     fun connectedDevices(): Observable<List<DeviceMetadata>>
 
+    fun findSavedDevice(macAddress: MacAddress): Single<WritableDeviceMetadata>
+    fun savedDevices(): Observable<List<WritableDeviceMetadata>>
+
+    // fun changes(macAddress: MacAddress): Observable<Change>
+
+    // hook up functions
     fun register(context: Context)
+
     fun unregister(context: Context)
 
+    // utilities
     fun bluetoothState(): Observable<BluetoothState>
 
     /*===========================Work with devices==========================*/
-
-    fun write(macAddress: MacAddress, characteristic: CharacteristicDetail.Write, data: Data): Single<Change>
-    fun write(macAddress: MacAddress, characteristicUuid: UUID, data: Data): Single<Change>
-    fun read(macAddress: MacAddress, characteristic: CharacteristicDetail.Read): Single<Change>
+    fun write(macAddress: MacAddress, characteristic: CharacteristicSuccess.Write, data: Data): Single<Change>
+    fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Single<Change>
+    // todo add subscribe function
 }

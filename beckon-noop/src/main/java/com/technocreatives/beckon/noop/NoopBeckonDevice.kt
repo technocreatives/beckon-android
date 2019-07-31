@@ -3,16 +3,38 @@ package com.technocreatives.beckon.noop
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicDetail
+import com.technocreatives.beckon.CharacteristicSuccess
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.DeviceMetadata
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import no.nordicsemi.android.ble.data.Data
-import java.util.UUID
 
 class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
+    override fun connectionStates(): Observable<ConnectionState> {
+        return Observable.empty()
+    }
+
+    override fun currentState(): ConnectionState {
+        return ConnectionState.NotConnected
+    }
+
+    override fun subscribe(characteristic: CharacteristicSuccess.Notify): Completable {
+        return Completable.never()
+    }
+
+    override fun subscribe(list: List<CharacteristicSuccess.Notify>): Completable {
+        return Completable.never()
+    }
+
+    override fun unsubscribe(characteristic: CharacteristicSuccess.Notify): Completable {
+        return Completable.never()
+    }
+
+    override fun unsubscribe(characteristic: List<CharacteristicSuccess.Notify>): Completable {
+        return Completable.never()
+    }
 
     override fun createBond(): Completable {
         return Completable.never()
@@ -22,20 +44,8 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return Completable.never()
     }
 
-    override fun read(characteristic: CharacteristicDetail.Read): Single<Change> {
+    override fun read(characteristic: CharacteristicSuccess.Read): Single<Change> {
         return Single.never()
-    }
-
-    override fun read(characteristicUUID: UUID): Single<Change> {
-        return Single.never()
-    }
-
-    override fun write(data: Data, characteristicUUID: UUID): Single<Change> {
-        return Single.never()
-    }
-
-    override fun connectionStates(): Observable<ConnectionState> {
-        return Observable.never()
     }
 
     override fun bondStates(): Observable<BondState> {
@@ -46,10 +56,6 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return Observable.never()
     }
 
-    override fun currentState(): ConnectionState {
-        return ConnectionState.Connected
-    }
-
     override fun disconnect(): Completable {
         return Completable.never()
     }
@@ -58,7 +64,7 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return metadata
     }
 
-    override fun write(data: Data, characteristic: CharacteristicDetail.Write): Single<Change> {
+    override fun write(data: Data, characteristic: CharacteristicSuccess.Write): Single<Change> {
         return Single.never()
     }
 }

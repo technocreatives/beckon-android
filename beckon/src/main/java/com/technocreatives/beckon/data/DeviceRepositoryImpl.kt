@@ -2,10 +2,13 @@ package com.technocreatives.beckon.data
 
 import android.content.Context
 import androidx.core.content.edit
+import arrow.core.Option
+import arrow.core.toOption
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.Types
+import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.WritableDeviceMetadata
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -70,6 +73,11 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         } else {
             Single.just(currentDevices)
         }
+    }
+
+    override fun findDevice(macAddress: MacAddress): Single<Option<WritableDeviceMetadata>> {
+        val currentDevices = currentDevices()
+        return Single.just(currentDevices.find { it.macAddress == macAddress }.toOption())
     }
 
     override fun saveDevices(devices: List<WritableDeviceMetadata>): Single<List<WritableDeviceMetadata>> {

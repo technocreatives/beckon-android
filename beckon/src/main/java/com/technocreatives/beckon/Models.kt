@@ -18,7 +18,11 @@ data class ScannerSetting(
     val filters: List<DeviceFilter>
 )
 
-data class BeckonScanResult(internal val device: BluetoothDevice, val rssi: Int) {
+data class Requirement(val uuid: UUID, val service: UUID, val type: Type) // mandatory characteristic
+
+data class Descriptor(val requirements: List<Requirement>, val subscribes: List<Characteristic>)
+
+data class ScanResult(internal val device: BluetoothDevice, val rssi: Int) {
     val macAddress: String = device.address
     val name: String? = device.name
 
@@ -41,16 +45,22 @@ data class BeckonScanResult(internal val device: BluetoothDevice, val rssi: Int)
     }
 }
 
-// This should be simpler
+internal sealed class BleConnectionState {
+    object NotStarted : BleConnectionState()
+    object Disconnecting : BleConnectionState()
+    object Disconnected : BleConnectionState()
+    object Connected : BleConnectionState()
+    object NotSupported : BleConnectionState()
+    object Ready : BleConnectionState()
+    object Connecting : BleConnectionState()
+    class Failed(val message: String, val errorCode: Int) : BleConnectionState()
+}
+
 sealed class ConnectionState {
-    object NotStarted : ConnectionState()
+    object NotConnected : ConnectionState()
     object Disconnecting : ConnectionState()
-    object Disconnected : ConnectionState()
     object Connected : ConnectionState()
-    object NotSupported : ConnectionState()
-    object Ready : ConnectionState()
     object Connecting : ConnectionState()
-    class Failed(val message: String, val errorCode: Int) : ConnectionState()
 }
 
 // should be parallel with BluetoothDevice.bondState()
@@ -62,12 +72,26 @@ sealed class BondState {
     object BondingFailed : BondState()
 }
 
-data class Characteristic(val uuid: UUID, val service: UUID, val types: List<Type>, val required: Boolean)
+data class Characteristic(val uuid: UUID, val service: UUID) {
+    fun toRequirement(type: Type): Requirement {
+        return Requirement(uuid, service, type)
+    }
+}
 
-data class Change(val characteristic: Characteristic, val data: Data)
+data class Change(val uuid: UUID, val data: Data)
+
 enum class Type {
     WRITE,
     NOTIFY,
     READ
 }
+
 typealias CharacteristicMapper<T> = (Change) -> T
+
+enum class BluetoothState {
+    UNKNOWN,
+    TURNING_ON,
+    TURNING_OFF,
+    ON,
+    OFF;
+}

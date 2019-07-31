@@ -5,10 +5,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.redux.Action
 import com.technocreatives.beckon.redux.Dispatcher
 
-internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : BroadcastReceiver() {
+internal interface Receiver {
+    fun register(context: Context)
+    fun unregister(context: Context)
+}
+
+internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : BroadcastReceiver(), Receiver {
 
     override fun onReceive(context: Context?, intent: Intent) {
         if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
@@ -17,7 +23,7 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : Br
         }
     }
 
-    fun register(context: Context) {
+    override fun register(context: Context) {
         context.registerReceiver(this,
                 IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
 
@@ -25,17 +31,9 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : Br
         dispatcher.dispatch(Action.ChangeBluetoothState(BluetoothAdapter.getDefaultAdapter().state.toBluetoothState()))
     }
 
-    fun unregister(context: Context) {
+    override fun unregister(context: Context) {
         context.unregisterReceiver(this)
     }
-}
-
-enum class BluetoothState {
-    UNKNOWN,
-    TURNING_ON,
-    TURNING_OFF,
-    ON,
-    OFF;
 }
 
 private fun Int.toBluetoothState(): BluetoothState {
