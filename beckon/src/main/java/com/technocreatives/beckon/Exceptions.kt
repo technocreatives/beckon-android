@@ -3,29 +3,29 @@ package com.technocreatives.beckon
 import arrow.core.Either
 import java.util.UUID
 
-class ScanFailedException(val errorCode: Int) : Exception()
-class StopScannerFailedException(val errorCode: Int) : Exception()
+class ScanFailedException(val errorCode: Int) : Throwable()
+class StopScannerFailedException(val errorCode: Int) : Throwable()
 
-class CharacteristicFailedException(message: String) : Exception(message)
-object BluetoothGattNullException : Exception()
-class RequirementFailedException(val fails: List<CharacteristicFailed>) : Exception()
-object CharacteristicNotFoundException : Exception()
-object NotAWriteCharacteristicException : Exception()
-object NotAReadCharacteristicException : Exception()
-object NotANotifyCharacteristicException : Exception()
-class ConnectFailedException(val macAddress: String, status: Int) : Exception()
+class CharacteristicFailedException(message: String) : Throwable(message)
+object BluetoothGattNullException : Throwable()
+class RequirementFailedException(val fails: List<CharacteristicFailed>) : Throwable()
+object CharacteristicNotFoundException : Throwable()
+object NotAWriteCharacteristicException : Throwable()
+object NotAReadCharacteristicException : Throwable()
+object NotANotifyCharacteristicException : Throwable()
+class ConnectFailedException(val macAddress: String, status: Int) : Throwable()
 
-class DeviceNotFoundException(val macAddress: String) : Exception()
-class BluetoothDeviceNotFoundException(val macAddress: String) : Exception()
+class DeviceNotFoundException(val macAddress: String) : Throwable()
+class BluetoothDeviceNotFoundException(val macAddress: String) : Throwable()
 
-class CreateBondFailedException(val macAddress: String, status: Int) : Exception()
-class RemoveBondFailedException(val macAddress: String, status: Int) : Exception()
+class CreateBondFailedException(val macAddress: String, status: Int) : Throwable()
+class RemoveBondFailedException(val macAddress: String, status: Int) : Throwable()
 
-class DisconnectDeviceFailedException(val macAddress: String, status: Int) : Exception()
+class DisconnectDeviceFailedException(val macAddress: String, status: Int) : Throwable()
 
-class WriteDataException(val macAddress: String, uuid: UUID, status: Int) : Exception()
-class ReadDataException(val macAddress: String, uuid: UUID, status: Int) : Exception()
-class SubscribeDataException(val macAddress: String, uuid: UUID, status: Int) : Exception()
+class WriteDataException(val macAddress: String, uuid: UUID, status: Int) : Throwable()
+class ReadDataException(val macAddress: String, uuid: UUID, status: Int) : Throwable()
+class SubscribeDataException(val macAddress: String, uuid: UUID, status: Int) : Throwable()
 
 sealed class BeckonError {
     data class DeviceNotFoundException(val macAddress: String) : BeckonError()

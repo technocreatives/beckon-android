@@ -95,6 +95,7 @@ dependencies {
     // Arrows
     implementation "io.arrow-kt:arrow-core:$arrow_version"
     implementation "io.arrow-kt:arrow-syntax:$arrow_version"
+    implementation "com.github.lenguyenthanh:RxArrow:$rxarrow"
 
     // spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"

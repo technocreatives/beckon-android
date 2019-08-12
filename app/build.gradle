@@ -98,6 +98,7 @@ dependencies {
     implementation "io.arrow-kt:arrow-core:$arrow_version"
     implementation "io.arrow-kt:arrow-syntax:$arrow_version"
 
+
     // Util
     implementation "com.jakewharton.timber:timber:$timber"
     implementation "com.inkapplications:android-preferences:$sharedPreferences"

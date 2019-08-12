@@ -14,16 +14,14 @@ import io.reactivex.Observable
 import io.reactivex.functions.BiFunction
 import java.util.UUID
 
-sealed class BeckonDeviceState
-
 data class BeckonState<State>(
     val metadata: DeviceMetadata,
     val connectionState: ConnectionState,
     val state: State
-) : BeckonDeviceState()
+)
 
-data class NoBeckonDeviceFound(val metadata: WritableDeviceMetadata) : BeckonDeviceState()
-data class NoSavedDeviceFound(val address: MacAddress) : BeckonDeviceState()
+data class NoBeckonDeviceFoundException(val metadata: WritableDeviceMetadata) : Throwable()
+data class NoSavedDeviceFoundException(val address: MacAddress) : Throwable()
 
 fun <Change> BeckonDevice.changes(characteristicUUID: UUID, mapper: CharacteristicMapper<Change>): Observable<Change> {
     return changes().filter { it.uuid == characteristicUUID }
