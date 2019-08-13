@@ -6,7 +6,7 @@ import arrow.core.right
 import com.lenguyenthanh.rxarrow.concatMapSingleE
 import com.lenguyenthanh.rxarrow.filterE
 import com.lenguyenthanh.rxarrow.flatMapE
-import com.lenguyenthanh.rxarrow.flatMapEE
+import com.lenguyenthanh.rxarrow.flatMapEither
 import com.lenguyenthanh.rxarrow.flatMapObservableE
 import com.lenguyenthanh.rxarrow.flatMapSingleE
 import com.technocreatives.beckon.BeckonClient
@@ -23,6 +23,11 @@ import io.reactivex.Single
 import io.reactivex.functions.BiFunction
 import timber.log.Timber
 
+sealed class BeckonError {
+    class NoSaveDevice() : BeckonError()
+    class NoConectedDevice() : BeckonError()
+}
+
 fun <Change, State> BeckonClient.deviceStates(
     address: MacAddress,
     mapper: CharacteristicMapper<Change>,
@@ -30,7 +35,7 @@ fun <Change, State> BeckonClient.deviceStates(
     defaultState: State
 ): Observable<Either<Throwable, BeckonState<State>>> {
     return findSavedDeviceE(address)
-        .flatMapEE { findConnectedDeviceE(it) }
+        .flatMapEither { findConnectedDeviceE(it) }
         .flatMapObservableE { it.deviceStates(mapper, reducer, defaultState) }
 }
 

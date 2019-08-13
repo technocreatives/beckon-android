@@ -63,7 +63,7 @@ internal fun checkNotify(
     services: List<UUID>,
     characteristics: List<CharacteristicSuccess>
 ): Either<CharacteristicFailed, CharacteristicSuccess.Notify> {
-    return checkRequirement(characteristic.toRequirement(Type.NOTIFY), services, characteristics)
+    return checkRequirement(characteristic.toRequirement(Feature.NOTIFY), services, characteristics)
         .map { it as CharacteristicSuccess.Notify }
 }
 
@@ -72,14 +72,14 @@ internal fun checkNotifyList(
     services: List<UUID>,
     details: List<CharacteristicSuccess>
 ): Either<RequirementFailedException, List<CharacteristicSuccess.Notify>> {
-    return checkRequirements(characteristics.map { it.toRequirement(Type.NOTIFY) }, services, details)
+    return checkRequirements(characteristics.map { it.toRequirement(Feature.NOTIFY) }, services, details)
         .map { it.map { it as CharacteristicSuccess.Notify } }
 }
 
 internal fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
     return find { it.toRequirement() == requirement }
         .toOption()
-        .toEither { requirement.toTypeFailed() }
+        .toEither { requirement.toFailed() }
 }
 
 sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: BluetoothGattCharacteristic) {
@@ -87,11 +87,11 @@ sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: Bl
     class Read(id: UUID, service: UUID, gatt: BluetoothGattCharacteristic) : CharacteristicSuccess(id, service, gatt)
     class Write(id: UUID, service: UUID, gatt: BluetoothGattCharacteristic) : CharacteristicSuccess(id, service, gatt)
 
-    fun getType(): Type {
+    fun getType(): Feature {
         return when (this) {
-            is Notify -> Type.NOTIFY
-            is Read -> Type.READ
-            is Write -> Type.WRITE
+            is Notify -> Feature.NOTIFY
+            is Read -> Feature.READ
+            is Write -> Feature.WRITE
         }
     }
 
@@ -108,11 +108,11 @@ sealed class CharacteristicFailed(val requirement: Requirement) {
     class UUIDNotFound(requirement: Requirement) : CharacteristicFailed(requirement)
 }
 
-fun Requirement.toTypeFailed(): CharacteristicFailed {
-    return when (type) {
-        Type.READ -> CharacteristicFailed.NotSupportRead(this)
-        Type.NOTIFY -> CharacteristicFailed.NotSupportNotify(this)
-        Type.WRITE -> CharacteristicFailed.NotSupportWrite(this)
+fun Requirement.toFailed(): CharacteristicFailed {
+    return when (feature) {
+        Feature.READ -> CharacteristicFailed.NotSupportRead(this)
+        Feature.NOTIFY -> CharacteristicFailed.NotSupportNotify(this)
+        Feature.WRITE -> CharacteristicFailed.NotSupportWrite(this)
     }
 }
 

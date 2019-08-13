@@ -18,7 +18,7 @@ data class ScannerSetting(
     val filters: List<DeviceFilter>
 )
 
-data class Requirement(val uuid: UUID, val service: UUID, val type: Type) // mandatory characteristic
+data class Requirement(val uuid: UUID, val service: UUID, val feature: Feature) // mandatory characteristic
 
 data class Descriptor(val requirements: List<Requirement>, val subscribes: List<Characteristic>)
 
@@ -73,14 +73,14 @@ sealed class BondState {
 }
 
 data class Characteristic(val uuid: UUID, val service: UUID) {
-    fun toRequirement(type: Type): Requirement {
-        return Requirement(uuid, service, type)
+    fun toRequirement(feature: Feature): Requirement {
+        return Requirement(uuid, service, feature)
     }
 }
 
 data class Change(val uuid: UUID, val data: Data)
 
-enum class Type {
+enum class Feature {
     WRITE,
     NOTIFY,
     READ

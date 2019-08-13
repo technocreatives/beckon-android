@@ -21,7 +21,7 @@ import com.technocreatives.beckon.DeviceDetail
 import com.technocreatives.beckon.ReadDataException
 import com.technocreatives.beckon.RemoveBondFailedException
 import com.technocreatives.beckon.SubscribeDataException
-import com.technocreatives.beckon.Type
+import com.technocreatives.beckon.Feature
 import com.technocreatives.beckon.WriteDataException
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -108,18 +108,18 @@ internal class BeckonBleManager(context: Context) : BleManager<BeckonManagerCall
             service: BluetoothGattService,
             char: BluetoothGattCharacteristic
         ): List<CharacteristicSuccess> {
-            return Type.values().toList().k().filterMap { findCharacteristic(service, char, it) }
+            return Feature.values().toList().k().filterMap { findCharacteristic(service, char, it) }
         }
 
         private fun findCharacteristic(
             service: BluetoothGattService,
             char: BluetoothGattCharacteristic,
-            type: Type
+            type: Feature
         ): Option<CharacteristicSuccess> {
             return when (type) {
-                Type.WRITE -> writeCharacteristic(service, char)
-                Type.READ -> readCharacteristic(service, char)
-                Type.NOTIFY -> notifyCharacteristic(service, char)
+                Feature.WRITE -> writeCharacteristic(service, char)
+                Feature.READ -> readCharacteristic(service, char)
+                Feature.NOTIFY -> notifyCharacteristic(service, char)
             }
         }
 

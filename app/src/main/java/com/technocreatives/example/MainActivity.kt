@@ -10,7 +10,7 @@ import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.DeviceMetadata
 import com.technocreatives.beckon.Requirement
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.Type
+import com.technocreatives.beckon.Feature
 import com.technocreatives.beckon.extension.deviceStates
 import com.technocreatives.example.common.extension.toUuid
 import com.technocreatives.example.common.view.init
@@ -42,8 +42,8 @@ class MainActivity : AppCompatActivity() {
             Timber.d("Connect to ${it.macAddress}")
 
             val requirements = listOf(
-                    Requirement(seatUuId.toUuid(), serviceUUID.toUuid(), Type.NOTIFY),
-                    Requirement(temperatureUuid.toUuid(), serviceUUID.toUuid(), Type.NOTIFY)
+                    Requirement(seatUuId.toUuid(), serviceUUID.toUuid(), Feature.NOTIFY),
+                    Requirement(temperatureUuid.toUuid(), serviceUUID.toUuid(), Feature.NOTIFY)
             )
             val subscribeList = listOf(
                     Characteristic(seatUuId.toUuid(), serviceUUID.toUuid()),
