@@ -16,7 +16,7 @@ interface BeckonDevice {
 
     fun disconnect(): Completable
 
-    fun metadata(): DeviceMetadata
+    fun metadata(): Metadata
 
     fun createBond(): Completable
     fun removeBond(): Completable

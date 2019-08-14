@@ -1,6 +1,6 @@
 package com.technocreatives.beckon.internal
 
-import com.technocreatives.beckon.ScanFailedException
+import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
 import io.reactivex.Observable
@@ -29,7 +29,7 @@ internal class ScannerImpl : Scanner {
         callback = object : ScanCallback() {
             override fun onScanFailed(errorCode: Int) {
                 Timber.d("onScanFailed $errorCode")
-                scanSubject?.onError(ScanFailedException(errorCode))
+                scanSubject?.onError(ScanError.ScanFailed(errorCode).toException())
             }
 
             override fun onScanResult(callbackType: Int, result: BleScanResult) {

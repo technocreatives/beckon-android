@@ -1,7 +1,7 @@
 package com.technocreatives.example
 
-import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
+import com.technocreatives.beckon.CharacteristicMapper
 import com.technocreatives.example.common.extension.toUuid
 import io.reactivex.functions.BiFunction
 import java.util.Date
@@ -19,9 +19,6 @@ val characteristics =// emptyList<Characteristic>()
                 Characteristic(randomUUID.toUuid(), serviceUUID.toUuid())
         )
 
-typealias CharacteristicMapper<T> = (Change) -> T
-
-//
 sealed class AxkidChange {
     class Seated(val isSeated: Boolean) : AxkidChange()
     class Temperature(val value: Int) : AxkidChange()

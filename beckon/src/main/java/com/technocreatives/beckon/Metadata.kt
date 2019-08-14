@@ -8,7 +8,7 @@ import com.technocreatives.beckon.util.parallelValidate
 import com.technocreatives.beckon.util.toValidated
 import java.util.UUID
 
-data class DeviceMetadata(
+data class Metadata(
     val macAddress: MacAddress,
     val name: String, // BluetoothDevice name
     val services: List<UUID>,
@@ -16,11 +16,11 @@ data class DeviceMetadata(
     val descriptor: Descriptor
 ) {
 
-    fun writableDeviceMetadata(): WritableDeviceMetadata {
-        return WritableDeviceMetadata(
-            macAddress,
-            name,
-            descriptor
+    fun savedMetadata(): SavedMetadata {
+        return SavedMetadata(
+                macAddress,
+                name,
+                descriptor
         )
     }
 
@@ -50,12 +50,12 @@ internal fun checkRequirements(
     requirements: List<Requirement>,
     services: List<UUID>,
     characteristics: List<CharacteristicSuccess>
-): Either<RequirementFailedException, List<CharacteristicSuccess>> {
+): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess>> {
     return requirements
-        .map { checkRequirement(it, services, characteristics).toValidated() }
-        .parallelValidate()
-        .leftMap { RequirementFailedException(it.all) }
-        .toEither()
+            .map { checkRequirement(it, services, characteristics).toValidated() }
+            .parallelValidate()
+            .leftMap { ConnectionError.RequirementFailed(it.all) }
+            .toEither()
 }
 
 internal fun checkNotify(
@@ -63,23 +63,23 @@ internal fun checkNotify(
     services: List<UUID>,
     characteristics: List<CharacteristicSuccess>
 ): Either<CharacteristicFailed, CharacteristicSuccess.Notify> {
-    return checkRequirement(characteristic.toRequirement(Feature.NOTIFY), services, characteristics)
-        .map { it as CharacteristicSuccess.Notify }
+    return checkRequirement(characteristic.toRequirement(Property.NOTIFY), services, characteristics)
+            .map { it as CharacteristicSuccess.Notify }
 }
 
 internal fun checkNotifyList(
     characteristics: List<Characteristic>,
     services: List<UUID>,
     details: List<CharacteristicSuccess>
-): Either<RequirementFailedException, List<CharacteristicSuccess.Notify>> {
-    return checkRequirements(characteristics.map { it.toRequirement(Feature.NOTIFY) }, services, details)
-        .map { it.map { it as CharacteristicSuccess.Notify } }
+): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess.Notify>> {
+    return checkRequirements(characteristics.map { it.toRequirement(Property.NOTIFY) }, services, details)
+            .map { it.map { it as CharacteristicSuccess.Notify } }
 }
 
 internal fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
     return find { it.toRequirement() == requirement }
-        .toOption()
-        .toEither { requirement.toFailed() }
+            .toOption()
+            .toEither { requirement.toFailed() }
 }
 
 sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: BluetoothGattCharacteristic) {
@@ -87,16 +87,25 @@ sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: Bl
     class Read(id: UUID, service: UUID, gatt: BluetoothGattCharacteristic) : CharacteristicSuccess(id, service, gatt)
     class Write(id: UUID, service: UUID, gatt: BluetoothGattCharacteristic) : CharacteristicSuccess(id, service, gatt)
 
-    fun getType(): Feature {
+    private fun property(): Property {
         return when (this) {
-            is Notify -> Feature.NOTIFY
-            is Read -> Feature.READ
-            is Write -> Feature.WRITE
+            is Notify -> Property.NOTIFY
+            is Read -> Property.READ
+            is Write -> Property.WRITE
         }
     }
 
     fun toRequirement(): Requirement {
-        return Requirement(id, service, getType())
+        return Requirement(id, service, property())
+    }
+
+    override fun toString(): String {
+        val prefix = when (this) {
+            is Notify -> "CharacteristicSuccess.Notify"
+            is Read -> "CharacteristicSuccess.Read"
+            is Write -> "CharacteristicSuccess.Write"
+        }
+        return "$prefix(id=$id, service=$service, gatt=$gatt)"
     }
 }
 
@@ -109,14 +118,14 @@ sealed class CharacteristicFailed(val requirement: Requirement) {
 }
 
 fun Requirement.toFailed(): CharacteristicFailed {
-    return when (feature) {
-        Feature.READ -> CharacteristicFailed.NotSupportRead(this)
-        Feature.NOTIFY -> CharacteristicFailed.NotSupportNotify(this)
-        Feature.WRITE -> CharacteristicFailed.NotSupportWrite(this)
+    return when (property) {
+        Property.READ -> CharacteristicFailed.NotSupportRead(this)
+        Property.NOTIFY -> CharacteristicFailed.NotSupportNotify(this)
+        Property.WRITE -> CharacteristicFailed.NotSupportWrite(this)
     }
 }
 
-data class WritableDeviceMetadata(
+data class SavedMetadata(
     val macAddress: MacAddress,
     val name: String,
     val descriptor: Descriptor

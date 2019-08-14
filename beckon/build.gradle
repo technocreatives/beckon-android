@@ -10,7 +10,7 @@ android {
         minSdkVersion 22
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "0.0.1"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -59,6 +59,9 @@ android {
             }
         }
     }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 configurations {
@@ -74,8 +77,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
     // Android x
-    api 'androidx.core:core-ktx:1.2.0-alpha01'
-    api 'androidx.annotation:annotation:1.0.2'
+    api 'androidx.core:core-ktx:1.2.0-alpha03'
+    api 'androidx.annotation:annotation:1.1.0'
 
     // RxJava
     api "io.reactivex.rxjava2:rxjava:$rxJava"
@@ -91,16 +94,17 @@ dependencies {
 
     implementation "com.jakewharton.timber:timber:$timber"
     implementation "com.squareup.moshi:moshi:$moshi"
+    implementation "com.github.lenguyenthanh:simpleredux:$simpleredux"
 
     // Arrows
     implementation "io.arrow-kt:arrow-core:$arrow_version"
     implementation "io.arrow-kt:arrow-syntax:$arrow_version"
     implementation "com.github.lenguyenthanh:RxArrow:$rxarrow"
 
-    // spek
+    // Spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
-    // spek requires kotlin-reflect, omit when already in classpath
+    // Spek requires kotlin-reflect, omit when already in classpath
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     testImplementation 'org.mockito:mockito-core:2.28.2'

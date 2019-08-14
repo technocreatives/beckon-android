@@ -4,30 +4,36 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.Either
 import arrow.core.None
-import arrow.core.Option
 import arrow.core.Some
 import arrow.core.flatMap
+import arrow.core.left
+import arrow.core.right
+import arrow.core.toOption
+import com.lenguyenthanh.rxarrow.flatMapE
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.BeckonResult
+import com.technocreatives.beckon.BeckonException
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceDetail
-import com.technocreatives.beckon.DeviceMetadata
-import com.technocreatives.beckon.DeviceNotFoundException
+import com.technocreatives.beckon.BeckonDeviceError
 import com.technocreatives.beckon.MacAddress
-import com.technocreatives.beckon.RequirementFailedException
+import com.technocreatives.beckon.Metadata
+import com.technocreatives.beckon.SavedMetadata
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.WritableDeviceMetadata
 import com.technocreatives.beckon.checkRequirements
 import com.technocreatives.beckon.data.DeviceRepository
 import com.technocreatives.beckon.extension.subscribe
-import com.technocreatives.beckon.redux.Action
-import com.technocreatives.beckon.redux.Store
+import com.technocreatives.beckon.redux.BeckonAction
+import com.technocreatives.beckon.redux.BeckonStore
+import com.technocreatives.beckon.util.bluetoothManager
 import com.technocreatives.beckon.util.disposedBy
+import com.technocreatives.beckon.util.findBondedDevice
+import com.technocreatives.beckon.util.fix
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -37,7 +43,7 @@ import timber.log.Timber
 
 internal class BeckonClientImpl(
     private val context: Context,
-    private val beckonStore: Store,
+    private val beckonStore: BeckonStore,
     private val deviceRepository: DeviceRepository,
     private val bluetoothReceiver: Receiver,
     private val scanner: Scanner
@@ -82,34 +88,48 @@ internal class BeckonClientImpl(
     override fun findConnectedDevice(macAddress: String): Single<BeckonDevice> {
         Timber.d("findDevice $macAddress in ${beckonStore.currentState()}")
         return when (val device = beckonStore.currentState().findDevice(macAddress)) {
-            is None -> Single.error(DeviceNotFoundException(macAddress))
+            is None -> Single.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
             is Some -> Single.just(device.t)
         }
     }
 
-    override fun findSavedDevice(macAddress: MacAddress): Single<WritableDeviceMetadata> {
+    override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError.ConnectedDeviceNotFound, BeckonDevice>> {
+        Timber.d("findDevice ${metadata.macAddress} in ${beckonStore.currentState()}")
+        return beckonStore.states()
+            .map { it.devices }
+            .switchMap {
+                Timber.d("List Connected Devices Change $it")
+                when (val device =
+                    it.find { it.metadata().macAddress == metadata.macAddress }.toOption()) {
+                    is None -> Observable.just(BeckonDeviceError.ConnectedDeviceNotFound(metadata).left())
+                    is Some -> Observable.just(device.t.right() as Either<BeckonDeviceError.ConnectedDeviceNotFound, BeckonDevice>)
+                }
+            }
+    }
+
+    override fun findSavedDevice(macAddress: MacAddress): Single<SavedMetadata> {
         return deviceRepository.findDevice(macAddress).flatMap {
             when (it) {
-                is None -> Single.error(DeviceNotFoundException(macAddress))
+                is None -> Single.error(BeckonDeviceError.SavedDeviceNotFound(macAddress).toException())
                 is Some -> Single.just(it.t)
             }
         }
     }
 
-    override fun connectedDevices(): Observable<List<DeviceMetadata>> {
+    override fun connectedDevices(): Observable<List<Metadata>> {
         return beckonStore.states().map { it.devices.map { it.metadata() } }
     }
 
-    override fun savedDevices(): Observable<List<WritableDeviceMetadata>> {
+    override fun savedDevices(): Observable<List<SavedMetadata>> {
         return deviceRepository.devices()
     }
 
     /**
-    *  Connect to a scanned device and then verify if all characteristics work
+     *  Connect to a scanned device and then verify if all characteristics work
      *  @param ScanResult
      *  @param Descriptor
      *  @return BeckonDevice
-    */
+     */
 
     override fun connect(
         result: ScanResult,
@@ -117,32 +137,33 @@ internal class BeckonClientImpl(
     ): Single<BeckonDevice> {
         Timber.d("Connect $result")
 
-        val manager = BeckonBleManager(context)
-        val request = manager.connect(result.device)
-            .retry(3, 100)
-            .useAutoConnect(true)
+        val manager = BeckonBleManager(context, result.device)
 
-        return manager.connect(request)
+        return manager.connect()
+            .doOnSuccess { Timber.d("Connected device: $it") }
             .map { either -> either.flatMap { checkRequirements(it, descriptor, result.device) } }
             .flatMap {
                 when (it) {
                     is Either.Right -> {
                         val beckonDevice = BeckonDeviceImpl(result.device, manager, it.b)
-                        beckonStore.dispatch(Action.AddConnectedDevice(beckonDevice))
+                        beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
                         Single.just(beckonDevice)
                     }
                     is Either.Left -> {
                         // todo better way to disconnect a device if it is not fulfil the requirement.
-                        if (it.a is RequirementFailedException) {
+                        if (it.a is ConnectionError.RequirementFailed) {
                             manager.disconnect().enqueue()
                         }
-                        Single.error(it.a)
+                        Single.error(BeckonException(it.a))
                     }
                 }
-            }.flatMap { subscribe(it, descriptor) }
+            }.flatMap { subscribe(it, descriptor) } // take care of on error here
     }
 
-    private fun subscribe(beckonDevice: BeckonDevice, descriptor: Descriptor): Single<BeckonDevice> {
+    private fun subscribe(
+        beckonDevice: BeckonDevice,
+        descriptor: Descriptor
+    ): Single<BeckonDevice> {
         return if (descriptor.subscribes.isEmpty()) {
             Single.just(beckonDevice)
         } else {
@@ -154,14 +175,19 @@ internal class BeckonClientImpl(
         detail: DeviceDetail,
         descriptor: Descriptor,
         device: BluetoothDevice
-    ): BeckonResult<DeviceMetadata> {
+    ): Either<ConnectionError.RequirementFailed, Metadata> {
         return checkRequirements(descriptor.requirements, detail.services, detail.characteristics)
-            .map { DeviceMetadata(device.address, device.name, detail.services, detail.characteristics, descriptor) }
+            .map {
+                Metadata(
+                    device.address ?: "No Address", device.name
+                        ?: "No name", detail.services, detail.characteristics, descriptor
+                )
+            }
     }
 
     override fun disconnect(macAddress: String): Completable {
         return when (val device = beckonStore.currentState().findDevice(macAddress)) {
-            is None -> Completable.error(DeviceNotFoundException(macAddress))
+            is None -> Completable.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
             is Some -> device.t.disconnect()
         }
     }
@@ -169,7 +195,7 @@ internal class BeckonClientImpl(
     // error can happen
     override fun save(macAddress: String): Single<String> {
         return when (val device = beckonStore.currentState().findDevice(macAddress)) {
-            is None -> Single.error(DeviceNotFoundException(macAddress))
+            is None -> Single.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
             is Some -> createBond(device.t).andThen(saveDevice(device.t))
         }
     }
@@ -190,17 +216,18 @@ internal class BeckonClientImpl(
     }
 
     private fun saveDevice(device: BeckonDevice): Single<MacAddress> {
-        return deviceRepository.addDevice(device.metadata().writableDeviceMetadata())
+        return deviceRepository.addDevice(device.metadata().savedMetadata())
             .map { device.metadata().macAddress }
     }
 
     private fun removeSavedDevice(device: BeckonDevice): Single<MacAddress> {
-        return deviceRepository.removeDevice(device.metadata().macAddress).map { device.metadata().macAddress }
+        return deviceRepository.removeDevice(device.metadata().macAddress)
+            .map { device.metadata().macAddress }
     }
 
     override fun remove(macAddress: String): Single<MacAddress> {
         return beckonStore.currentState().findDevice(macAddress).fold({
-            Single.error(DeviceNotFoundException(macAddress))
+            Single.error(BeckonDeviceError.SavedDeviceNotFound(macAddress).toException())
         }, { device ->
             device.disconnect().andThen(removeSavedDevice(device))
         })
@@ -209,26 +236,14 @@ internal class BeckonClientImpl(
     override fun register(context: Context) {
         bluetoothReceiver.register(context)
 
-        beckonStore.states().subscribe {
-            Timber.d("State $it")
-        }.disposedBy(bag)
-
         beckonStore.states()
             .map { it.devices }
-            .doOnNext { Timber.d("All saved devices $it") }
+            .doOnNext { Timber.d("All connected devices $it") }
             .map { it.map { it.currentState() } }
             .distinctUntilChanged()
             .subscribe {
                 // process devices states
-                Timber.d("State of Beckon devices $it")
-            }.disposedBy(bag)
-
-        beckonStore.states()
-            .map { it.devices }
-            .doOnNext { Timber.d("All discovered devices $it") }
-            .distinctUntilChanged()
-            .subscribe {
-                Timber.d("State of discovered devices $it")
+                Timber.d("ConnectionSate of all BeckonDevices $it")
             }.disposedBy(bag)
 
         // do scan to check if bluetooth turn on from off state
@@ -236,35 +251,63 @@ internal class BeckonClientImpl(
             .map { it.bluetoothState }
             .distinctUntilChanged()
             .filter { it == BluetoothState.ON }
-            .switchMap { deviceRepository.devices().take(1) }
+            .map { deviceRepository.currentDevices() }
+            .subscribe { reconnectSavedDevices(it) }
+            .disposedBy(bag)
+        reconnectSavedDevices(deviceRepository.currentDevices())
+        beckonStore.states()
+            .map { it.bluetoothState }
+            .distinctUntilChanged()
+            .filter { it == BluetoothState.OFF }
             .subscribe {
-                reconnectSavedDevices(it)
+                beckonStore.dispatch(BeckonAction.RemoveAllConnectedDevices)
             }.disposedBy(bag)
     }
 
-    private fun reconnectSavedDevices(devices: List<WritableDeviceMetadata>) {
+    private fun reconnectSavedDevices(devices: List<SavedMetadata>) {
+        Timber.d("reconnectSavedDevices")
         devices.forEach {
-            connect(it)
+            connect(it).subscribe(
+                { Timber.d("Reconnect Success $it") },
+                { Timber.e(it, "Reconnect Failed") }
+            )
         }
     }
 
     // to do reimplement when we have a bondable device to test
-    private fun connect(metadata: WritableDeviceMetadata): Observable<DeviceMetadata> {
-        return Observable.empty()
-//        return when (val device = findBeckonDevice(metadata)) {
-//            is None -> Observable.error(BluetoothDeviceNotFoundException(metadata.macAddress))
-//            is Some -> {
-//                beckonStore.dispatch(AddSavedDevice(device.t))
-//                device.t.connect()
-//            }
-//        }
+    override fun connect(metadata: SavedMetadata): Single<BeckonDevice> {
+        return when (val device =
+            context.bluetoothManager().findBondedDevice(metadata.macAddress)) {
+            is Some -> tryToReconnect(device.t, metadata.descriptor).fix()
+            is None -> Single.error(BeckonDeviceError.BondedDeviceNotFound(metadata).toException())
+        }
     }
 
-    // to do reimplement when we have a bondable device to test
-    private fun findBeckonDevice(metadata: WritableDeviceMetadata): Option<BeckonDevice> {
-        return Option.empty()
-//        return bluetoothManager.findDevice(metadata.macAddress)
-//                .map { BeckonDeviceImpl(context, metadata, it) }
+    private fun tryToReconnect(
+        device: BluetoothDevice,
+        descriptor: Descriptor
+    ): Single<Either<ConnectionError, BeckonDevice>> {
+        Timber.d("tryToReconnect $device")
+        val manager = BeckonBleManager(context, device)
+        return manager.connect()
+            .doOnSuccess { Timber.d("Connected device: $it") }
+            .map { either -> either.flatMap { checkRequirements(it, descriptor, device) } }
+            .flatMap {
+                when (it) {
+                    is Either.Right -> {
+                        val beckonDevice = BeckonDeviceImpl(device, manager, it.b)
+                        beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
+                        Single.just(beckonDevice.right())
+                    }
+                    is Either.Left -> {
+                        // todo better way to disconnect a device if it is not fulfil the requirement.
+                        if (it.a is ConnectionError.RequirementFailed) {
+                            manager.disconnect().enqueue()
+                        }
+                        Single.just(it)
+                    }
+                }
+            }.flatMapE { subscribe(it, descriptor) }
     }
 
     override fun unregister(context: Context) {
@@ -285,7 +328,10 @@ internal class BeckonClientImpl(
         return findConnectedDevice(macAddress).flatMap { it.write(data, characteristic) }
     }
 
-    override fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Single<Change> {
+    override fun read(
+        macAddress: MacAddress,
+        characteristic: CharacteristicSuccess.Read
+    ): Single<Change> {
         return findConnectedDevice(macAddress).flatMap { it.read(characteristic) }
     }
 }

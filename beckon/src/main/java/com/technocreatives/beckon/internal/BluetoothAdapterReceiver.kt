@@ -5,9 +5,9 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import com.lenguyenthanh.redux.Dispatcher
 import com.technocreatives.beckon.BluetoothState
-import com.technocreatives.beckon.redux.Action
-import com.technocreatives.beckon.redux.Dispatcher
+import com.technocreatives.beckon.redux.BeckonAction
 
 internal interface Receiver {
     fun register(context: Context)
@@ -19,7 +19,7 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : Br
     override fun onReceive(context: Context?, intent: Intent) {
         if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
             val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
-            dispatcher.dispatch(Action.ChangeBluetoothState(state.toBluetoothState()))
+            dispatcher.dispatch(BeckonAction.ChangeBluetoothState(state.toBluetoothState()))
         }
     }
 
@@ -28,7 +28,7 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : Br
                 IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
 
         // Post initial state
-        dispatcher.dispatch(Action.ChangeBluetoothState(BluetoothAdapter.getDefaultAdapter().state.toBluetoothState()))
+        dispatcher.dispatch(BeckonAction.ChangeBluetoothState(BluetoothAdapter.getDefaultAdapter().state.toBluetoothState()))
     }
 
     override fun unregister(context: Context) {

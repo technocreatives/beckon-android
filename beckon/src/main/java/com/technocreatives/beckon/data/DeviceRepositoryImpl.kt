@@ -9,7 +9,7 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.Types
 import com.technocreatives.beckon.MacAddress
-import com.technocreatives.beckon.WritableDeviceMetadata
+import com.technocreatives.beckon.SavedMetadata
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
@@ -41,11 +41,11 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
     }
 
     private val adapter by lazy {
-        val type = Types.newParameterizedType(List::class.java, WritableDeviceMetadata::class.java)
-        moshi.adapter<List<WritableDeviceMetadata>>(type)
+        val type = Types.newParameterizedType(List::class.java, SavedMetadata::class.java)
+        moshi.adapter<List<SavedMetadata>>(type)
     }
 
-    override fun currentDevices(): List<WritableDeviceMetadata> {
+    override fun currentDevices(): List<SavedMetadata> {
         val json = sharedPreferences.getString(KEY_DEVICES, "")!!
         return if (json.isBlank()) {
             emptyList()
@@ -54,7 +54,7 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         }
     }
 
-    override fun addDevice(metadata: WritableDeviceMetadata): Single<List<WritableDeviceMetadata>> {
+    override fun addDevice(metadata: SavedMetadata): Single<List<SavedMetadata>> {
         val currentDevices = currentDevices()
         return if (!currentDevices.any { it.macAddress == metadata.macAddress }) {
             val devices = currentDevices + metadata
@@ -64,7 +64,7 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         }
     }
 
-    override fun removeDevice(macAddress: String): Single<List<WritableDeviceMetadata>> {
+    override fun removeDevice(macAddress: String): Single<List<SavedMetadata>> {
         val currentDevices = currentDevices()
         val device = currentDevices.find { it.macAddress == macAddress }
         return if (device != null) {
@@ -75,12 +75,12 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         }
     }
 
-    override fun findDevice(macAddress: MacAddress): Single<Option<WritableDeviceMetadata>> {
+    override fun findDevice(macAddress: MacAddress): Single<Option<SavedMetadata>> {
         val currentDevices = currentDevices()
         return Single.just(currentDevices.find { it.macAddress == macAddress }.toOption())
     }
 
-    override fun saveDevices(devices: List<WritableDeviceMetadata>): Single<List<WritableDeviceMetadata>> {
+    override fun saveDevices(devices: List<SavedMetadata>): Single<List<SavedMetadata>> {
         return Single.create { emitter ->
             try {
                 val json = adapter.toJson(devices)
@@ -95,7 +95,7 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         }
     }
 
-    override fun devices(): Observable<List<WritableDeviceMetadata>> {
+    override fun devices(): Observable<List<SavedMetadata>> {
         return devicesSubject.hide()
     }
 }

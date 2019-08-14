@@ -18,7 +18,7 @@ data class ScannerSetting(
     val filters: List<DeviceFilter>
 )
 
-data class Requirement(val uuid: UUID, val service: UUID, val feature: Feature) // mandatory characteristic
+data class Requirement(val uuid: UUID, val service: UUID, val property: Property) // mandatory characteristic
 
 data class Descriptor(val requirements: List<Requirement>, val subscribes: List<Characteristic>)
 
@@ -61,6 +61,15 @@ sealed class ConnectionState {
     object Disconnecting : ConnectionState()
     object Connected : ConnectionState()
     object Connecting : ConnectionState()
+
+    override fun toString(): String {
+        return when (this) {
+            is NotConnected -> "ConnectionState.NotConnected"
+            is Disconnecting -> "ConnectionState.Disconnecting"
+            is Connected -> "ConnectionState.Connected"
+            is Connecting -> "ConnectionState.Connecting"
+        }
+    }
 }
 
 // should be parallel with BluetoothDevice.bondState()
@@ -69,18 +78,27 @@ sealed class BondState {
     object CreatingBond : BondState()
     object RemovingBond : BondState()
     object Bonded : BondState()
-    object BondingFailed : BondState()
+
+    override fun toString(): String {
+        return when (this) {
+            is NotBonded -> "BondState.NotBonded"
+            is CreatingBond -> "BondState.CreatingBond"
+            is RemovingBond -> "BondState.RemovingBond"
+            is Bonded -> "BondState.Bonded"
+        }
+    }
 }
 
 data class Characteristic(val uuid: UUID, val service: UUID) {
-    fun toRequirement(feature: Feature): Requirement {
-        return Requirement(uuid, service, feature)
+    fun toRequirement(property: Property): Requirement {
+        return Requirement(uuid, service, property)
     }
 }
 
 data class Change(val uuid: UUID, val data: Data)
+typealias State = Map<UUID, Data>
 
-enum class Feature {
+enum class Property {
     WRITE,
     NOTIFY,
     READ

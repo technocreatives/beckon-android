@@ -6,7 +6,7 @@ buildscript {
     ext.rxAndroid = '2.1.1'
     ext.kotlin_version = '1.3.41'
     ext.arrow_version = "0.10.0-SNAPSHOT"
-    ext.rxarrow = "3493b0dfe1"
+    ext.rxarrow = "b9e1a67bb7"
     ext.timber = '4.7.1'
     ext.sharedPreferences = '1.1.0'
     ext.rxBindingVersion = '3.0.0-alpha2'
@@ -14,6 +14,9 @@ buildscript {
     ext.nsBleVersion = '2.1.1'
     ext.nsDfuVersion = '1.9.0'
     ext.moshi = '1.8.0'
+
+    ext.simpleredux = 'eb08c22f9d'
+    ext.statemachine = '0.02'
 
     // Quality tools
     ext.ktlint_version = '0.31.0'

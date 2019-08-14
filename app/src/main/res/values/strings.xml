@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Beckon Example</string>
+    <string name="rationale">Rationale, we need permission bla bla</string>
 </resources>

@@ -25,7 +25,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name="com.technocreatives.example.MainActivity">
+        <activity android:name=".bond.BondActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
@@ -35,6 +35,13 @@
 
         <service android:name="com.technocreatives.example.BluetoothService"/>
 
+        <service android:name=".bond.BondService"/>
+
+        <receiver android:name=".service.AutoStart">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

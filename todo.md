@@ -39,6 +39,8 @@ A Bluetooth library which should be easy and stable.
 3. Non functional requirements
   - Work in background
 
+## Resource
+- [Getting Started Bluetooth Low Energy](https://www.amazon.com/Getting-Started-Bluetooth-Low-Energy-ebook/dp/B00K1N23LA)
 ## Requirement
 
 - Limit bluetooth knowledge with client deveper
@@ -52,7 +54,6 @@ A Bluetooth library which should be easy and stable.
 
 ## Todo
 
-- user removes bond device in system setting
 - InvalidDataException for mapper?
 - Use unit test to make sure logic works correctly.
 - Teardown Models file
@@ -63,11 +64,22 @@ A Bluetooth library which should be easy and stable.
 - Use BeckonError class instead of Exception
 - Add disconnect all/allSaved devices api for BeckonClient
 - Support Dokka
+- when turn off bluetooth, we may need to remove all connected devices from BeckonStore
+- When scan new device we need to search for already connected device as well
+- Work with encryption/decryption
+- Work with authorization/authentication
+- Support Bluetooth Generic Attributes (https://www.bluetooth.com/specifications/gatt/)
+- Create Service class which contains list of Characteristics
+    ```Kotlin
+      data class Service(val id: UUID, characteristics: List<Characteristic>)
+    ```
+- Rework on Error handling using BeckonError interface
+- Split Gatt from Metadata
+- Only run Background service when there is a connected device
 
 ## Doing
 
-- Use state machine to manage connection state of a beckon device 50%
-
+- user removes bond device in system setting
 
 ## Done
 - Support Read on Characteristic
@@ -75,3 +87,4 @@ A Bluetooth library which should be easy and stable.
 - Make findCharacteristic code shorter
 - Solve connect and disconnect devices when scanning => scan connect and save in one screen
 - Seperation of connected and saved devices
+- Use state machine to manage connection state of a beckon device 50%

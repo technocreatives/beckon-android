@@ -5,9 +5,9 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.DeviceMetadata
-import com.technocreatives.beckon.DisconnectDeviceFailedException
+import com.technocreatives.beckon.Metadata
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -17,7 +17,7 @@ import timber.log.Timber
 internal class BeckonDeviceImpl(
     private val bluetoothDevice: BluetoothDevice,
     private val manager: BeckonBleManager,
-    private val deviceMetadata: DeviceMetadata
+    private val metadata: Metadata
 ) : BeckonDevice {
 
     override fun connectionStates(): Observable<ConnectionState> {
@@ -40,7 +40,7 @@ internal class BeckonDeviceImpl(
                     Timber.d("Disconnect success")
                     emitter.onComplete()
                 }
-                .fail { device, status -> emitter.onError(DisconnectDeviceFailedException(device.address, status)) }
+                .fail { device, status -> emitter.onError(ConnectionError.DisconnectDeviceFailed(device.address, status).toException()) }
                 .enqueue()
         }
     }
@@ -49,8 +49,8 @@ internal class BeckonDeviceImpl(
         return bluetoothDevice
     }
 
-    override fun metadata(): DeviceMetadata {
-        return deviceMetadata
+    override fun metadata(): Metadata {
+        return metadata
     }
 
     override fun bondStates(): Observable<BondState> {
@@ -92,6 +92,6 @@ internal class BeckonDeviceImpl(
     }
 
     override fun toString(): String {
-        return deviceMetadata.toString()
+        return metadata.toString()
     }
 }

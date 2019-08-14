@@ -5,13 +5,13 @@ import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
 import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.DeviceMetadata
+import com.technocreatives.beckon.Metadata
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import no.nordicsemi.android.ble.data.Data
 
-class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
+class NoopBeckonDevice(val metadata: Metadata) : BeckonDevice {
     override fun connectionStates(): Observable<ConnectionState> {
         return Observable.empty()
     }
@@ -60,7 +60,7 @@ class NoopBeckonDevice(val metadata: DeviceMetadata) : BeckonDevice {
         return Completable.never()
     }
 
-    override fun metadata(): DeviceMetadata {
+    override fun metadata(): Metadata {
         return metadata
     }
 

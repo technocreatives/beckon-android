@@ -2,6 +2,7 @@ package com.technocreatives.example.domain
 
 import arrow.core.Either
 import com.technocreatives.beckon.BeckonClient
+import com.technocreatives.beckon.BeckonDeviceError
 import com.technocreatives.beckon.extension.BeckonState
 import com.technocreatives.beckon.extension.deviceStates
 import com.technocreatives.example.AxkidState
@@ -12,7 +13,7 @@ import io.reactivex.Observable
 import timber.log.Timber
 
 class FetchDevicesUseCase(private val beckonClient: BeckonClient) {
-    fun execute(): Observable<List<Either<Throwable, BeckonState<AxkidState>>>> {
+    fun execute(): Observable<List<Either<BeckonDeviceError, BeckonState<AxkidState>>>> {
         Timber.d("FetchDevicesUseCase execute!")
         return beckonClient.connectedDevices()
                 .map { devices -> devices.map { it.macAddress } }

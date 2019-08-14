@@ -1,6 +1,7 @@
 package com.technocreatives.beckon
 
 import android.content.Context
+import arrow.core.Either
 import com.technocreatives.beckon.data.DeviceRepositoryImpl
 import com.technocreatives.beckon.internal.BeckonClientImpl
 import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
@@ -54,7 +55,10 @@ interface BeckonClient {
         descriptor: Descriptor
     ): Single<BeckonDevice>
 
-    fun disconnect(macAddress: String): Completable
+    fun connect(
+        metadata: SavedMetadata
+    ): Single<BeckonDevice>
+    fun disconnect(macAddress: MacAddress): Completable
 
     /*===========================Device management==========================*/
 
@@ -64,7 +68,7 @@ interface BeckonClient {
      * - create bond if necessary (Bonded success or BondFailureException)
      * - save to database ( Complete or return SaveDeviceException)
      */
-    fun save(macAddress: String): Single<String>
+    fun save(macAddress: MacAddress): Single<MacAddress>
 
     /**
      * Remove a saved device
@@ -72,14 +76,15 @@ interface BeckonClient {
      * - Remove from database
      * - Remove from store
      */
-    fun remove(macAddress: String): Single<String>
+    fun remove(macAddress: MacAddress): Single<MacAddress>
 
     // find a connected device
     fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDevice>
-    fun connectedDevices(): Observable<List<DeviceMetadata>>
+    fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError.ConnectedDeviceNotFound, BeckonDevice>>
+    fun connectedDevices(): Observable<List<Metadata>>
 
-    fun findSavedDevice(macAddress: MacAddress): Single<WritableDeviceMetadata>
-    fun savedDevices(): Observable<List<WritableDeviceMetadata>>
+    fun findSavedDevice(macAddress: MacAddress): Single<SavedMetadata>
+    fun savedDevices(): Observable<List<SavedMetadata>>
 
     // fun changes(macAddress: MacAddress): Observable<Change>
 

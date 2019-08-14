@@ -3,40 +3,36 @@ package com.technocreatives.beckon.extension
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.lenguyenthanh.rxarrow.concatMapSingleE
 import com.lenguyenthanh.rxarrow.filterE
 import com.lenguyenthanh.rxarrow.flatMapE
-import com.lenguyenthanh.rxarrow.flatMapEither
-import com.lenguyenthanh.rxarrow.flatMapObservableE
+import com.lenguyenthanh.rxarrow.flatMapObservableEither
 import com.lenguyenthanh.rxarrow.flatMapSingleE
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.BeckonDeviceError
+import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.BeckonResult
 import com.technocreatives.beckon.CharacteristicMapper
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.MacAddress
+import com.technocreatives.beckon.SavedMetadata
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.WritableDeviceMetadata
+import com.technocreatives.beckon.State
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.functions.BiFunction
 import timber.log.Timber
-
-sealed class BeckonError {
-    class NoSaveDevice() : BeckonError()
-    class NoConectedDevice() : BeckonError()
-}
 
 fun <Change, State> BeckonClient.deviceStates(
     address: MacAddress,
     mapper: CharacteristicMapper<Change>,
     reducer: BiFunction<State, Change, State>,
     defaultState: State
-): Observable<Either<Throwable, BeckonState<State>>> {
+): Observable<Either<BeckonDeviceError, BeckonState<State>>> {
     return findSavedDeviceE(address)
-        .flatMapEither { findConnectedDeviceE(it) }
-        .flatMapObservableE { it.deviceStates(mapper, reducer, defaultState) }
+            .flatMapObservableEither { findConnectedDeviceO(it) }
+            .flatMapE { it.deviceStates(mapper, reducer, defaultState) }
 }
 
 fun <Change, State> BeckonClient.deviceStates(
@@ -44,24 +40,33 @@ fun <Change, State> BeckonClient.deviceStates(
     mapper: CharacteristicMapper<Change>,
     reducer: BiFunction<State, Change, State>,
     defaultState: State
-): Observable<List<Either<Throwable, BeckonState<State>>>> {
+): Observable<List<Either<BeckonDeviceError, BeckonState<State>>>> {
     val devices = addresses.map { deviceStates(it, mapper, reducer, defaultState) }
     Timber.d("deviceStates $devices")
     return Observable.combineLatest(devices) {
         Timber.d("combineLatest ${it[0]}")
-        it.map { it as Either<Throwable, BeckonState<State>> }.toList()
+        it.map { it as Either<BeckonDeviceError, BeckonState<State>> }.toList()
     }
 }
 
-fun BeckonClient.findSavedDeviceE(macAddress: MacAddress): Single<Either<Throwable, WritableDeviceMetadata>> {
-    return findSavedDevice(macAddress).map { it.right() as Either<Throwable, WritableDeviceMetadata> }
-        .onErrorReturn { NoSavedDeviceFoundException(macAddress).left() }
+fun BeckonClient.deviceStates(address: MacAddress): Observable<Either<BeckonDeviceError, BeckonState<State>>> {
+    return findSavedDeviceE(address)
+            .flatMapObservableEither { findConnectedDeviceO(it) }
+            .flatMapE { it.deviceStates() }
 }
 
-fun BeckonClient.findConnectedDeviceE(metadata: WritableDeviceMetadata): Single<Either<Throwable, BeckonDevice>> {
-    return findConnectedDevice(metadata.macAddress)
-        .map { it.right() as Either<Throwable, BeckonDevice> }
-        .onErrorReturn { NoBeckonDeviceFoundException(metadata).left() }
+fun BeckonClient.devicesStates(addresses: List<String>): Observable<List<Either<BeckonError, BeckonState<State>>>> {
+    val devices = addresses.map { deviceStates(it) }
+    Timber.d("deviceStates $devices")
+    return Observable.combineLatest(devices) {
+        Timber.d("combineLatest without State ${it[0]}")
+        it.map { it as Either<BeckonError, BeckonState<State>> }.toList()
+    }
+}
+
+fun BeckonClient.findSavedDeviceE(macAddress: MacAddress): Single<Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata>> {
+    return findSavedDevice(macAddress).map { it.right() as Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata> }
+            .onErrorReturn { BeckonDeviceError.SavedDeviceNotFound(macAddress).left() }
 }
 
 // onError can be happen
@@ -71,29 +76,30 @@ fun BeckonClient.scanAndConnect(
     descriptor: Descriptor
 ): Observable<BeckonResult<BeckonDevice>> {
     return scan(conditions, setting)
-        .concatMapSingleE { connect(it, descriptor) }
-        .doOnNext { Timber.d("scanAndConnect $it") }
+            .flatMapSingleE { connect(it, descriptor) } // todo need safe connect method
+            .doOnNext { Timber.d("scanAndConnect $it") }
 }
 
+// onError should be happen?
 fun BeckonClient.scan(conditions: Observable<Boolean>, setting: ScannerSetting): Observable<BeckonResult<ScanResult>> {
     return conditions
-        .switchMap {
-            Timber.d("Scan switchMap $it")
-            if (it) {
-                startScan(setting)
-            } else {
-                stopScan()
-                Observable.empty()
+            .switchMap {
+                Timber.d("Scan switchMap $it")
+                if (it) {
+                    startScan(setting)
+                } else {
+                    stopScan()
+                    Observable.empty()
+                }
             }
-        }
-        .distinct { it.macAddress }
-        .map { it.right() as BeckonResult<ScanResult> }
-        .onErrorReturn { it.left() }
-        .doOnNext { Timber.d("scan $it") }
-        .doOnDispose {
-            Timber.d("doOnDispose stop scan")
-            stopScan()
-        }
+            .distinct { it.macAddress }
+            .map { it.right() as BeckonResult<ScanResult> }
+            .onErrorReturn { it.left() }
+            .doOnNext { Timber.d("scan $it") }
+            .doOnDispose {
+                Timber.d("doOnDispose stop scan")
+                stopScan()
+            }
 }
 
 // onError can be happen
@@ -107,7 +113,22 @@ fun <Change, State> BeckonClient.scanAndSave(
     filter: (State) -> Boolean
 ): Observable<BeckonResult<MacAddress>> {
     return scanAndConnect(conditions, setting, descriptor)
-        .flatMapE { it.deviceStates(mapper, reducer, defaultState) }
+            .flatMapE { it.deviceStates(mapper, reducer, defaultState) }
+            .doOnNext { Timber.d("Scan device state $it") }
+            .filterE { deviceState -> filter(deviceState.state) }
+            .flatMapSingleE { save(it.metadata.macAddress) }
+            .doOnNext { Timber.d("scanAndSave $it") }
+}
+
+// onError can be happen
+fun BeckonClient.scanAndSave(
+    conditions: Observable<Boolean>,
+    setting: ScannerSetting,
+    descriptor: Descriptor,
+    filter: (State) -> Boolean
+): Observable<BeckonResult<MacAddress>> {
+    return scanAndConnect(conditions, setting, descriptor)
+        .flatMapE { it.deviceStates() }
         .doOnNext { Timber.d("Scan device state $it") }
         .filterE { deviceState -> filter(deviceState.state) }
         .flatMapSingleE { save(it.metadata.macAddress) }

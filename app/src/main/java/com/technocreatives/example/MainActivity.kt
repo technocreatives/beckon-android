@@ -7,10 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceFilter
-import com.technocreatives.beckon.DeviceMetadata
+import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.Requirement
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.Feature
+import com.technocreatives.beckon.Property
 import com.technocreatives.beckon.extension.deviceStates
 import com.technocreatives.example.common.extension.toUuid
 import com.technocreatives.example.common.view.init
@@ -42,8 +42,8 @@ class MainActivity : AppCompatActivity() {
             Timber.d("Connect to ${it.macAddress}")
 
             val requirements = listOf(
-                    Requirement(seatUuId.toUuid(), serviceUUID.toUuid(), Feature.NOTIFY),
-                    Requirement(temperatureUuid.toUuid(), serviceUUID.toUuid(), Feature.NOTIFY)
+                    Requirement(seatUuId.toUuid(), serviceUUID.toUuid(), Property.NOTIFY),
+                    Requirement(temperatureUuid.toUuid(), serviceUUID.toUuid(), Property.NOTIFY)
             )
             val subscribeList = listOf(
                     Characteristic(seatUuId.toUuid(), serviceUUID.toUuid()),
@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun update(device: DeviceMetadata) {
+    private fun update(device: Metadata) {
         // Timber.d("managers $managers")
         // Timber.d("manager ${managers.map { it.peripheral }}")
         val devices = connectedAdapter.items + device

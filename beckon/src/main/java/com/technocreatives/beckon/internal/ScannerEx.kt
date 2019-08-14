@@ -2,7 +2,7 @@ package com.technocreatives.beckon.internal
 
 import android.os.ParcelUuid
 import com.technocreatives.beckon.DeviceFilter
-import com.technocreatives.beckon.ScanFailedException
+import com.technocreatives.beckon.ScanError
 import io.reactivex.Observable
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
@@ -18,7 +18,7 @@ internal fun BluetoothLeScannerCompat.startScan(setting: ScanSettings, filters: 
         val callback: ScanCallback = object : ScanCallback() {
             override fun onScanFailed(errorCode: Int) {
                 Timber.d("onScanFailed $errorCode")
-                observer.onError(ScanFailedException(errorCode))
+                observer.onError(ScanError.ScanFailed(errorCode).toException())
             }
 
             override fun onScanResult(callbackType: Int, result: ScanResult) {

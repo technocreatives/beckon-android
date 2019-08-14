@@ -1,8 +1,8 @@
 package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothDevice
-import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.BleConnectionState
+import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.util.debugInfo
 import io.reactivex.subjects.BehaviorSubject
 import no.nordicsemi.android.ble.BleManagerCallbacks
@@ -36,7 +36,7 @@ internal class BeckonManagerCallbacks(
 
     override fun onBondingFailed(device: BluetoothDevice) {
         Timber.d("onBondingFailed ${device.debugInfo()}")
-        bondStateSubject.onNext(BondState.BondingFailed)
+        bondStateSubject.onNext(BondState.NotBonded)
     }
 
     override fun onServicesDiscovered(device: BluetoothDevice, optionalServicesFound: Boolean) {
