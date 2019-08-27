@@ -39,7 +39,7 @@ class BondComponent(private val view: BondActivity) {
                 .setUseHardwareBatchingIfSupported(true)
                 .build()
 
-        val filters = listOf(DeviceFilter(deviceName = "Nordic_BMS", deviceAddress = null, serviceUuid = serviceUUID))
+        val filters = listOf(DeviceFilter(deviceName = "Axkid Connect", deviceAddress = null, serviceUuid = serviceUUID))
         return ScannerSetting(settings, filters)
     }
 }

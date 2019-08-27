@@ -6,11 +6,17 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import arrow.core.Option
 import arrow.core.toOption
+import timber.log.Timber
 
 fun BluetoothManager.findDevice(address: String): Option<BluetoothDevice> {
-    val device = adapter.bondedDevices.firstOrNull { it.address == address }
-        ?: getConnectedDevices(BluetoothProfile.GATT)
-            .firstOrNull { it.address == address } ?: safeGetRemoteDevice(address)
+    Timber.d("findDevice %s", getConnectedDevices(BluetoothProfile.GATT).size)
+    getConnectedDevices(BluetoothProfile.GATT).onEach {
+        Timber.d("Gatt Connected ${it.address}")
+    }
+    val device =
+            getConnectedDevices(BluetoothProfile.GATT)
+                    .firstOrNull { it.address == address }
+                    ?: adapter.bondedDevices.firstOrNull { it.address == address }
     return device.toOption()
 }
 

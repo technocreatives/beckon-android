@@ -15,7 +15,7 @@ buildscript {
     ext.nsDfuVersion = '1.9.0'
     ext.moshi = '1.8.0'
 
-    ext.simpleredux = 'eb08c22f9d'
+    ext.simpleredux = '0935d92689'
     ext.statemachine = '0.02'
 
     // Quality tools
@@ -30,7 +30,7 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.2'
+        classpath 'com.android.tools.build:gradle:3.5.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "de.mannodermaus.gradle.plugins:android-junit5:1.4.2.1"
     }

@@ -43,7 +43,7 @@ class BondActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
 
         component.permissionsService.onResume(component.permissionsService.hasPermission())
         component.beckonClient.let { client ->
-            client.savedDevices()
+            bag?.add(client.savedDevices()
                     .map { it.map { it.macAddress } }
                     .doOnNext { Timber.d("All saved devices $it") }
                     .switchMap { client.devicesStates(it) }
@@ -53,7 +53,7 @@ class BondActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
                         Timber.e(it, "Error of the universe ")
                     }, {
                         Timber.d("The universe is dead")
-                    })
+                    }))
         }
     }
 

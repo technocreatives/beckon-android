@@ -14,7 +14,7 @@ internal interface Receiver {
     fun unregister(context: Context)
 }
 
-internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher) : BroadcastReceiver(), Receiver {
+internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher<BeckonAction>) : BroadcastReceiver(), Receiver {
 
     override fun onReceive(context: Context?, intent: Intent) {
         if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {

@@ -10,7 +10,6 @@ import com.lenguyenthanh.rxarrow.flatMapSingleE
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
-import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.BeckonResult
 import com.technocreatives.beckon.CharacteristicMapper
 import com.technocreatives.beckon.Descriptor
@@ -55,12 +54,12 @@ fun BeckonClient.deviceStates(address: MacAddress): Observable<Either<BeckonDevi
             .flatMapE { it.deviceStates() }
 }
 
-fun BeckonClient.devicesStates(addresses: List<String>): Observable<List<Either<BeckonError, BeckonState<State>>>> {
+fun BeckonClient.devicesStates(addresses: List<String>): Observable<List<Either<BeckonDeviceError, BeckonState<State>>>> {
     val devices = addresses.map { deviceStates(it) }
     Timber.d("deviceStates $devices")
     return Observable.combineLatest(devices) {
         Timber.d("combineLatest without State ${it[0]}")
-        it.map { it as Either<BeckonError, BeckonState<State>> }.toList()
+        it.map { it as Either<BeckonDeviceError, BeckonState<State>> }.toList()
     }
 }
 
