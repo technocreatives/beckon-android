@@ -7,8 +7,8 @@ import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
-import timber.log.Timber
 import no.nordicsemi.android.support.v18.scanner.ScanResult as BleScanResult
+import timber.log.Timber
 
 interface Scanner {
     fun startScan(setting: ScannerSetting): Observable<ScanResult>

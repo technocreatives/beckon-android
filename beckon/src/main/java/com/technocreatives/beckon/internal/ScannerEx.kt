@@ -4,13 +4,13 @@ import android.os.ParcelUuid
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScanError
 import io.reactivex.Observable
+import java.util.UUID
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
 import no.nordicsemi.android.support.v18.scanner.ScanFilter
 import no.nordicsemi.android.support.v18.scanner.ScanResult
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import timber.log.Timber
-import java.util.UUID
 
 internal fun BluetoothLeScannerCompat.startScan(setting: ScanSettings, filters: List<DeviceFilter>): Observable<com.technocreatives.beckon.ScanResult> {
 
