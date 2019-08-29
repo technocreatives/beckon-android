@@ -41,7 +41,7 @@ internal fun checkRequirement(
 ): Either<CharacteristicFailed, CharacteristicSuccess> {
     return when {
         requirement.service !in services -> CharacteristicFailed.ServiceNotFound(requirement).left()
-        requirement.uuid !in characteristics.map { it.id } -> CharacteristicFailed.UUIDNotFound(requirement).left()
+        requirement.uuid !in characteristics.map { it.id } -> CharacteristicFailed.CharacteristicNotFound(requirement).left()
         else -> characteristics.findCharacteristic(requirement)
     }
 }
@@ -114,7 +114,17 @@ sealed class CharacteristicFailed(val requirement: Requirement) {
     class NotSupportRead(requirement: Requirement) : CharacteristicFailed(requirement)
     class NotSupportNotify(requirement: Requirement) : CharacteristicFailed(requirement)
     class ServiceNotFound(requirement: Requirement) : CharacteristicFailed(requirement)
-    class UUIDNotFound(requirement: Requirement) : CharacteristicFailed(requirement)
+    class CharacteristicNotFound(requirement: Requirement) : CharacteristicFailed(requirement)
+
+    override fun toString(): String {
+        return when (this) {
+            is NotSupportWrite -> "NotSupportWrite $requirement"
+            is NotSupportRead -> "NotSupportRead $requirement"
+            is NotSupportNotify -> "NotSupportNotify $requirement"
+            is ServiceNotFound -> "ServiceNotFound $requirement"
+            is CharacteristicNotFound -> "CharacteristicNotFound $requirement"
+        }
+    }
 }
 
 fun Requirement.toFailed(): CharacteristicFailed {

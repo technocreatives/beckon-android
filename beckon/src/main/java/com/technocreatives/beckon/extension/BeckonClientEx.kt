@@ -7,6 +7,7 @@ import com.lenguyenthanh.rxarrow.filterE
 import com.lenguyenthanh.rxarrow.flatMapE
 import com.lenguyenthanh.rxarrow.flatMapObservableEither
 import com.lenguyenthanh.rxarrow.flatMapSingleE
+import com.lenguyenthanh.rxarrow.flatMapSingleEither
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
@@ -78,8 +79,13 @@ fun BeckonClient.scanAndConnect(
     descriptor: Descriptor
 ): Observable<BeckonResult<BeckonDevice>> {
     return scan(conditions, setting)
-            .flatMapSingleE { connect(it, descriptor) } // todo need safe connect method
+            .flatMapSingleEither { safeConnect(it, descriptor) } // todo need safe connect method
             .doOnNext { Timber.d("scanAndConnect $it") }
+}
+
+fun BeckonClient.safeConnect(result: ScanResult, descriptor: Descriptor): Single<BeckonResult<BeckonDevice>> {
+    return connect(result, descriptor).map { it.right() as BeckonResult<BeckonDevice> }
+            .onErrorReturn { it.left() }
 }
 
 // onError should be happen?
@@ -130,10 +136,10 @@ fun BeckonClient.scanAndSave(
     filter: (BeckonState<State>) -> Boolean
 ): Observable<BeckonResult<MacAddress>> {
     return scanAndConnect(conditions, setting, descriptor)
-        .doOnNext { Timber.d("scanAndConnect $it") }
-        .flatMapE { it.deviceStates() }
-        .doOnNext { Timber.d("Scan device state $it") }
-        .filterE { deviceState -> filter(deviceState) }
-        .flatMapSingleE { save(it.metadata.macAddress) }
-        .doOnNext { Timber.d("scanAndSave $it") }
+            .doOnNext { Timber.d("scanAndConnect $it") }
+            .flatMapE { it.deviceStates() }
+            .doOnNext { Timber.d("Scan device state $it") }
+            .filterE { deviceState -> filter(deviceState) }
+            .flatMapSingleE { save(it.metadata.macAddress) }
+            .doOnNext { Timber.d("scanAndSave $it") }
 }
