@@ -15,9 +15,7 @@ class ScanDeviceUseCase(
     operator fun invoke(setting: ScannerSetting, descriptor: Descriptor): Observable<Either<Throwable, String>> {
         return beckonClient
                 .scanAndSave(
-                        scanConditionUseCase()
-                                .doOnNext { Timber.d("scan condition $it") }
-                                .map { it == ScanCondition.OK },
+                        scanConditionUseCase().map { it == ScanCondition.OK },
                         setting,
                         descriptor,
                         { true })
