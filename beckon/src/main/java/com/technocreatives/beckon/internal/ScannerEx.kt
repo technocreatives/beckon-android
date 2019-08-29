@@ -64,7 +64,8 @@ fun DeviceFilter.toScanFilter(): ScanFilter {
     val serviceUuid = serviceUuid?.toUuid()?.let { ParcelUuid(it) }
     return ScanFilter.Builder()
             .setDeviceName(deviceName)
-            // .setServiceUuid(serviceUuid)
+            .setServiceUuid(serviceUuid)
             .build()
 }
+
 fun String.toUuid(): UUID = UUID.fromString(this)
