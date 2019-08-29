@@ -24,7 +24,7 @@ class NoopBeckonClient() : BeckonClient {
         return Single.never()
     }
 
-    override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError.ConnectedDeviceNotFound, BeckonDevice>> {
+    override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDevice>> {
         return Observable.empty()
     }
 

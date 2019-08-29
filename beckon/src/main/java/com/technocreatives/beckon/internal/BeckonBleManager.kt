@@ -21,6 +21,7 @@ import com.technocreatives.beckon.Property
 import com.technocreatives.beckon.ReadDataException
 import com.technocreatives.beckon.SubscribeDataException
 import com.technocreatives.beckon.WriteDataException
+import com.technocreatives.beckon.util.toBondState
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -43,8 +44,9 @@ internal class BeckonBleManager(context: Context, val device: BluetoothDevice) :
 
     private val stateSubject: BehaviorSubject<ConnectionState> =
             BehaviorSubject.createDefault(ConnectionState.NotConnected)
-    private val bondSubject: BehaviorSubject<BondState> =
-            BehaviorSubject.createDefault(BondState.NotBonded)
+    private val bondSubject by lazy {
+            BehaviorSubject.createDefault(device.bondState.toBondState())
+    }
     private val changeSubject = PublishSubject.create<Change>()
     private val devicesSubject by lazy { SingleSubject.create<Either<ConnectionError, DeviceDetail>>() }
 
@@ -59,7 +61,7 @@ internal class BeckonBleManager(context: Context, val device: BluetoothDevice) :
 
     private fun connect(request: ConnectRequest): Single<Either<ConnectionError, DeviceDetail>> {
         request.fail { device, status ->
-            Timber.e("ConnectFailedException ${device.address} status: $status")
+            Timber.e("ConnectionError ${device.address} status: $status")
             devicesSubject.onSuccess(ConnectionError.ConnectFailed(device.address, status).left())
         }.enqueue()
         return devicesSubject.hide()
@@ -202,6 +204,10 @@ internal class BeckonBleManager(context: Context, val device: BluetoothDevice) :
 
     fun currentState(): ConnectionState {
         return stateSubject.value!!
+    }
+
+    fun currentBondState(): BondState {
+        return bondSubject.value!!
     }
 
     fun write(data: Data, uuid: UUID, gatt: BluetoothGattCharacteristic): Single<Change> {

@@ -80,7 +80,7 @@ interface BeckonClient {
 
     // find a connected device
     fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDevice>
-    fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError.ConnectedDeviceNotFound, BeckonDevice>>
+    fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDevice>>
     fun connectedDevices(): Observable<List<Metadata>>
 
     fun findSavedDevice(macAddress: MacAddress): Single<SavedMetadata>

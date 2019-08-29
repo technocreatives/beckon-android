@@ -55,6 +55,9 @@ fun BeckonClient.deviceStates(address: MacAddress): Observable<Either<BeckonDevi
 }
 
 fun BeckonClient.devicesStates(addresses: List<String>): Observable<List<Either<BeckonDeviceError, BeckonState<State>>>> {
+    if (addresses.isEmpty()) {
+        return Observable.never()
+    }
     val devices = addresses.map { deviceStates(it) }
     Timber.d("deviceStates $devices")
     return Observable.combineLatest(devices) {
@@ -124,12 +127,13 @@ fun BeckonClient.scanAndSave(
     conditions: Observable<Boolean>,
     setting: ScannerSetting,
     descriptor: Descriptor,
-    filter: (State) -> Boolean
+    filter: (BeckonState<State>) -> Boolean
 ): Observable<BeckonResult<MacAddress>> {
     return scanAndConnect(conditions, setting, descriptor)
+        .doOnNext { Timber.d("scanAndConnect $it") }
         .flatMapE { it.deviceStates() }
         .doOnNext { Timber.d("Scan device state $it") }
-        .filterE { deviceState -> filter(deviceState.state) }
+        .filterE { deviceState -> filter(deviceState) }
         .flatMapSingleE { save(it.metadata.macAddress) }
         .doOnNext { Timber.d("scanAndSave $it") }
 }

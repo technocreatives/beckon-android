@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Context
 import arrow.core.Option
 import arrow.core.toOption
+import com.technocreatives.beckon.BondState
 import timber.log.Timber
 
 fun BluetoothManager.findDevice(address: String): Option<BluetoothDevice> {
@@ -34,4 +35,13 @@ private fun BluetoothManager.safeGetRemoteDevice(address: String): BluetoothDevi
 
 fun Context.bluetoothManager(): BluetoothManager {
     return getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+}
+
+internal fun Int.toBondState(): BondState {
+    return when (this) {
+        BluetoothDevice.BOND_BONDED -> BondState.Bonded
+        BluetoothDevice.BOND_BONDING -> BondState.CreatingBond
+        BluetoothDevice.BOND_NONE -> BondState.NotBonded
+        else -> BondState.NotBonded
+    }
 }

@@ -93,16 +93,22 @@ internal class BeckonClientImpl(
         }
     }
 
-    override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError.ConnectedDeviceNotFound, BeckonDevice>> {
+    override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDevice>> {
         Timber.d("findDevice ${metadata.macAddress} in ${beckonStore.currentState()}")
         return beckonStore.states()
                 .map { it.devices }
-                .switchMap {
+                .map {
                     Timber.d("List Connected Devices Change $it")
                     when (val device =
                             it.find { it.metadata().macAddress == metadata.macAddress }.toOption()) {
-                        is None -> Observable.just(BeckonDeviceError.ConnectedDeviceNotFound(metadata).left())
-                        is Some -> Observable.just(device.t.right() as Either<BeckonDeviceError.ConnectedDeviceNotFound, BeckonDevice>)
+                        is None -> {
+                            if (context.bluetoothManager().findDevice(metadata.macAddress) is None) {
+                                BeckonDeviceError.BondedDeviceNotFound(metadata).left()
+                            } else {
+                                BeckonDeviceError.ConnectedDeviceNotFound(metadata).left()
+                            }
+                        }
+                        is Some -> device.t.right()
                     }
                 }
     }
@@ -188,7 +194,7 @@ internal class BeckonClientImpl(
     override fun disconnect(macAddress: String): Completable {
         return when (val device = beckonStore.currentState().findDevice(macAddress)) {
             is None -> Completable.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
-            is Some -> device.t.disconnect()
+            is Some -> device.t.disconnect().doOnComplete { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device.t)) }
         }
     }
 

@@ -92,6 +92,6 @@ internal class BeckonDeviceImpl(
     }
 
     override fun toString(): String {
-        return metadata.toString()
+        return "BeckonDevice address: ${metadata.macAddress} connectionState: ${currentState()} bondState: ${manager.currentBondState()}"
     }
 }
