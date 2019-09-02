@@ -11,6 +11,7 @@ import com.lenguyenthanh.rxarrow.flatMapSingleEither
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
+import com.technocreatives.beckon.BeckonException
 import com.technocreatives.beckon.BeckonResult
 import com.technocreatives.beckon.CharacteristicMapper
 import com.technocreatives.beckon.Descriptor
@@ -78,9 +79,11 @@ fun BeckonClient.scanAndConnect(
     setting: ScannerSetting,
     descriptor: Descriptor
 ): Observable<BeckonResult<BeckonDevice>> {
-    return scan(conditions, setting)
+    val scanStream = scan(conditions, setting)
             .flatMapSingleEither { safeConnect(it, descriptor) } // todo need safe connect method
-            .doOnNext { Timber.d("scanAndConnect $it") }
+    val searchStream = search(setting.filters, descriptor).map { it.mapLeft { BeckonException(it) } }
+            .doOnNext { Timber.d("SearchStream $it") }
+    return Observable.merge(scanStream, searchStream)
 }
 
 fun BeckonClient.safeConnect(result: ScanResult, descriptor: Descriptor): Single<BeckonResult<BeckonDevice>> {
@@ -133,13 +136,13 @@ fun BeckonClient.scanAndSave(
     conditions: Observable<Boolean>,
     setting: ScannerSetting,
     descriptor: Descriptor,
-    filter: (BeckonState<State>) -> Boolean
+    filter: (State) -> Boolean
 ): Observable<BeckonResult<MacAddress>> {
     return scanAndConnect(conditions, setting, descriptor)
             .doOnNext { Timber.d("scanAndConnect $it") }
             .flatMapE { it.deviceStates() }
             .doOnNext { Timber.d("Scan device state $it") }
-            .filterE { deviceState -> filter(deviceState) }
+            .filterE { deviceState -> filter(deviceState.state) }
             .flatMapSingleE { save(it.metadata.macAddress) }
             .doOnNext { Timber.d("scanAndSave $it") }
 }

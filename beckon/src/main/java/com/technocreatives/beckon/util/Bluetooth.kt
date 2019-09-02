@@ -25,6 +25,10 @@ fun BluetoothManager.findBondedDevice(address: String): Option<BluetoothDevice> 
     return adapter.bondedDevices.firstOrNull { it.address == address }.toOption()
 }
 
+fun BluetoothManager.connectedDevices(): List<BluetoothDevice> {
+    return getConnectedDevices(BluetoothProfile.GATT)
+}
+
 private fun BluetoothManager.safeGetRemoteDevice(address: String): BluetoothDevice? {
     return try {
         adapter.getRemoteDevice(address)

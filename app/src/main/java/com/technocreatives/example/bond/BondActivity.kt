@@ -39,7 +39,7 @@ class BondActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     override fun onResume() {
         super.onResume()
         bag = CompositeDisposable()
-//        bag?.add(scan().subscribe { Timber.d("Scan result $it") })
+        bag?.add(scan().subscribe { Timber.d("Scan result $it") })
 
         component.permissionsService.onResume(component.permissionsService.hasPermission())
 

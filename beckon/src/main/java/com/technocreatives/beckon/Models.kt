@@ -8,41 +8,41 @@ import no.nordicsemi.android.support.v18.scanner.ScanSettings
 typealias MacAddress = String
 
 data class DeviceFilter(
-    val deviceName: String? = null,
-    val deviceAddress: String? = null,
+    val name: String? = null,
+    val address: String? = null,
     val serviceUuid: String? = null
-)
+) {
+    fun filter(device: BluetoothDevice): Boolean {
+        return filterMacAddress(device) && filterName(device)
+    }
+
+    private fun filterName(device: BluetoothDevice): Boolean {
+        if (name == null) return true
+        return device.name == name
+    }
+
+    private fun filterMacAddress(device: BluetoothDevice): Boolean {
+        if (address == null) return true
+        return device.address == address
+    }
+}
 
 data class ScannerSetting(
     val settings: ScanSettings,
     val filters: List<DeviceFilter>
 )
 
-data class Requirement(val uuid: UUID, val service: UUID, val property: Property) // mandatory characteristic
+data class Requirement(
+    val uuid: UUID,
+    val service: UUID,
+    val property: Property
+) // mandatory characteristic
 
 data class Descriptor(val requirements: List<Requirement>, val subscribes: List<Characteristic>)
 
 data class ScanResult(internal val device: BluetoothDevice, val rssi: Int) {
     val macAddress: String = device.address
     val name: String? = device.name
-
-    fun filter(filters: List<DeviceFilter>): Boolean {
-        return filters.any { this.filter(it) }
-    }
-
-    fun filter(filter: DeviceFilter): Boolean {
-        return filterMacAddress(filter.deviceAddress) && filterName(filter.deviceName)
-    }
-
-    private fun filterName(deviceName: String?): Boolean {
-        if (deviceName == null) return true
-        return this.name == deviceName
-    }
-
-    private fun filterMacAddress(address: String?): Boolean {
-        if (address == null) return true
-        return macAddress == address
-    }
 }
 
 internal sealed class BleConnectionState {

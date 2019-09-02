@@ -13,13 +13,13 @@ import com.lenguyenthanh.rxarrow.flatMapE
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
-import com.technocreatives.beckon.BeckonException
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
 import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceDetail
+import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
@@ -31,6 +31,7 @@ import com.technocreatives.beckon.extension.subscribe
 import com.technocreatives.beckon.redux.BeckonAction
 import com.technocreatives.beckon.redux.BeckonStore
 import com.technocreatives.beckon.util.bluetoothManager
+import com.technocreatives.beckon.util.connectedDevices
 import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.beckon.util.findDevice
 import com.technocreatives.beckon.util.fix
@@ -81,9 +82,14 @@ internal class BeckonClientImpl(
         return Completable.mergeArray(*completables)
     }
 
-    // override fun scan(): Observable<ScanResult> {
-    //     return scanner.results()
-    // }
+    override fun search(filters: List<DeviceFilter>, descriptor: Descriptor): Observable<Either<ConnectionError, BeckonDevice>> {
+        val addresses = beckonStore.currentState().devices.map { it.metadata().macAddress }
+        val connectedDevicesInSystem = context.bluetoothManager()
+                .connectedDevices()
+                .filter { device -> filters.any { it.filter(device) } }
+                .filter { it.address !in addresses }
+        return Observable.fromArray(*connectedDevicesInSystem.toTypedArray()).flatMapSingle { connect(it, descriptor) }
+    }
 
     override fun findConnectedDevice(macAddress: String): Single<BeckonDevice> {
         Timber.d("findDevice $macAddress in ${beckonStore.currentState()}")
@@ -142,28 +148,32 @@ internal class BeckonClientImpl(
         descriptor: Descriptor
     ): Single<BeckonDevice> {
         Timber.d("Connect $result")
+        return connect(result.device, descriptor).fix()
+    }
 
-        val manager = BeckonBleManager(context, result.device)
+    private fun connect(
+        device: BluetoothDevice,
+        descriptor: Descriptor
+    ): Single<Either<ConnectionError, BeckonDevice>> {
+        Timber.d("Connect $device")
+
+        val manager = BeckonBleManager(context, device)
 
         return manager.connect()
                 .doOnSuccess { Timber.d("Connected device: $it") }
-                .map { either -> either.flatMap { checkRequirements(it, descriptor, result.device) } }
-                .flatMap {
-                    when (it) {
-                        is Either.Right -> {
-                            val beckonDevice = BeckonDeviceImpl(result.device, manager, it.b)
-                            beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
-                            Single.just(beckonDevice)
+                .map { either -> either.flatMap { checkRequirements(it, descriptor, device) } }
+                .map {
+                    it.fold({
+                        if (it is ConnectionError.RequirementFailed) {
+                            manager.disconnect().enqueue()
                         }
-                        is Either.Left -> {
-                            // todo better way to disconnect a device if it is not fulfil the requirement.
-                            if (it.a is ConnectionError.RequirementFailed) {
-                                manager.disconnect().enqueue()
-                            }
-                            Single.error(BeckonException(it.a))
-                        }
-                    }
-                }.flatMap { subscribe(it, descriptor) } // take care of on error here
+                        it.left() as Either<ConnectionError, BeckonDevice>
+                    }, {
+                        val beckonDevice = BeckonDeviceImpl(device, manager, it)
+                        beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
+                        beckonDevice.right()
+                    })
+                }.flatMapE { subscribe(it, descriptor) }
     }
 
     private fun subscribe(

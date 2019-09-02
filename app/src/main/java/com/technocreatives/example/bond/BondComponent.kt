@@ -39,8 +39,10 @@ class BondComponent(private val view: BondActivity) {
                 .setUseHardwareBatchingIfSupported(true)
                 .build()
 
-        val filters = listOf(DeviceFilter(deviceName = null, deviceAddress = null, serviceUuid = serviceUUID))
+        val filters = listOf(DeviceFilter(serviceUuid = serviceUUID, address = "FB:3B:77:15:24:D4"))
         return ScannerSetting(settings, filters)
     }
 }
+
+//"D5:CD:BF:86:27:AC"
 

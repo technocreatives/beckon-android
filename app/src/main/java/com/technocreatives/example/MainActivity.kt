@@ -8,9 +8,9 @@ import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.Metadata
+import com.technocreatives.beckon.Property
 import com.technocreatives.beckon.Requirement
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.Property
 import com.technocreatives.beckon.extension.deviceStates
 import com.technocreatives.example.common.extension.toUuid
 import com.technocreatives.example.common.view.init
@@ -99,7 +99,7 @@ class MainActivity : AppCompatActivity() {
                 .setUseHardwareBatchingIfSupported(false)
                 .build()
 
-        val filters = listOf(DeviceFilter(deviceName = "AXKID", deviceAddress = null, serviceUuid = null))
+        val filters = listOf(DeviceFilter(name = "AXKID"))
 
         beckon.startScan(ScannerSetting(settings, filters))
 

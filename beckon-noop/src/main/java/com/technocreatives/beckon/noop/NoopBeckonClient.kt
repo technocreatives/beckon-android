@@ -8,7 +8,9 @@ import com.technocreatives.beckon.BeckonDeviceError
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
+import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
@@ -20,6 +22,13 @@ import io.reactivex.Single
 import no.nordicsemi.android.ble.data.Data
 
 class NoopBeckonClient() : BeckonClient {
+    override fun search(
+        filters: List<DeviceFilter>,
+        descriptor: Descriptor
+    ): Observable<Either<ConnectionError, BeckonDevice>> {
+        return Observable.never()
+    }
+
     override fun connect(metadata: SavedMetadata): Single<BeckonDevice> {
         return Single.never()
     }
@@ -66,11 +75,18 @@ class NoopBeckonClient() : BeckonClient {
         return Observable.empty()
     }
 
-    override fun write(macAddress: MacAddress, characteristic: CharacteristicSuccess.Write, data: Data): Single<Change> {
+    override fun write(
+        macAddress: MacAddress,
+        characteristic: CharacteristicSuccess.Write,
+        data: Data
+    ): Single<Change> {
         return Single.never()
     }
 
-    override fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Single<Change> {
+    override fun read(
+        macAddress: MacAddress,
+        characteristic: CharacteristicSuccess.Read
+    ): Single<Change> {
         return Single.never()
     }
 

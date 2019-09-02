@@ -63,8 +63,8 @@ internal fun BluetoothLeScannerCompat.scanList(setting: ScanSettings, filters: L
 fun DeviceFilter.toScanFilter(): ScanFilter {
     val serviceUuid = serviceUuid?.toUuid()?.let { ParcelUuid(it) }
     return ScanFilter.Builder()
-            .setDeviceName(deviceName)
-            .setDeviceAddress(deviceAddress)
+            .setDeviceName(name)
+            .setDeviceAddress(address)
             .setServiceUuid(serviceUuid)
             .build()
 }
