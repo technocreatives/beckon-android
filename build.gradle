@@ -10,7 +10,7 @@ buildscript {
     ext.timber = '4.7.1'
     ext.sharedPreferences = '1.1.0'
     ext.rxBindingVersion = '3.0.0-alpha2'
-    ext.nsScannerVersion = '1.4.2'
+    ext.nsScannerVersion = '1.4.3'
     ext.nsBleVersion = '2.1.1'
     ext.nsDfuVersion = '1.9.0'
     ext.moshi = '1.8.0'
