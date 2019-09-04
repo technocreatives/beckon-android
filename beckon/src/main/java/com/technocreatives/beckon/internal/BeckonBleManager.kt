@@ -190,15 +190,15 @@ internal class BeckonBleManager(context: Context, val device: BluetoothDevice) :
     }
 
     fun connectionState(): Observable<ConnectionState> {
-        return stateSubject.distinctUntilChanged().hide()
+        return stateSubject.distinctUntilChanged().hide().share()
     }
 
     fun bondStates(): Observable<BondState> {
-        return bondSubject.distinctUntilChanged().hide()
+        return bondSubject.distinctUntilChanged().hide().share()
     }
 
     fun changes(): Observable<Change> {
-        return changeSubject.hide()
+        return changeSubject.distinctUntilChanged().hide().share()
     }
 
     fun currentState(): ConnectionState {
@@ -227,7 +227,7 @@ internal class BeckonBleManager(context: Context, val device: BluetoothDevice) :
     fun read(uuid: UUID, gatt: BluetoothGattCharacteristic): Single<Change> {
         return Single.create { emitter ->
             val callback = DataReceivedCallback { device, data ->
-                Timber.d("read DataReceivedCallback uuid: $uuid device: $device data: $data")
+                Timber.d("read DataReceivedCallback address: ${this.device.address} uuid: $uuid device: $device data: $data")
                 emitter.onSuccess(Change(uuid, data))
             }
             readCharacteristic(gatt)

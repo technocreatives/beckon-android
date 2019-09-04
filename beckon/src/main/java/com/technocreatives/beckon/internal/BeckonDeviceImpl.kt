@@ -40,10 +40,7 @@ internal class BeckonDeviceImpl(
     }
 
     override fun states(): Observable<State> {
-        return changes()
-            .doOnNext { Timber.d("Changes ${this.metadata.name} ${this.metadata.macAddress} $it") }
-            .scan(emptyMap()) { state: State, change -> state + change }
-            .doOnNext { Timber.d("State ${this.metadata.name} ${this.metadata.macAddress} $it") }
+        return states
     }
 
     override fun currentState(): ConnectionState {
