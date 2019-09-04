@@ -26,7 +26,6 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
-import io.reactivex.subjects.PublishSubject
 import io.reactivex.subjects.SingleSubject
 import java.util.UUID
 import no.nordicsemi.android.ble.BleManager
@@ -47,7 +46,7 @@ internal class BeckonBleManager(context: Context, val device: BluetoothDevice) :
     private val bondSubject by lazy {
             BehaviorSubject.createDefault(device.bondState.toBondState())
     }
-    private val changeSubject = PublishSubject.create<Change>()
+    private val changeSubject = BehaviorSubject.create<Change>()
     private val devicesSubject by lazy { SingleSubject.create<Either<ConnectionError, DeviceDetail>>() }
 
     init {

@@ -30,14 +30,9 @@ fun <Change, State> BeckonDevice.states(
     reducer: BiFunction<State, Change, State>,
     defaultState: State
 ): Observable<State> {
-    return this.changes()
+    return changes()
         .map { mapper(it) }
         .scan(defaultState, reducer)
-}
-
-fun BeckonDevice.states(): Observable<State> {
-    return changes()
-        .scan(emptyMap()) { state, change -> state + change }
 }
 
 fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {

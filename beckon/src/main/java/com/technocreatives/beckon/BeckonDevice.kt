@@ -11,6 +11,7 @@ interface BeckonDevice {
     fun bondStates(): Observable<BondState>
 
     fun changes(): Observable<Change>
+    fun states(): Observable<State>
 
     fun currentState(): ConnectionState
 

@@ -8,6 +8,8 @@ import com.technocreatives.beckon.CharacteristicSuccess
 import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.Metadata
+import com.technocreatives.beckon.State
+import com.technocreatives.beckon.extension.plus
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -26,6 +28,18 @@ internal class BeckonDeviceImpl(
 
     override fun changes(): Observable<Change> {
         return manager.changes()
+    }
+
+    private val states by lazy {
+        changes()
+        .doOnNext { Timber.d("Changes $it") }
+        .scan(emptyMap()) { state: State, change -> state + change }
+        .doOnNext { Timber.d("State $it") }
+        .share()
+    }
+
+    override fun states(): Observable<State> {
+        return states
     }
 
     override fun currentState(): ConnectionState {

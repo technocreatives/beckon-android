@@ -6,14 +6,19 @@ import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.Metadata
+import com.technocreatives.beckon.State
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import no.nordicsemi.android.ble.data.Data
 
 class NoopBeckonDevice(val metadata: Metadata) : BeckonDevice {
+    override fun states(): Observable<State> {
+        return Observable.never()
+    }
+
     override fun connectionStates(): Observable<ConnectionState> {
-        return Observable.empty()
+        return Observable.never()
     }
 
     override fun currentState(): ConnectionState {
