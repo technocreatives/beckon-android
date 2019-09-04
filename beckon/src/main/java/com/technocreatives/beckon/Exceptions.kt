@@ -20,9 +20,9 @@ class DisconnectDeviceFailedException(val macAddress: String, status: Int) : Thr
 class CreateBondFailedException(val macAddress: String, status: Int) : Throwable()
 class RemoveBondFailedException(val macAddress: String, status: Int) : Throwable()
 
-class WriteDataException(val macAddress: String, uuid: UUID, status: Int) : Throwable()
-class ReadDataException(val macAddress: String, uuid: UUID, status: Int) : Throwable()
-class SubscribeDataException(val macAddress: String, uuid: UUID, status: Int) : Throwable()
+data class WriteDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
+data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
+data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
 
 typealias BeckonResult<T> = Either<Throwable, T>
 
@@ -53,4 +53,12 @@ sealed class BeckonDeviceError : BeckonError {
     data class SavedDeviceNotFound(val address: MacAddress) : BeckonDeviceError()
     data class BondedDeviceNotFound(val savedMetadata: SavedMetadata) : BeckonDeviceError()
     data class ConnectedDeviceNotFound(val savedMetadata: SavedMetadata) : BeckonDeviceError()
+
+    fun macAddress(): MacAddress {
+        return when (this) {
+            is SavedDeviceNotFound -> address
+            is BondedDeviceNotFound -> savedMetadata.macAddress
+            is ConnectedDeviceNotFound -> savedMetadata.macAddress
+        }
+    }
 }

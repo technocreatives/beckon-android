@@ -236,16 +236,17 @@ internal class BeckonClientImpl(
                 .map { device.metadata().macAddress }
     }
 
-    private fun removeSavedDevice(device: BeckonDevice): Single<MacAddress> {
-        return deviceRepository.removeDevice(device.metadata().macAddress)
-                .map { device.metadata().macAddress }
+    private fun removeSavedDevice(macAddress: MacAddress): Single<MacAddress> {
+        return deviceRepository.removeDevice(macAddress)
+                .map { macAddress }
     }
 
     override fun remove(macAddress: String): Single<MacAddress> {
+
         return beckonStore.currentState().findDevice(macAddress).fold({
-            Single.error(BeckonDeviceError.SavedDeviceNotFound(macAddress).toException())
+            removeSavedDevice(macAddress)
         }, { device ->
-            device.disconnect().andThen(removeSavedDevice(device))
+            device.disconnect().andThen(removeSavedDevice(macAddress))
         })
     }
 

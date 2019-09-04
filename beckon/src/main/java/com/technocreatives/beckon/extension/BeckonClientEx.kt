@@ -91,7 +91,6 @@ fun BeckonClient.safeConnect(result: ScanResult, descriptor: Descriptor): Single
             .onErrorReturn { it.left() }
 }
 
-// onError should be happen?
 fun BeckonClient.scan(conditions: Observable<Boolean>, setting: ScannerSetting): Observable<BeckonResult<ScanResult>> {
     return conditions
             .switchMap {
@@ -131,7 +130,6 @@ fun <Change, State> BeckonClient.scanAndSave(
             .doOnNext { Timber.d("scanAndSave $it") }
 }
 
-// onError can be happen
 fun BeckonClient.scanAndSave(
     conditions: Observable<Boolean>,
     setting: ScannerSetting,

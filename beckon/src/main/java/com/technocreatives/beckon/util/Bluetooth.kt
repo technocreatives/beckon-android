@@ -10,7 +10,6 @@ import com.technocreatives.beckon.BondState
 import timber.log.Timber
 
 fun BluetoothManager.findDevice(address: String): Option<BluetoothDevice> {
-    Timber.d("findDevice %s", getConnectedDevices(BluetoothProfile.GATT).size)
     getConnectedDevices(BluetoothProfile.GATT).onEach {
         Timber.d("Gatt Connected ${it.address}")
     }

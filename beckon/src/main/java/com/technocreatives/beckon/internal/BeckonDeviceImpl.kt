@@ -32,15 +32,18 @@ internal class BeckonDeviceImpl(
 
     private val states by lazy {
         changes()
-        .doOnNext { Timber.d("Changes $it") }
+        .doOnNext { Timber.d("Changes ${this.metadata.name} ${this.metadata.macAddress} $it") }
         .scan(emptyMap()) { state: State, change -> state + change }
-        .doOnNext { Timber.d("State $it") }
+        .doOnNext { Timber.d("State ${this.metadata.name} ${this.metadata.macAddress} $it") }
         .replay(1)
         .autoConnect()
     }
 
     override fun states(): Observable<State> {
-        return states
+        return changes()
+            .doOnNext { Timber.d("Changes ${this.metadata.name} ${this.metadata.macAddress} $it") }
+            .scan(emptyMap()) { state: State, change -> state + change }
+            .doOnNext { Timber.d("State ${this.metadata.name} ${this.metadata.macAddress} $it") }
     }
 
     override fun currentState(): ConnectionState {
