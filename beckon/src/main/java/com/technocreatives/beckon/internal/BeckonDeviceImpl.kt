@@ -35,7 +35,8 @@ internal class BeckonDeviceImpl(
         .doOnNext { Timber.d("Changes $it") }
         .scan(emptyMap()) { state: State, change -> state + change }
         .doOnNext { Timber.d("State $it") }
-        .share()
+        .replay(1)
+        .autoConnect()
     }
 
     override fun states(): Observable<State> {
