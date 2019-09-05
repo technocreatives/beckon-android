@@ -14,7 +14,9 @@ import com.technocreatives.beckon.BeckonDeviceError
 import com.technocreatives.beckon.BeckonException
 import com.technocreatives.beckon.BeckonResult
 import com.technocreatives.beckon.CharacteristicMapper
+import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
+import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.SavedMetadata
 import com.technocreatives.beckon.ScanResult
@@ -79,10 +81,12 @@ fun BeckonClient.scanAndConnect(
     setting: ScannerSetting,
     descriptor: Descriptor
 ): Observable<BeckonResult<BeckonDevice>> {
-    val scanStream = scan(conditions, setting)
-            .flatMapSingleEither { safeConnect(it, descriptor) } // todo need safe connect method
-    val searchStream = search(setting.filters, descriptor).map { it.mapLeft { BeckonException(it) } }
+
+    val searchStream = search(conditions, setting.filters, descriptor).map { it.mapLeft { BeckonException(it) } }
             .doOnNext { Timber.d("SearchStream $it") }
+    val scanStream = scan(conditions, setting)
+        .flatMapSingleEither { safeConnect(it, descriptor) }
+
     return Observable.merge(scanStream, searchStream)
 }
 
@@ -112,6 +116,18 @@ fun BeckonClient.scan(conditions: Observable<Boolean>, setting: ScannerSetting):
             }
 }
 
+fun BeckonClient.search(conditions: Observable<Boolean>, filters: List<DeviceFilter>, descriptor: Descriptor): Observable<Either<ConnectionError, BeckonDevice>> {
+    return conditions
+        .switchMap {
+            Timber.d("Search switchMap $it")
+            if (it) {
+                search(filters, descriptor)
+            } else {
+                Observable.empty()
+            }
+        }
+}
+
 // onError can be happen
 fun <Change, State> BeckonClient.scanAndSave(
     conditions: Observable<Boolean>,
@@ -136,7 +152,7 @@ fun BeckonClient.scanAndSave(
     descriptor: Descriptor,
     filter: (State) -> Boolean
 ): Observable<BeckonResult<MacAddress>> {
-    return scanAndConnect(conditions, setting, descriptor)
+    return scanAndConnect(conditions.distinctUntilChanged(), setting, descriptor)
             .doOnNext { Timber.d("scanAndConnect $it") }
             .flatMapE { it.deviceStates() }
             .doOnNext { Timber.d("Scan device state $it") }

@@ -17,13 +17,13 @@ data class DeviceFilter(
     }
 
     private fun filterName(device: BluetoothDevice): Boolean {
-        if (name == null) return true
-        return device.name == name
+        return if (name == null) true
+        else device.name == name
     }
 
     private fun filterMacAddress(device: BluetoothDevice): Boolean {
-        if (address == null) return true
-        return device.address == address
+        return if (address == null) true
+        else device.address == address
     }
 }
 

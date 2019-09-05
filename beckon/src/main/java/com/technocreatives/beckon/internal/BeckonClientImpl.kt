@@ -39,6 +39,7 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
+import no.nordicsemi.android.ble.Request.createBond
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 
@@ -75,7 +76,7 @@ internal class BeckonClientImpl(
 
         val completables = beckonStore.currentState().devices
             .filter { it.metadata().macAddress !in currentSavedDevices }
-            .map { it.disconnect() }
+            .map { disconnect(it) }
             .toTypedArray()
 
         if (completables.isEmpty()) return Completable.complete()
@@ -84,9 +85,10 @@ internal class BeckonClientImpl(
 
     /**
      * get all connected devices in system
-     * filter by descriptor
-     * not connected beckon device
-     * not out saved beckon device
+     * filter by list of DeviceFilters
+     * filter by Descriptor
+     * filter out connected beckon device
+     * filter out saved beckon device
      */
     override fun search(
         filters: List<DeviceFilter>,
@@ -94,6 +96,8 @@ internal class BeckonClientImpl(
     ): Observable<Either<ConnectionError, BeckonDevice>> {
         val connected = beckonStore.currentState().devices.map { it.metadata().macAddress }
         val saved = deviceRepository.currentDevices().map { it.macAddress }
+        Timber.d("Search connected: $connected saved: $saved")
+
         val connectedDevicesInSystem = context.bluetoothManager()
             .connectedDevices()
             .filter { device -> filters.any { it.filter(device) } }
@@ -217,14 +221,17 @@ internal class BeckonClientImpl(
     override fun disconnect(macAddress: String): Completable {
         return when (val device = beckonStore.currentState().findDevice(macAddress)) {
             is None -> Completable.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
-            is Some -> device.t.disconnect().doOnComplete {
-                beckonStore.dispatch(
-                    BeckonAction.RemoveConnectedDevice(
-                        device.t
-                    )
-                )
-            }
+            is Some -> disconnect(device.t)
         }
+    }
+
+    /**
+     * Disconnect bluetooth and then remove that device from BeckonStore
+     * in case of error remove it any way
+     */
+    private fun disconnect(device: BeckonDevice): Completable {
+        return device.disconnect()
+            .doOnEvent { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device)) }
     }
 
     // error can happen

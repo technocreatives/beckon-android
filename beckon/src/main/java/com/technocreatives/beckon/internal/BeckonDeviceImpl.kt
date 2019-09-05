@@ -48,11 +48,11 @@ internal class BeckonDeviceImpl(
     }
 
     override fun disconnect(): Completable {
-        Timber.d("disconnect $this")
+        Timber.d("disconnect ${metadata.macAddress}")
         return Completable.create { emitter ->
             manager.disconnect()
                 .done {
-                    Timber.d("Disconnect success")
+                    Timber.d("Disconnect success ${metadata.macAddress}")
                     emitter.onComplete()
                 }
                 .fail { device, status -> emitter.onError(ConnectionError.DisconnectDeviceFailed(device.address, status).toException()) }
