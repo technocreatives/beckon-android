@@ -75,7 +75,8 @@ internal class BeckonBleManager(
         }
 
         mCallbacks = BeckonManagerCallbacks(bondSubject, onStateChange)
-        states.subscribe { Timber.d("Oh yeah $device $it") }
+        // TODO Fix disposable
+        val statesDisposable = states.subscribe { Timber.d("Oh yeah $device $it") }
     }
 
     fun states() = states
@@ -111,7 +112,8 @@ internal class BeckonBleManager(
                 val services = bluetoothGatt!!.services.map { it.uuid }
                 val characteristics = allCharacteristics(bluetoothGatt!!)
                 val detail = DeviceDetail(services, characteristics)
-                subscribeBla(descriptor.subscribes, detail).subscribe({
+                // TODO Fix disposable
+                val disposable = subscribeBla(descriptor.subscribes, detail).subscribe({
                     devicesSubject.onSuccess(detail.right())
                 }, {
                     devicesSubject.onSuccess(ConnectionError.RequirementFailed(emptyList()).left())
