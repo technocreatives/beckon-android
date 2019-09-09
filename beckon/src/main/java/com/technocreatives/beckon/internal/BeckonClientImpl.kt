@@ -9,7 +9,6 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import arrow.core.toOption
-import com.lenguyenthanh.rxarrow.flatMapE
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
@@ -173,7 +172,7 @@ internal class BeckonClientImpl(
     ): Single<Either<ConnectionError, BeckonDevice>> {
         Timber.d("Connect $device")
 
-        val manager = BeckonBleManager(context, device)
+        val manager = BeckonBleManager(context, device, descriptor)
 
         return manager.connect()
             .doOnSuccess { Timber.d("Connected device: $it") }
@@ -189,7 +188,8 @@ internal class BeckonClientImpl(
                     beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
                     beckonDevice.right()
                 })
-            }.flatMapE { subscribe(it, descriptor) }
+            }
+            // .flatMapE { subscribe(it, descriptor) }
     }
 
     private fun subscribe(
@@ -340,7 +340,7 @@ internal class BeckonClientImpl(
         descriptor: Descriptor
     ): Single<Either<ConnectionError, BeckonDevice>> {
         Timber.d("tryToReconnect $device")
-        val manager = BeckonBleManager(context, device)
+        val manager = BeckonBleManager(context, device, descriptor)
         return manager.connect()
             .doOnSuccess { Timber.d("Connected device: $it") }
             .map { either -> either.flatMap { checkRequirements(it, descriptor, device) } }
@@ -359,7 +359,8 @@ internal class BeckonClientImpl(
                         Single.just(it)
                     }
                 }
-            }.flatMapE { subscribe(it, descriptor) }
+            }
+            // .flatMapE { subscribe(it, descriptor) }
     }
 
     override fun unregister(context: Context) {
