@@ -27,6 +27,10 @@ data class Metadata(
     fun findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
         return characteristics.findCharacteristic(requirement)
     }
+
+    fun findReadCharacteristic(characteristic: Characteristic): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
+        return characteristics.findReadCharacteristic(characteristic.toRequirement(Property.READ))
+    }
 }
 
 data class DeviceDetail(
@@ -76,10 +80,26 @@ internal fun checkNotifyList(
             .map { it.map { it as CharacteristicSuccess.Notify } }
 }
 
+internal fun checkReadList(
+    characteristics: List<Characteristic>,
+    services: List<UUID>,
+    details: List<CharacteristicSuccess>
+): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess.Read>> {
+    return checkRequirements(characteristics.map { it.toRequirement(Property.READ) }, services, details)
+        .map { it.map { it as CharacteristicSuccess.Read } }
+}
+
 internal fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
     return find { it.toRequirement() == requirement }
             .toOption()
             .toEither { requirement.toFailed() }
+}
+
+internal fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
+    return this.filterIsInstance(CharacteristicSuccess.Read::class.java)
+        .find { it.toRequirement() == requirement }
+        .toOption()
+        .toEither { requirement.toFailed() }
 }
 
 sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: BluetoothGattCharacteristic) {

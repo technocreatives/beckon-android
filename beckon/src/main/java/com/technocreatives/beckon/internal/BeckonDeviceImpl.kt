@@ -10,6 +10,7 @@ import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.State
 import com.technocreatives.beckon.extension.plus
+import com.technocreatives.beckon.extension.subscribe
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -30,17 +31,8 @@ internal class BeckonDeviceImpl(
         return manager.changes()
     }
 
-    private val states by lazy {
-        changes()
-        .doOnNext { Timber.d("Changes ${this.metadata.name} ${this.metadata.macAddress} $it") }
-        .scan(emptyMap()) { state: State, change -> state + change }
-        .doOnNext { Timber.d("State ${this.metadata.name} ${this.metadata.macAddress} $it") }
-        .replay(1)
-        .autoConnect()
-    }
-
     override fun states(): Observable<State> {
-        return states
+        return manager.states()
     }
 
     override fun currentState(): ConnectionState {

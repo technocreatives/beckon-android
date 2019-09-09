@@ -9,7 +9,6 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import arrow.core.toOption
-import com.lenguyenthanh.rxarrow.flatMapE
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
@@ -53,7 +52,11 @@ internal class BeckonClientImpl(
     private val bag = CompositeDisposable()
 
     override fun startScan(setting: ScannerSetting): Observable<ScanResult> {
+        val connected = beckonStore.currentState().devices.map { it.metadata().macAddress }
+        val saved = deviceRepository.currentDevices().map { it.macAddress }
         return scanner.startScan(setting)
+            .filter { it.device.address !in connected }
+            .filter { it.device.address !in saved }
     }
 
     override fun stopScan() {
@@ -172,7 +175,7 @@ internal class BeckonClientImpl(
     ): Single<Either<ConnectionError, BeckonDevice>> {
         Timber.d("Connect $device")
 
-        val manager = BeckonBleManager(context, device)
+        val manager = BeckonBleManager(context, device, descriptor)
 
         return manager.connect()
             .doOnSuccess { Timber.d("Connected device: $it") }
@@ -188,7 +191,8 @@ internal class BeckonClientImpl(
                     beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
                     beckonDevice.right()
                 })
-            }.flatMapE { subscribe(it, descriptor) }
+            }
+            // .flatMapE { subscribe(it, descriptor) }
     }
 
     private fun subscribe(
@@ -339,7 +343,7 @@ internal class BeckonClientImpl(
         descriptor: Descriptor
     ): Single<Either<ConnectionError, BeckonDevice>> {
         Timber.d("tryToReconnect $device")
-        val manager = BeckonBleManager(context, device)
+        val manager = BeckonBleManager(context, device, descriptor)
         return manager.connect()
             .doOnSuccess { Timber.d("Connected device: $it") }
             .map { either -> either.flatMap { checkRequirements(it, descriptor, device) } }
@@ -358,7 +362,8 @@ internal class BeckonClientImpl(
                         Single.just(it)
                     }
                 }
-            }.flatMapE { subscribe(it, descriptor) }
+            }
+            // .flatMapE { subscribe(it, descriptor) }
     }
 
     override fun unregister(context: Context) {
