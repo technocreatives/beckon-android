@@ -53,7 +53,11 @@ internal class BeckonClientImpl(
     private val bag = CompositeDisposable()
 
     override fun startScan(setting: ScannerSetting): Observable<ScanResult> {
+        val connected = beckonStore.currentState().devices.map { it.metadata().macAddress }
+        val saved = deviceRepository.currentDevices().map { it.macAddress }
         return scanner.startScan(setting)
+            .filter { it.device.address !in connected }
+            .filter { it.device.address !in saved }
     }
 
     override fun stopScan() {
