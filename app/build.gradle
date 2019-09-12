@@ -9,6 +9,7 @@ android {
         applicationId "com.technocreatives.beckon.example"
         minSdkVersion 23
         targetSdkVersion 29
+        buildToolsVersion = "29.0.2"
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
