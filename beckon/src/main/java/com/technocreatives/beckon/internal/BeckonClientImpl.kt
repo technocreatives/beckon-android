@@ -39,7 +39,6 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
-import no.nordicsemi.android.ble.Request.createBond
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 
@@ -231,7 +230,7 @@ internal class BeckonClientImpl(
      */
     private fun disconnect(device: BeckonDevice): Completable {
         return device.disconnect()
-            .doOnEvent { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device)) }
+            .doFinally { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device)) }
     }
 
     // error can happen
@@ -272,7 +271,7 @@ internal class BeckonClientImpl(
         return beckonStore.currentState().findDevice(macAddress).fold({
             removeSavedDevice(macAddress)
         }, { device ->
-            device.disconnect().andThen(removeSavedDevice(macAddress))
+            removeSavedDevice(macAddress).flatMap { disconnect(device).toSingle { macAddress } }
         })
     }
 
