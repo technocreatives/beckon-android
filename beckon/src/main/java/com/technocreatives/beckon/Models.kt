@@ -38,7 +38,7 @@ data class Requirement(
     val property: Property
 ) // mandatory characteristic
 
-data class Descriptor(val requirements: List<Requirement>, val subscribes: List<Characteristic>)
+data class Descriptor(val requirements: List<Requirement>, val subscribes: List<Characteristic>, val reads: List<Characteristic>)
 
 data class ScanResult(internal val device: BluetoothDevice, val rssi: Int) {
     val macAddress: String = device.address

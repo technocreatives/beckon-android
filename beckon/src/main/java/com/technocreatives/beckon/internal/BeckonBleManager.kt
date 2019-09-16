@@ -25,6 +25,7 @@ import com.technocreatives.beckon.State
 import com.technocreatives.beckon.SubscribeDataException
 import com.technocreatives.beckon.WriteDataException
 import com.technocreatives.beckon.checkNotifyList
+import com.technocreatives.beckon.checkReadList
 import com.technocreatives.beckon.extension.plus
 import com.technocreatives.beckon.util.toBondState
 import io.reactivex.Completable
@@ -35,8 +36,6 @@ import io.reactivex.subjects.SingleSubject
 import java.util.UUID
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.ConnectRequest
-import no.nordicsemi.android.ble.Request.createBond
-import no.nordicsemi.android.ble.Request.removeBond
 import no.nordicsemi.android.ble.callback.DataReceivedCallback
 import no.nordicsemi.android.ble.callback.DataSentCallback
 import no.nordicsemi.android.ble.data.Data
@@ -104,6 +103,18 @@ internal class BeckonBleManager(
         }
     }
 
+    fun readBla(reads: List<Characteristic>, detail: DeviceDetail): Observable<Change> {
+        return when (val list =
+            checkReadList(reads, detail.services, detail.characteristics)) {
+            is Either.Left -> {
+                Observable.error(list.a.toException())
+            }
+            is Either.Right -> {
+                read(list.b)
+            }
+        }
+    }
+
     private val gattCallback = object : BleManagerGattCallback() {
 
         override fun initialize() {
@@ -112,12 +123,15 @@ internal class BeckonBleManager(
                 val services = bluetoothGatt!!.services.map { it.uuid }
                 val characteristics = allCharacteristics(bluetoothGatt!!)
                 val detail = DeviceDetail(services, characteristics)
+
                 // TODO Fix disposable
-                val disposable = subscribeBla(descriptor.subscribes, detail).subscribe({
-                    devicesSubject.onSuccess(detail.right())
-                }, {
-                    devicesSubject.onSuccess(ConnectionError.RequirementFailed(emptyList()).left())
-                })
+                val disposable = subscribeBla(descriptor.subscribes, detail)
+                    .andThen(readBla(descriptor.reads, detail).ignoreElements())
+                    .subscribe({
+                        devicesSubject.onSuccess(detail.right())
+                    }, {
+                        devicesSubject.onSuccess(ConnectionError.RequirementFailed(emptyList()).left())
+                    })
             } else {
                 devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
             }
@@ -279,7 +293,9 @@ internal class BeckonBleManager(
         return Single.create { emitter ->
             val callback = DataReceivedCallback { device, data ->
                 Timber.d("read DataReceivedCallback address: ${this.device.address} uuid: $uuid device: $device data: $data")
-                emitter.onSuccess(Change(uuid, data))
+                val change = Change(uuid, data)
+                changeSubject.onNext(change)
+                emitter.onSuccess(change)
             }
             readCharacteristic(gatt)
                 .with(callback)
@@ -290,8 +306,13 @@ internal class BeckonBleManager(
         }
     }
 
+    fun read(list: List<CharacteristicSuccess.Read>): Observable<Change> {
+        if (list.isEmpty()) return Observable.empty()
+        return Observable.merge(list.map { read(it.id, it.gatt).toObservable() })
+    }
+
     fun subscribe(list: List<CharacteristicSuccess.Notify>): Completable {
-        if (list.isEmpty()) return Completable.error(IllegalArgumentException("Empty notify list"))
+        if (list.isEmpty()) return Completable.complete()
         return Completable.merge(list.map { subscribe(it) })
     }
 

@@ -76,6 +76,15 @@ internal fun checkNotifyList(
             .map { it.map { it as CharacteristicSuccess.Notify } }
 }
 
+internal fun checkReadList(
+    characteristics: List<Characteristic>,
+    services: List<UUID>,
+    details: List<CharacteristicSuccess>
+): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess.Read>> {
+    return checkRequirements(characteristics.map { it.toRequirement(Property.READ) }, services, details)
+        .map { it.map { it as CharacteristicSuccess.Read } }
+}
+
 internal fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
     return find { it.toRequirement() == requirement }
             .toOption()
