@@ -44,6 +44,15 @@ fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
             })
 }
 
+
+fun <Change, State> BeckonDevice.deviceStates(
+        mapper: CharacteristicMapper<Change>,
+        reducer: (State, Change) -> State,
+        defaultState: State
+): Observable<BeckonState<State>> {
+    return deviceStates(mapper, BiFunction { t1, t2 -> reducer(t1, t2) }, defaultState)
+}
+
 fun <Change, State> BeckonDevice.deviceStates(
     mapper: CharacteristicMapper<Change>,
     reducer: BiFunction<State, Change, State>,

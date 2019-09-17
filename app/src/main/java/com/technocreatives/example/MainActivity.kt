@@ -50,6 +50,8 @@ class MainActivity : AppCompatActivity() {
                     Characteristic(temperatureUuid.toUuid(), serviceUUID.toUuid())
             )
             val descriptor = Descriptor(requirements, subscribeList)
+
+            Log.d(TAG, "Connecting to: $it")
             beckon.connect(it, descriptor)
                     .subscribe { device ->
                         update(device.metadata())

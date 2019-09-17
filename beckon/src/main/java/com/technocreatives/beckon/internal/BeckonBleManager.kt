@@ -10,20 +10,8 @@ import arrow.core.Option
 import arrow.core.k
 import arrow.core.left
 import arrow.core.right
+import com.technocreatives.beckon.*
 import com.technocreatives.beckon.BleConnectionState
-import com.technocreatives.beckon.BondState
-import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.Characteristic
-import com.technocreatives.beckon.CharacteristicSuccess
-import com.technocreatives.beckon.ConnectionError
-import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.Descriptor
-import com.technocreatives.beckon.DeviceDetail
-import com.technocreatives.beckon.Property
-import com.technocreatives.beckon.ReadDataException
-import com.technocreatives.beckon.State
-import com.technocreatives.beckon.SubscribeDataException
-import com.technocreatives.beckon.WriteDataException
 import com.technocreatives.beckon.checkNotifyList
 import com.technocreatives.beckon.checkReadList
 import com.technocreatives.beckon.extension.plus
@@ -130,7 +118,7 @@ internal class BeckonBleManager(
                     .subscribe({
                         devicesSubject.onSuccess(detail.right())
                     }, {
-                        devicesSubject.onSuccess(ConnectionError.RequirementFailed(emptyList()).left())
+                        devicesSubject.onSuccess(ConnectionError.BluetoothGattError(it).left())
                     })
             } else {
                 devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
@@ -184,8 +172,8 @@ internal class BeckonBleManager(
             service: BluetoothGattService,
             char: BluetoothGattCharacteristic
         ): Option<CharacteristicSuccess.Notify> {
-            return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
-                char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
+            return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0// &&
+//                char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
             ) {
                 Option.just(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
             } else {
@@ -197,7 +185,7 @@ internal class BeckonBleManager(
             service: BluetoothGattService,
             char: BluetoothGattCharacteristic
         ): Option<CharacteristicSuccess.Read> {
-            return if (char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
+            return if (char.properties > 0) { // and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
                 Option.just(CharacteristicSuccess.Read(char.uuid, service.uuid, char))
             } else {
                 Option.empty()
@@ -208,7 +196,7 @@ internal class BeckonBleManager(
             service: BluetoothGattService,
             char: BluetoothGattCharacteristic
         ): Option<CharacteristicSuccess.Write> {
-            return if (char.properties and BluetoothGattCharacteristic.PERMISSION_WRITE > 0) {
+            return if (char.properties > 0) { // and BluetoothGattCharacteristic.PERMISSION_WRITE > 0) {
                 Option.just(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
             } else {
                 Option.empty()

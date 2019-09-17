@@ -4,7 +4,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'de.mannodermaus.android-junit5'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 28
 
     defaultConfig {
         minSdkVersion 22
@@ -22,6 +22,10 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+
+        development {
+
+        }
     }
 
     lintOptions {
@@ -38,8 +42,11 @@ android {
     }
 
     compileOptions {
-        targetCompatibility '1.8'
-        sourceCompatibility '1.8'
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+        kotlinOptions {
+            freeCompilerArgs ['-Xuse-experimental=kotlin.ExperimentalUnsignedTypes']
+        }
     }
 
     testOptions {
@@ -60,6 +67,7 @@ android {
             }
         }
     }
+    buildToolsVersion = '28.0.3'
     kotlinOptions {
         jvmTarget = "1.8"
     }
@@ -74,7 +82,6 @@ androidExtensions {
 }
 
 dependencies {
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
     // Android x
