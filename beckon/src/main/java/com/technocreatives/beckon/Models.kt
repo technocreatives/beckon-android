@@ -45,9 +45,23 @@ data class Descriptor(
     val reads: List<Characteristic> = emptyList()
 )
 
-data class ScanResult(internal val device: BluetoothDevice, val rssi: Int) {
-    val macAddress: String = device.address
-    val name: String? = device.name
+data class ScanResult(internal val device: BluetoothDevice, val rssi: Int) : Comparable<ScanResult> {
+    val macAddress: String get() = device.address
+    val name: String? get() = device.name
+
+    override fun compareTo(other: ScanResult): Int {
+        val thisName = this.name
+        val otherName = other.name
+
+        if (thisName != null && otherName != null) {
+            val r = thisName.compareTo(otherName)
+            if (r != 0) {
+                return r
+            }
+        }
+
+        return this.macAddress.compareTo(other.macAddress)
+    }
 }
 
 internal sealed class BleConnectionState {

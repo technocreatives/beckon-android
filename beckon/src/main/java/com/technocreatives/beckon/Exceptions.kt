@@ -26,6 +26,7 @@ sealed class ConnectionError : BeckonError {
     data class BleConnectFailed(val macAddress: MacAddress, val status: Int) : ConnectionError()
     data class CreateBondFailed(val macAddress: String, val status: Int) : ConnectionError()
     data class RemoveBondFailed(val macAddress: String, val status: Int) : ConnectionError()
+    data class ConnectFailed(val macAddress: MacAddress, val status: Int) : ConnectionError()
     data class BluetoothGattNull(val macAddress: MacAddress) : ConnectionError()
 
     data class RequirementFailed(val fails: List<CharacteristicFailed>) : ConnectionError()
