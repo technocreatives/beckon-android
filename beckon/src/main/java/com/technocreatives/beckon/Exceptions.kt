@@ -47,6 +47,8 @@ sealed class ConnectionError : BeckonError {
     data class DisconnectDeviceFailed(val macAddress: String, val status: Int) : ConnectionError()
     data class CreateBondFailed(val macAddress: String, val status: Int) : ConnectionError()
     data class RemoveBondFailed(val macAddress: String, val status: Int) : ConnectionError()
+
+    data class GeneralError(val macAddress: MacAddress, val throwable: Throwable) : ConnectionError()
 }
 
 sealed class BeckonDeviceError : BeckonError {

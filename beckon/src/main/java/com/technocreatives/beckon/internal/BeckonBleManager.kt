@@ -131,7 +131,7 @@ internal class BeckonBleManager(
                     .subscribe({
                         devicesSubject.onSuccess(detail.right())
                     }, {
-                        devicesSubject.onSuccess(ConnectionError.RequirementFailed(emptyList()).left())
+                        devicesSubject.onSuccess(ConnectionError.GeneralError(device.address, it).left())
                     })
             } else {
                 devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
