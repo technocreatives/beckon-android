@@ -290,14 +290,14 @@ internal class BeckonClientImpl(
     }
 
     override fun clearAllSavedDevices(): Completable {
-        return Observable.concat(deviceRepository.currentDevices().map { removeSavedDevice(it.macAddress).toObservable() }).ignoreElements()
+        return Observable.concat(deviceRepository.currentDevices().map { remove(it.macAddress).toObservable() }).ignoreElements()
     }
 
     override fun remove(macAddress: String): Single<MacAddress> {
         return beckonStore.currentState().findConnectedDevice(macAddress).fold({
             removeSavedDevice(macAddress)
         }, { device ->
-            removeSavedDevice(macAddress).flatMap { disconnect(device).toSingle { macAddress } }
+            removeSavedDevice(macAddress).flatMap { removeBond(device).toSingle { macAddress } }
         })
     }
 
