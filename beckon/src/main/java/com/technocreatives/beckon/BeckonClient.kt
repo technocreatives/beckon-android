@@ -87,6 +87,7 @@ interface BeckonClient {
 
     fun findSavedDevice(macAddress: MacAddress): Single<SavedMetadata>
     fun savedDevices(): Observable<List<SavedMetadata>>
+    fun clearAllSavedDevices(): Completable
 
     // fun changes(macAddress: MacAddress): Observable<Change>
 
