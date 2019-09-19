@@ -173,3 +173,7 @@ fun BeckonClient.scanAndSave(
         .flatMapSingleE { save(it.metadata.macAddress) }
         .doOnNext { Timber.d("scanAndSave $it") }
 }
+
+fun BeckonClient.connectSavedDevice(macAddress: MacAddress): Single<BeckonDevice> {
+    return findSavedDevice(macAddress).flatMap { connect(it) }
+}

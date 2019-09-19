@@ -35,6 +35,7 @@ import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.SingleSubject
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.ConnectRequest
 import no.nordicsemi.android.ble.callback.DataReceivedCallback
@@ -126,13 +127,21 @@ internal class BeckonBleManager(
                 val detail = DeviceDetail(services, characteristics)
 
                 // TODO Fix disposable
-                val disposable = subscribeBla(descriptor.subscribes, detail)
-                    .andThen(readBla(descriptor.reads, detail).ignoreElements())
-                    .subscribe({
-                        devicesSubject.onSuccess(detail.right())
-                    }, {
-                        devicesSubject.onSuccess(ConnectionError.GeneralError(device.address, it).left())
-                    })
+                val disposable =
+                    Observable.just(Unit).delay(1600, TimeUnit.MILLISECONDS).flatMapCompletable {
+                        subscribeBla(descriptor.subscribes, detail)
+                    }
+                        .andThen(readBla(descriptor.reads, detail).ignoreElements())
+                        .subscribe({
+                            devicesSubject.onSuccess(detail.right())
+                        }, {
+                            devicesSubject.onSuccess(
+                                ConnectionError.GeneralError(
+                                    device.address,
+                                    it
+                                ).left()
+                            )
+                        })
             } else {
                 devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
             }
