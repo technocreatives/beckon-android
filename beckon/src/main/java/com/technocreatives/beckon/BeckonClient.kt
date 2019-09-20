@@ -10,6 +10,7 @@ import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
 import com.technocreatives.beckon.internal.ScannerImpl
 import com.technocreatives.beckon.redux.createBeckonStore
 import com.technocreatives.beckon.util.bluetoothManager
+import com.technocreatives.beckon.util.connectedDevices
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -36,6 +37,41 @@ interface BeckonClient {
             }
 
             return beckonClient
+        }
+
+        fun toggleBluetoothAdapter(context: Context): Completable {
+            return Completable.create {
+                context.bluetoothManager().adapter.disable()
+                context.bluetoothManager().adapter.enable()
+                it.onComplete()
+            }.subscribeOn(AndroidSchedulers.mainThread()).observeOn(AndroidSchedulers.mainThread())
+        }
+
+        fun disconnectAll(context: Context, filter: List<UUID> = emptyList()): Completable {
+            val connectedDevices = context.bluetoothManager().connectedDevices()
+                .filter {
+                    if (filter.isEmpty()) {
+                        true
+                    } else {
+                        val uuids = it.uuids.map { it.uuid }
+
+                        for (uuid in filter) {
+                            if (uuids.contains(uuid)) {
+                                return@filter true
+                            }
+                        }
+
+                        false
+                    }
+                }
+
+            return Observable.fromIterable(connectedDevices)
+                .map {
+                    Timber.d("Disconnecting from: ${it.name} [${it.address}]")
+                }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(AndroidSchedulers.mainThread())
+                .ignoreElements()
         }
 
         fun removeAllBonded(context: Context, filter: List<UUID> = emptyList()): Completable {

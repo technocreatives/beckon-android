@@ -43,11 +43,21 @@ internal class BeckonDeviceImpl(
         Timber.d("disconnect ${metadata.macAddress}")
         return Completable.create { emitter ->
             manager.disconnect()
+                .timeout(3000)
                 .done {
                     Timber.d("Disconnect success ${metadata.macAddress}")
+                    manager.close()
                     emitter.onComplete()
                 }
-                .fail { device, status -> emitter.onError(ConnectionError.DisconnectDeviceFailed(device.address, status).toException()) }
+                .fail { device, status ->
+                    manager.close()
+                    emitter.onError(ConnectionError.DisconnectDeviceFailed(device.address, status).toException())
+                }
+                .invalid {
+                    Timber.wtf("Disconnect ${metadata.macAddress} failed? Invalid.")
+                    manager.close()
+                    emitter.onError(ConnectionError.DisconnectDeviceFailed(metadata.macAddress, -1).toException())
+                }
                 .enqueue()
         }
     }
