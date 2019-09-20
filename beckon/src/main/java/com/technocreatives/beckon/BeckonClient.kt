@@ -2,34 +2,68 @@ package com.technocreatives.beckon
 
 import android.content.Context
 import arrow.core.Either
+import com.technocreatives.beckon.data.DeviceRepository
 import com.technocreatives.beckon.data.DeviceRepositoryImpl
+import com.technocreatives.beckon.extension.removeBond
 import com.technocreatives.beckon.internal.BeckonClientImpl
 import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
 import com.technocreatives.beckon.internal.ScannerImpl
 import com.technocreatives.beckon.redux.createBeckonStore
+import com.technocreatives.beckon.util.bluetoothManager
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
 import no.nordicsemi.android.ble.data.Data
+import timber.log.Timber
+import java.util.*
 
 interface BeckonClient {
 
     companion object {
-        // todo using by lazy
+        private val beckonStore by lazy { createBeckonStore() }
+        private val receiver by lazy { BluetoothAdapterReceiver(beckonStore) }
+        private val scanner by lazy { ScannerImpl() }
 
-        private var beckonClient: BeckonClient? = null
+        private lateinit var deviceRepository: DeviceRepository
+        private lateinit var beckonClient: BeckonClient
 
         // return a singleton instance of client
         fun create(context: Context): BeckonClient {
-            val beckonStore = createBeckonStore()
-            val deviceRepository = DeviceRepositoryImpl(context)
-            val receiver = BluetoothAdapterReceiver(beckonStore)
-            val scanner = ScannerImpl()
-
-            if (beckonClient == null) {
+            if (!::beckonClient.isInitialized) {
+                deviceRepository = DeviceRepositoryImpl(context)
                 beckonClient = BeckonClientImpl(context, beckonStore, deviceRepository, receiver, scanner)
             }
-            return beckonClient!!
+
+            return beckonClient
+        }
+
+        fun removeAllBonded(context: Context, filter: List<UUID> = emptyList()): Completable {
+            val bondedDevices = context.bluetoothManager().adapter.bondedDevices
+                    .filter {
+                        if (filter.isEmpty()) {
+                            true
+                        } else {
+                            val uuids = it.uuids.map { it.uuid }
+
+                            for (uuid in filter) {
+                                if (uuids.contains(uuid)) {
+                                    return@filter true
+                                }
+                            }
+
+                            false
+                        }
+                    }
+
+            return Observable.fromIterable(bondedDevices)
+                    .map {
+                        Timber.d("Removing bond for: ${it.name} [${it.address}]")
+                        it.removeBond()
+                    }
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(AndroidSchedulers.mainThread())
+                    .ignoreElements()
         }
     }
 
