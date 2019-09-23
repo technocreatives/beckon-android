@@ -39,6 +39,7 @@ internal class BeckonDeviceImpl(
         return manager.currentState()
     }
 
+    // This may never complete if bluetooth system is messed up
     override fun disconnect(): Completable {
         Timber.d("disconnect ${metadata.macAddress}")
         return Completable.create { emitter ->

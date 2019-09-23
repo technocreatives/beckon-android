@@ -9,9 +9,11 @@ import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import arrow.core.toOption
+import com.lenguyenthanh.rxarrow.fix
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
+import com.technocreatives.beckon.BeckonException
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
@@ -33,7 +35,6 @@ import com.technocreatives.beckon.util.bluetoothManager
 import com.technocreatives.beckon.util.connectedDevices
 import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.beckon.util.findDevice
-import com.technocreatives.beckon.util.fix
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -166,7 +167,7 @@ internal class BeckonClientImpl(
         descriptor: Descriptor
     ): Single<BeckonDevice> {
         Timber.d("Connect $result")
-        return connect(result.device, descriptor).fix()
+        return connect(result.device, descriptor).fix { BeckonException(it) }
     }
 
     private fun connect(
@@ -192,7 +193,7 @@ internal class BeckonClientImpl(
                     beckonDevice.right()
                 })
             }
-            // .flatMapE { subscribe(it, descriptor) }
+        // .flatMapE { subscribe(it, descriptor) }
     }
 
     private fun subscribe(
@@ -333,7 +334,7 @@ internal class BeckonClientImpl(
     override fun connect(metadata: SavedMetadata): Single<BeckonDevice> {
         return when (val device =
             context.bluetoothManager().findDevice(metadata.macAddress)) {
-            is Some -> tryToReconnect(device.t, metadata.descriptor).fix()
+            is Some -> tryToReconnect(device.t, metadata.descriptor).fix { BeckonException(it) }
             is None -> Single.error(BeckonDeviceError.BondedDeviceNotFound(metadata).toException())
         }
     }
@@ -363,7 +364,7 @@ internal class BeckonClientImpl(
                     }
                 }
             }
-            // .flatMapE { subscribe(it, descriptor) }
+        // .flatMapE { subscribe(it, descriptor) }
     }
 
     override fun unregister(context: Context) {
