@@ -129,7 +129,7 @@ sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: Bl
     }
 }
 
-sealed class CharacteristicFailed(val requirement: Requirement) {
+sealed class CharacteristicFailed(private val requirement: Requirement) {
     class NotSupportWrite(requirement: Requirement) : CharacteristicFailed(requirement)
     class NotSupportRead(requirement: Requirement) : CharacteristicFailed(requirement)
     class NotSupportNotify(requirement: Requirement) : CharacteristicFailed(requirement)

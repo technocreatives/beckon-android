@@ -85,7 +85,7 @@ internal class BeckonBleManager(
     private fun connect(request: ConnectRequest): Single<Either<ConnectionError, DeviceDetail>> {
         request.fail { device, status ->
             Timber.e("ConnectionError ${device.address} status: $status")
-            devicesSubject.onSuccess(ConnectionError.ConnectFailed(device.address, status).left())
+            devicesSubject.onSuccess(ConnectionError.BleConnectFailed(device.address, status).left())
         }.enqueue()
         return devicesSubject.hide()
     }

@@ -78,7 +78,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
     // Android x
-    api 'androidx.core:core-ktx:1.2.0-alpha03'
+    api 'androidx.core:core-ktx:1.2.0-alpha04'
     api 'androidx.annotation:annotation:1.1.0'
 
     // RxJava
@@ -111,6 +111,8 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.28.2'
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
     testImplementation "org.assertj:assertj-core:3.13.2"
+    testImplementation("io.strikt:strikt-core:0.22.1")
+    testImplementation group: 'org.opentest4j', name: 'opentest4j', version: '1.2.0'
 }
 
 task ktlint(type: JavaExec, group: "verification") {
