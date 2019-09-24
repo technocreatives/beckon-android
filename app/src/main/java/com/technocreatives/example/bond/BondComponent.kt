@@ -40,7 +40,7 @@ class BondComponent(private val view: BondActivity) {
                 .build()
 
         val filters = listOf(DeviceFilter(serviceUuid = serviceUUID, address = "FB:3B:77:15:24:D4"))
-        return ScannerSetting(settings, filters)
+        return ScannerSetting(settings, filters, true)
     }
 }
 

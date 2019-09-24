@@ -46,7 +46,7 @@ interface BeckonClient {
 
     fun disconnectAllConnectedButNotSavedDevices(): Completable
 
-    fun search(filters: List<DeviceFilter>, descriptor: Descriptor): Observable<Either<ConnectionError, BeckonDevice>>
+    fun search(setting: ScannerSetting, descriptor: Descriptor): Observable<Either<ConnectionError, BeckonDevice>>
 
     /*
     * Connect to a scanned device and then verify if all characteristics work

@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
 
         val filters = listOf(DeviceFilter(name = "AXKID"))
 
-        beckon.startScan(ScannerSetting(settings, filters))
+        beckon.startScan(ScannerSetting(settings, filters, true))
 
 //        scanDeviceUseCase(characteristics)
 //                .doOnNext { Timber.d("Found $it") }

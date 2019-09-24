@@ -19,7 +19,6 @@ import com.technocreatives.beckon.CharacteristicSuccess
 import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceDetail
-import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
@@ -52,11 +51,16 @@ internal class BeckonClientImpl(
     private val bag = CompositeDisposable()
 
     override fun startScan(setting: ScannerSetting): Observable<ScanResult> {
-        val connected = beckonStore.currentState().connectedDevices.map { it.metadata().macAddress }
-        val saved = deviceRepository.currentDevices().map { it.macAddress }
-        return scanner.startScan(setting)
-            .filter { it.device.address !in connected }
-            .filter { it.device.address !in saved }
+        val originalScanStream = scanner.startScan(setting)
+        return if (setting.useFilter) {
+            val connected = beckonStore.currentState().connectedDevices.map { it.metadata().macAddress }
+            val saved = deviceRepository.currentDevices().map { it.macAddress }
+            originalScanStream
+                .filter { it.device.address !in connected }
+                .filter { it.device.address !in saved }
+        } else {
+            originalScanStream
+        }
     }
 
     override fun stopScan() {
@@ -93,19 +97,27 @@ internal class BeckonClientImpl(
      * filter out saved beckon device
      */
     override fun search(
-        filters: List<DeviceFilter>,
+        setting: ScannerSetting,
         descriptor: Descriptor
     ): Observable<Either<ConnectionError, BeckonDevice>> {
-        val connected = beckonStore.currentState().connectedDevices.map { it.metadata().macAddress }
-        val saved = deviceRepository.currentDevices().map { it.macAddress }
-        Timber.d("Search connected: $connected saved: $saved")
+        Timber.d("Search: $setting")
 
         val connectedDevicesInSystem = context.bluetoothManager()
             .connectedDevices()
-            .filter { device -> filters.any { it.filter(device) } }
-            .filter { it.address !in connected }
-            .filter { it.address !in saved }
-        return Observable.fromArray(*connectedDevicesInSystem.toTypedArray())
+            .filter { device -> setting.filters.any { it.filter(device) } }
+
+        val connectedDevices = if (setting.useFilter) {
+            val connected = beckonStore.currentState().connectedDevices.map { it.metadata().macAddress }
+            val saved = deviceRepository.currentDevices().map { it.macAddress }
+            Timber.d("Search connected: $connected saved: $saved")
+            connectedDevicesInSystem
+                .filter { it.address !in connected }
+                .filter { it.address !in saved }
+        } else {
+            connectedDevicesInSystem
+        }
+
+        return Observable.fromArray(*connectedDevices.toTypedArray())
             .flatMapSingle { connect(it, descriptor) }
     }
 
@@ -127,7 +139,8 @@ internal class BeckonClientImpl(
                     is None -> {
                         when (state.findConnectingDevice(metadata.macAddress)) {
                             is None ->
-                                if (context.bluetoothManager().findDevice(metadata.macAddress) is None) {
+                                if (context.bluetoothManager().adapter.isEnabled &&
+                                    context.bluetoothManager().findDevice(metadata.macAddress) is None) {
                                     BeckonDeviceError.BondedDeviceNotFound(metadata).left()
                                 } else {
                                     BeckonDeviceError.ConnectedDeviceNotFound(metadata).left()

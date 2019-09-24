@@ -29,7 +29,8 @@ data class DeviceFilter(
 
 data class ScannerSetting(
     val settings: ScanSettings,
-    val filters: List<DeviceFilter>
+    val filters: List<DeviceFilter>,
+    val useFilter: Boolean
 )
 
 data class Requirement(

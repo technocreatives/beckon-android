@@ -10,7 +10,6 @@ import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
 import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
-import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
@@ -23,7 +22,7 @@ import no.nordicsemi.android.ble.data.Data
 
 class NoopBeckonClient() : BeckonClient {
     override fun search(
-        filters: List<DeviceFilter>,
+        setting: ScannerSetting,
         descriptor: Descriptor
     ): Observable<Either<ConnectionError, BeckonDevice>> {
         return Observable.never()

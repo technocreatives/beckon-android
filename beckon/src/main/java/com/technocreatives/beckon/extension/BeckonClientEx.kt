@@ -16,7 +16,6 @@ import com.technocreatives.beckon.BeckonResult
 import com.technocreatives.beckon.CharacteristicMapper
 import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
-import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.SavedMetadata
 import com.technocreatives.beckon.ScanResult
@@ -83,7 +82,7 @@ fun BeckonClient.scanAndConnect(
 ): Observable<BeckonResult<BeckonDevice>> {
 
     val searchStream =
-        search(conditions, setting.filters, descriptor).map { it.mapLeft { BeckonException(it) } }
+        search(conditions, setting, descriptor).map { it.mapLeft { BeckonException(it) } }
             .doOnNext { Timber.d("SearchStream $it") }
     val scanStream = scan(conditions, setting)
         .flatMapSingleEither { safeConnect(it, descriptor) }
@@ -125,14 +124,14 @@ fun BeckonClient.scan(
 
 fun BeckonClient.search(
     conditions: Observable<Boolean>,
-    filters: List<DeviceFilter>,
+    setting: ScannerSetting,
     descriptor: Descriptor
 ): Observable<Either<ConnectionError, BeckonDevice>> {
     return conditions
         .switchMap {
             Timber.d("Search switchMap $it")
             if (it) {
-                search(filters, descriptor)
+                search(setting, descriptor)
             } else {
                 Observable.empty()
             }
