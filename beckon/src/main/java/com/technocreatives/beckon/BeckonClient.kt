@@ -37,15 +37,18 @@ interface BeckonClient {
 
     /**
      * return stream of @ScanResult
-     * this may emit exception is something go wrong
+     * this may throw exception if something goes wrong
      */
-
     fun startScan(setting: ScannerSetting): Observable<ScanResult>
 
     fun stopScan()
 
     fun disconnectAllConnectedButNotSavedDevices(): Completable
 
+    /**
+     * Search for all connected devices in the systems which satisfies ScannerSetting
+     * If setting.useFilter == True, this function will ignore all connected and saved devices in Beckon
+     */
     fun search(setting: ScannerSetting, descriptor: Descriptor): Observable<Either<ConnectionError, BeckonDevice>>
 
     /*
@@ -57,6 +60,11 @@ interface BeckonClient {
         descriptor: Descriptor
     ): Single<BeckonDevice>
 
+    /*
+    * Connect to a saved device and then verify if all characteristics work
+    * This function only works with bonded device
+    * Return @BeckonDevice or ConnectFailedException when it fails
+    * */
     fun connect(
         metadata: SavedMetadata
     ): Single<BeckonDevice>
@@ -66,29 +74,29 @@ interface BeckonClient {
 
     /**
      * Save a connected device for longer use
-     * - find the device in set of connected device (return a device or DeviceNotFoundException)
-     * - create bond if necessary (Bonded success or BondFailureException)
-     * - save to database ( Complete or return SaveDeviceException)
+     * - find the device in set of connected device (return a device or @ConnectedDeviceNotFound)
+     * - create bond if necessary (Bonded success or @CreateBondFailed)
+     * - save to database
      */
     fun save(macAddress: MacAddress): Single<MacAddress>
 
     /**
      * Remove a saved device
-     * - Remove Bond ???
      * - Remove from database
      * - Remove from store
+     * - This function does not remove Bond so you have to removeBond before use this function if you want.
      */
     fun remove(macAddress: MacAddress): Single<MacAddress>
 
-    // find a connected device
     fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDevice>
+    /**
+     * Return a stream of state
+      */
     fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDevice>>
     fun connectedDevices(): Observable<List<Metadata>>
 
     fun findSavedDevice(macAddress: MacAddress): Single<SavedMetadata>
     fun savedDevices(): Observable<List<SavedMetadata>>
-
-    // fun changes(macAddress: MacAddress): Observable<Change>
 
     // hook up functions
     fun register(context: Context)

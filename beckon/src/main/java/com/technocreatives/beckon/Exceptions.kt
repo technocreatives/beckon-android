@@ -7,6 +7,7 @@ data class WriteDataException(val macAddress: String, val uuid: UUID, val status
 data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
 data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
 
+// todo use BeckonException instead of Throwable
 typealias BeckonResult<T> = Either<Throwable, T>
 
 interface BeckonError {
@@ -16,7 +17,6 @@ interface BeckonError {
 }
 
 data class BeckonException(val beckonError: BeckonError) : Throwable()
-data class GeneralError(val throwable: Throwable) : BeckonError
 
 sealed class ScanError : BeckonError {
     data class ScanFailed(val errorCode: Int) : ScanError()

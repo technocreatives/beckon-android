@@ -102,10 +102,12 @@ internal fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Req
         .toEither { requirement.toFailed() }
 }
 
-sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: BluetoothGattCharacteristic) {
-    class Notify(id: UUID, service: UUID, gatt: BluetoothGattCharacteristic) : CharacteristicSuccess(id, service, gatt)
-    class Read(id: UUID, service: UUID, gatt: BluetoothGattCharacteristic) : CharacteristicSuccess(id, service, gatt)
-    class Write(id: UUID, service: UUID, gatt: BluetoothGattCharacteristic) : CharacteristicSuccess(id, service, gatt)
+sealed class CharacteristicSuccess {
+    abstract val id: UUID
+    abstract val service: UUID
+    data class Notify(override val id: UUID, override val service: UUID, val gatt: BluetoothGattCharacteristic) : CharacteristicSuccess()
+    data class Read(override val id: UUID, override val service: UUID, val gatt: BluetoothGattCharacteristic) : CharacteristicSuccess()
+    data class Write(override val id: UUID, override val service: UUID, val gatt: BluetoothGattCharacteristic) : CharacteristicSuccess()
 
     private fun property(): Property {
         return when (this) {
@@ -118,33 +120,14 @@ sealed class CharacteristicSuccess(val id: UUID, val service: UUID, val gatt: Bl
     fun toRequirement(): Requirement {
         return Requirement(id, service, property())
     }
-
-    override fun toString(): String {
-        val prefix = when (this) {
-            is Notify -> "CharacteristicSuccess.Notify"
-            is Read -> "CharacteristicSuccess.Read"
-            is Write -> "CharacteristicSuccess.Write"
-        }
-        return "$prefix(id=$id, service=$service, gatt=$gatt)"
-    }
 }
 
-sealed class CharacteristicFailed(private val requirement: Requirement) {
-    class NotSupportWrite(requirement: Requirement) : CharacteristicFailed(requirement)
-    class NotSupportRead(requirement: Requirement) : CharacteristicFailed(requirement)
-    class NotSupportNotify(requirement: Requirement) : CharacteristicFailed(requirement)
-    class ServiceNotFound(requirement: Requirement) : CharacteristicFailed(requirement)
-    class CharacteristicNotFound(requirement: Requirement) : CharacteristicFailed(requirement)
-
-    override fun toString(): String {
-        return when (this) {
-            is NotSupportWrite -> "NotSupportWrite $requirement"
-            is NotSupportRead -> "NotSupportRead $requirement"
-            is NotSupportNotify -> "NotSupportNotify $requirement"
-            is ServiceNotFound -> "ServiceNotFound $requirement"
-            is CharacteristicNotFound -> "CharacteristicNotFound $requirement"
-        }
-    }
+sealed class CharacteristicFailed {
+    data class NotSupportWrite(val requirement: Requirement) : CharacteristicFailed()
+    data class NotSupportRead(val requirement: Requirement) : CharacteristicFailed()
+    data class NotSupportNotify(val requirement: Requirement) : CharacteristicFailed()
+    data class ServiceNotFound(val requirement: Requirement) : CharacteristicFailed()
+    data class CharacteristicNotFound(val requirement: Requirement) : CharacteristicFailed()
 }
 
 fun Requirement.toFailed(): CharacteristicFailed {

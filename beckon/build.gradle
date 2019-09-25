@@ -111,8 +111,7 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:2.28.2'
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
     testImplementation "org.assertj:assertj-core:3.13.2"
-    testImplementation("io.strikt:strikt-core:0.22.1")
-    testImplementation group: 'org.opentest4j', name: 'opentest4j', version: '1.2.0'
+    testImplementation "io.strikt:strikt-core:0.22.2"
 }
 
 task ktlint(type: JavaExec, group: "verification") {

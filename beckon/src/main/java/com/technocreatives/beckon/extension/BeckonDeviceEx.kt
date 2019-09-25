@@ -25,16 +25,6 @@ fun <Change> BeckonDevice.changes(characteristicUUID: UUID, mapper: Characterist
         .map { mapper(it) }
 }
 
-fun <Change, State> BeckonDevice.states(
-    mapper: CharacteristicMapper<Change>,
-    reducer: BiFunction<State, Change, State>,
-    defaultState: State
-): Observable<State> {
-    return changes()
-        .map { mapper(it) }
-        .scan(defaultState, reducer)
-}
-
 fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
     return Observable.combineLatest(
             states(),
@@ -42,29 +32,6 @@ fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
             BiFunction<State, ConnectionState, BeckonState<State>> { t1, t2 ->
                 BeckonState(metadata(), t2, t1)
             })
-}
-
-fun <Change, State> BeckonDevice.deviceStates(
-    mapper: CharacteristicMapper<Change>,
-    reducer: BiFunction<State, Change, State>,
-    defaultState: State
-): Observable<BeckonState<State>> {
-    val states = states(mapper, reducer, defaultState)
-    return Observable.combineLatest(
-        states,
-        connectionStates(),
-        BiFunction<State, ConnectionState, BeckonState<State>> { t1, t2 ->
-            BeckonState(metadata(), t2, t1)
-        })
-}
-
-fun <Change, State> BeckonDevice.subscribe(
-    subscribes: List<Characteristic>,
-    mapper: CharacteristicMapper<Change>,
-    reducer: BiFunction<State, Change, State>,
-    defaultState: State
-): Observable<BeckonState<State>> {
-    return subscribe(subscribes).andThen(deviceStates(mapper, reducer, defaultState))
 }
 
 fun BeckonDevice.subscribe(subscribes: List<Characteristic>): Completable {

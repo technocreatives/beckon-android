@@ -89,19 +89,13 @@ internal class BeckonClientImpl(
         return Completable.mergeArray(*completables)
     }
 
-    /**
-     * get all connected devices in system
-     * filter by list of DeviceFilters
-     * filter by Descriptor
-     * filter out connected beckon device
-     * filter out saved beckon device
-     */
     override fun search(
         setting: ScannerSetting,
         descriptor: Descriptor
     ): Observable<Either<ConnectionError, BeckonDevice>> {
         Timber.d("Search: $setting")
 
+        Timber.d("Search: $setting")
         val connectedDevicesInSystem = context.bluetoothManager()
             .connectedDevices()
             .filter { device -> setting.filters.any { it.filter(device) } }
@@ -170,13 +164,6 @@ internal class BeckonClientImpl(
         return deviceRepository.devices()
     }
 
-    /**
-     *  Connect to a scanned device and then verify if all characteristics work
-     *  @param ScanResult
-     *  @param Descriptor
-     *  @return BeckonDevice
-     */
-
     override fun connect(
         result: ScanResult,
         descriptor: Descriptor
@@ -211,7 +198,6 @@ internal class BeckonClientImpl(
                     beckonDevice.right()
                 })
             }
-        // .flatMapE { subscribe(it, descriptor) }
     }
 
     private fun subscribe(
@@ -264,17 +250,10 @@ internal class BeckonClientImpl(
         }
     }
 
-    /***
-     * Create Bond for a device
-     */
     private fun createBond(device: BeckonDevice): Completable {
-//        return Completable.complete()
         return device.createBond()
     }
 
-    /**
-     * Remove Bond and disconnect device
-     */
     private fun removeBond(device: BeckonDevice): Completable {
         return device.removeBond()
     }
@@ -320,8 +299,6 @@ internal class BeckonClientImpl(
             .subscribe { reconnectSavedDevices(it) }
             .disposedBy(bag)
 
-//        reconnectSavedDevices(deviceRepository.currentDevices())
-
         beckonStore.states()
             .map { it.bluetoothState }
             .distinctUntilChanged()
@@ -331,7 +308,7 @@ internal class BeckonClientImpl(
                     it.disconnect().subscribe({
                         Timber.d("Disconnect after BT_OFF success")
                     }, {
-                        Timber.w(it, "Disconnect after BT_OFF falied")
+                        Timber.w(it, "Disconnect after BT_OFF failed")
                     })
                 }
                 beckonStore.dispatch(BeckonAction.RemoveAllConnectedDevices)
@@ -360,7 +337,6 @@ internal class BeckonClientImpl(
 
     override fun unregister(context: Context) {
         bluetoothReceiver.unregister(context)
-        // todo disconnect all devices???
         bag.clear()
     }
 

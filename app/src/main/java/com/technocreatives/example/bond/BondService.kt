@@ -13,7 +13,6 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import com.technocreatives.example.App
 import com.technocreatives.example.R
-import com.technocreatives.example.domain.FetchDevicesUseCase
 import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
 
@@ -22,7 +21,6 @@ class BondService : Service() {
 
     private val beckon by lazy { App[this].beckonClient() }
 
-    private val fetchDevicesUseCase by lazy { FetchDevicesUseCase(beckon) }
 
     private val bag = CompositeDisposable()
 

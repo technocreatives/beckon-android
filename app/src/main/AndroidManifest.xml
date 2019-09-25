@@ -33,7 +33,6 @@
             </intent-filter>
         </activity>
 
-        <service android:name="com.technocreatives.example.BluetoothService"/>
 
         <service android:name=".bond.BondService"/>
 
