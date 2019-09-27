@@ -14,61 +14,61 @@ internal class BeckonManagerCallbacks(
 ) : BleManagerCallbacks {
 
     override fun onDeviceDisconnected(device: BluetoothDevice) {
-        Timber.d("onDeviceDisconnected $device")
+        Timber.i("onDeviceDisconnected $device")
         stateCallback(BleConnectionState.Disconnected)
     }
 
     override fun onDeviceDisconnecting(device: BluetoothDevice) {
-        Timber.d("onDeviceDisconnecting $device")
+        Timber.i("onDeviceDisconnecting $device")
         stateCallback(BleConnectionState.Disconnecting)
     }
 
     override fun onDeviceConnected(device: BluetoothDevice) {
-        Timber.d("onDeviceConnected $device")
-        Timber.d("Connect to ${device.debugInfo()}")
+        Timber.i("onDeviceConnected $device")
+        Timber.i("Connect to ${device.debugInfo()}")
         stateCallback(BleConnectionState.Connected)
     }
 
     override fun onDeviceNotSupported(device: BluetoothDevice) {
-        Timber.d("onDeviceNotSupported ${device.debugInfo()}")
+        Timber.i("onDeviceNotSupported ${device.debugInfo()}")
         stateCallback(BleConnectionState.NotSupported)
     }
 
     override fun onBondingFailed(device: BluetoothDevice) {
-        Timber.d("onBondingFailed ${device.debugInfo()}")
+        Timber.i("onBondingFailed ${device.debugInfo()}")
         bondStateSubject.onNext(BondState.NotBonded)
     }
 
     override fun onServicesDiscovered(device: BluetoothDevice, optionalServicesFound: Boolean) {
-        Timber.d("onServicesDiscovered ${device.debugInfo()} $optionalServicesFound")
+        Timber.i("onServicesDiscovered ${device.debugInfo()} $optionalServicesFound")
     }
 
     override fun onBondingRequired(device: BluetoothDevice) {
-        Timber.d("onBondingRequired ${device.debugInfo()}")
+        Timber.i("onBondingRequired ${device.debugInfo()}")
     }
 
     override fun onLinkLossOccurred(device: BluetoothDevice) {
-        Timber.d("onLinkLossOccurred ${device.debugInfo()}")
+        Timber.i("onLinkLossOccurred ${device.debugInfo()}")
         stateCallback(BleConnectionState.Disconnected)
     }
 
     override fun onBonded(device: BluetoothDevice) {
-        Timber.d("onBonded ${device.debugInfo()}")
+        Timber.i("onBonded ${device.debugInfo()}")
         bondStateSubject.onNext(BondState.Bonded)
     }
 
     override fun onDeviceReady(device: BluetoothDevice) {
-        Timber.d("onDeviceReady ${device.debugInfo()}")
+        Timber.i("onDeviceReady ${device.debugInfo()}")
         stateCallback(BleConnectionState.Ready)
     }
 
     override fun onError(device: BluetoothDevice, message: String, errorCode: Int) {
-        Timber.d("onError Device: ${device.debugInfo()} Message: $message ErrorCode: $errorCode")
+        Timber.w("onError Device: ${device.debugInfo()} Message: $message ErrorCode: $errorCode")
         stateCallback(BleConnectionState.Failed(message, errorCode))
     }
 
     override fun onDeviceConnecting(device: BluetoothDevice) {
-        Timber.d("onDeviceConnecting ${device.debugInfo()}")
+        Timber.i("onDeviceConnecting ${device.debugInfo()}")
         stateCallback(BleConnectionState.Connecting)
     }
 }

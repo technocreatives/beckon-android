@@ -1,6 +1,7 @@
 package com.technocreatives.beckon.extension
 
 import arrow.core.Either
+import arrow.core.identity
 import arrow.core.left
 import arrow.core.right
 import com.lenguyenthanh.rxarrow.either
@@ -26,13 +27,13 @@ import io.reactivex.Single
 import timber.log.Timber
 
 fun BeckonClient.devicesStates(addresses: List<String>): Observable<List<Either<BeckonDeviceError, BeckonState<State>>>> {
+    Timber.d("deviceStates $addresses")
     if (addresses.isEmpty()) {
         return Observable.never()
     }
     val devices = addresses.map { deviceStates(it) }
-    Timber.d("deviceStates $devices")
     return Observable.combineLatest(devices) {
-        Timber.d("combineLatest without State ${it[0]}")
+        Timber.d("deviceStates combineLatest $it")
         it.map { it as Either<BeckonDeviceError, BeckonState<State>> }.toList()
     }
 }
@@ -55,7 +56,6 @@ fun BeckonClient.scanAndConnect(
 
     val searchStream =
         search(conditions, setting, descriptor).map { it.mapLeft { BeckonException(it) } }
-            .doOnNext { Timber.d("SearchStream $it") }
     val scanStream = scan(conditions, setting)
         .flatMapSingleEither { safeConnect(it, descriptor) }
 
@@ -76,20 +76,20 @@ fun BeckonClient.scan(
 ): Observable<BeckonResult<ScanResult>> {
     return conditions
         .switchMap {
-            Timber.d("Scan switchMap $it")
             if (it) {
+                Timber.d("Scan conditions are meet, start scanning")
                 startScan(setting)
             } else {
+                Timber.d("Scan conditions are not meet, stop scanning")
                 stopScan()
                 Observable.empty()
             }
         }
         .distinct { it.macAddress }
-        .map { it.right() as BeckonResult<ScanResult> }
-        .onErrorReturn { it.left() }
-        .doOnNext { Timber.d("scan $it") }
+        .either(::identity)
+        .doOnNext { Timber.d("Scan found $it") }
         .doOnDispose {
-            Timber.d("doOnDispose stop scan")
+            Timber.d("Scan stream is disposed, stop scanning")
             stopScan()
         }
 }
@@ -101,13 +101,15 @@ fun BeckonClient.search(
 ): Observable<Either<ConnectionError, BeckonDevice>> {
     return conditions
         .switchMap {
-            Timber.d("Search switchMap $it")
             if (it) {
+                Timber.d("Scan conditions are meet, start searching")
                 search(setting, descriptor)
             } else {
+                Timber.d("Scan conditions are not meet, stop searching")
                 Observable.empty()
             }
         }
+        .doOnNext { Timber.d("Search found $it") }
 }
 
 fun BeckonClient.scanAndSave(
@@ -120,7 +122,7 @@ fun BeckonClient.scanAndSave(
         .flatMapE { it.deviceStates() }
         .filterE { deviceState -> filter(deviceState.state) }
         .flatMapSingleE { save(it.metadata.macAddress) }
-        .doOnNext { Timber.d("scanAndSave $it") }
+        .doOnNext { Timber.d("scanAndSave found $it") }
 }
 
 fun BeckonClient.connectSavedDevice(macAddress: MacAddress): Single<BeckonDevice> {

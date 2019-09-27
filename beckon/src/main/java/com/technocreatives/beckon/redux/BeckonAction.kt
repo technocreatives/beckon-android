@@ -10,7 +10,6 @@ internal sealed class BeckonAction {
     data class RemoveConnectedDevice(val device: BeckonDevice) : BeckonAction()
     data class AddConnectingDevice(val metadata: SavedMetadata) : BeckonAction()
     data class RemoveConnectingDevice(val metadata: SavedMetadata) : BeckonAction()
-    // data class MoveToConnectedDevice(val device: BeckonDevice): BeckonAction()
     data class ChangeBluetoothState(val state: BluetoothState) : BeckonAction()
     object RemoveAllConnectedDevices : BeckonAction()
 }

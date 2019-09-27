@@ -8,8 +8,8 @@ fun Disposable.disposedBy(container: DisposableContainer) {
     container.add(this)
 }
 
-fun CompletableEmitter.safe(lamda: (CompletableEmitter.() -> Unit)) {
+fun CompletableEmitter.safe(f: (CompletableEmitter.() -> Unit)) {
     if (!this.isDisposed) {
-        lamda.invoke(this)
+        f.invoke(this)
     }
 }

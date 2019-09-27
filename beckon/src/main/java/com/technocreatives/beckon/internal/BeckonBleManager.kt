@@ -48,8 +48,7 @@ internal class BeckonBleManager(
     context: Context,
     val device: BluetoothDevice,
     val descriptor: Descriptor
-) :
-    BleManager<BeckonManagerCallbacks>(context) {
+) : BleManager<BeckonManagerCallbacks>(context) {
 
     private var bluetoothGatt: BluetoothGatt? = null
 
@@ -77,7 +76,7 @@ internal class BeckonBleManager(
 
         mCallbacks = BeckonManagerCallbacks(bondSubject, onStateChange)
         // TODO Fix disposable
-        val statesDisposable = states.subscribe { Timber.d("Oh yeah $device $it") }
+        val statesDisposable = states.subscribe { Timber.d("New states of $device $it") }
     }
 
     fun states() = states
@@ -85,7 +84,12 @@ internal class BeckonBleManager(
     private fun connect(request: ConnectRequest): Single<Either<ConnectionError, DeviceDetail>> {
         request.fail { device, status ->
             Timber.e("ConnectionError ${device.address} status: $status")
-            devicesSubject.onSuccess(ConnectionError.BleConnectFailed(device.address, status).left())
+            devicesSubject.onSuccess(
+                ConnectionError.BleConnectFailed(
+                    device.address,
+                    status
+                ).left()
+            )
         }.enqueue()
         return devicesSubject.hide()
     }
@@ -154,7 +158,7 @@ internal class BeckonBleManager(
         override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
             Timber.d("isRequiredServiceSupported $gatt")
             val services = gatt.services.map { it.uuid }
-            Timber.d("All services $services")
+            Timber.d("All discovered services $services")
             bluetoothGatt = gatt
 
             return true
@@ -334,7 +338,7 @@ internal class BeckonBleManager(
         return Completable.create { emitter ->
             Timber.d("setNotification callback $uuid")
             val callback = DataReceivedCallback { device, data ->
-                Timber.d("DataReceivedCallback $device $data")
+                Timber.d("notify DataReceivedCallback $device $data")
                 changeSubject.onNext(Change(uuid, data))
             }
             val readCallback = DataReceivedCallback { device, data ->
@@ -344,6 +348,7 @@ internal class BeckonBleManager(
             setNotificationCallback(gatt).with(callback)
             enableNotifications(gatt)
                 .fail { device, status ->
+                    Timber.w("EnableNotification request failed: $device $status")
                     emitter.safe {
                         onError(
                             SubscribeDataException(
@@ -359,7 +364,7 @@ internal class BeckonBleManager(
                 }
                 .enqueue()
             readCharacteristic(gatt).with(readCallback)
-                .fail { device, status -> Timber.d("LLLLLLLLLL: $device $status") }
+                .fail { device, status -> Timber.w("Read request failed: $device $status") }
                 .enqueue()
         }
     }
@@ -368,6 +373,7 @@ internal class BeckonBleManager(
         return Completable.create { emitter ->
             disableNotifications(notify.gatt)
                 .fail { device, status ->
+                    Timber.w("DisableNotification request failed: $device $status")
                     emitter.onError(
                         SubscribeDataException(
                             device.address,
@@ -382,7 +388,7 @@ internal class BeckonBleManager(
     }
 
     override fun log(priority: Int, message: String) {
-        Timber.d(message)
+        Timber.log(priority, message)
     }
 
     override fun toString(): String {
