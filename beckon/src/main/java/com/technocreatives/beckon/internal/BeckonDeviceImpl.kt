@@ -1,16 +1,7 @@
 package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothDevice
-import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.BondState
-import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicSuccess
-import com.technocreatives.beckon.ConnectionError
-import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.Metadata
-import com.technocreatives.beckon.State
-import com.technocreatives.beckon.extension.plus
-import com.technocreatives.beckon.extension.subscribe
+import com.technocreatives.beckon.*
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -18,9 +9,9 @@ import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 
 internal class BeckonDeviceImpl(
-    private val bluetoothDevice: BluetoothDevice,
-    private val manager: BeckonBleManager,
-    private val metadata: Metadata
+        private val bluetoothDevice: BluetoothDevice,
+        private val manager: BeckonBleManager,
+        private val metadata: Metadata
 ) : BeckonDevice {
 
     override fun connectionStates(): Observable<ConnectionState> {
@@ -44,12 +35,22 @@ internal class BeckonDeviceImpl(
         Timber.d("disconnect ${metadata.macAddress}")
         return Completable.create { emitter ->
             manager.disconnect()
-                .done {
-                    Timber.d("Disconnect success ${metadata.macAddress}")
-                    emitter.onComplete()
-                }
-                .fail { device, status -> emitter.onError(ConnectionError.DisconnectDeviceFailed(device.address, status).toException()) }
-                .enqueue()
+                    .timeout(3000)
+                    .done {
+                        Timber.d("Disconnect success ${metadata.macAddress}")
+                        manager.close()
+                        emitter.onComplete()
+                    }
+                    .fail { device, status ->
+                        manager.close()
+                        emitter.onError(ConnectionError.DisconnectDeviceFailed(device.address, status).toException())
+                    }
+                    .invalid {
+                        Timber.wtf("Disconnect ${metadata.macAddress} failed? Invalid.")
+                        manager.close()
+                        emitter.onError(ConnectionError.DisconnectDeviceFailed(metadata.macAddress, -1).toException())
+                    }
+                    .enqueue()
         }
     }
 
