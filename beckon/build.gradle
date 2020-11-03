@@ -4,12 +4,12 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'de.mannodermaus.android-junit5'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 22
-        targetSdkVersion 29
-        buildToolsVersion = "29.0.2"
+        targetSdkVersion 30
+        buildToolsVersion = "30.0.2"
         versionCode 1
         versionName "0.0.1"
 
@@ -67,7 +67,7 @@ android {
             }
         }
     }
-    buildToolsVersion = '28.0.3'
+    buildToolsVersion = '30.0.3'
     kotlinOptions {
         jvmTarget = "1.8"
     }

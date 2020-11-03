@@ -100,6 +100,10 @@ class NoopBeckonClient() : BeckonClient {
         throw UnsupportedOperationException("not implemented")
     }
 
+    override fun clearAllSavedDevices(): Completable {
+        TODO("Not yet implemented")
+    }
+
     override fun disconnect(macAddress: String): Completable {
         return Completable.never()
     }

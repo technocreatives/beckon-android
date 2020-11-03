@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
             )
             val descriptor = Descriptor(requirements, subscribeList)
 
-            Log.d(TAG, "Connecting to: $it")
+            Timber.d("Connecting to: $it")
             beckon.connect(it, descriptor)
                     .subscribe { device ->
                         update(device.metadata())
