@@ -293,6 +293,10 @@ internal class BeckonClientImpl(
         return Observable.concat(deviceRepository.currentDevices().map { remove(it.macAddress).toObservable() }).ignoreElements()
     }
 
+    override fun replaceSavedDevices(data: List<SavedMetadata>): Single<List<SavedMetadata>> {
+        return deviceRepository.saveDevices(data)
+    }
+
     override fun remove(macAddress: String): Single<MacAddress> {
         return beckonStore.currentState().findConnectedDevice(macAddress).fold({
             removeSavedDevice(macAddress)

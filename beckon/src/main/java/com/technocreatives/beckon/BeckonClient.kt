@@ -123,6 +123,9 @@ interface BeckonClient {
     fun savedDevices(): Observable<List<SavedMetadata>>
     fun clearAllSavedDevices(): Completable
 
+
+    // TODO This is a ugly hack up update the devices with new descriptors
+    fun replaceSavedDevices(data: List<SavedMetadata>): Single<List<SavedMetadata>>
     // fun changes(macAddress: MacAddress): Observable<Change>
 
     // hook up functions
