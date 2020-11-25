@@ -7,6 +7,11 @@
     package="com.technocreatives.example"
 >
 
+    <uses-feature
+            android:name="android.hardware.bluetooth"
+            android:required="true"
+            tools:ignore="UnsupportedTvHardware" />
+
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
