@@ -36,14 +36,3 @@ fun RecyclerView.init(adapter: RecyclerView.Adapter<*>, layoutManager: RecyclerV
     this.adapter = adapter
 }
 
-fun Context.linearLayoutManager(direction: Int): LinearLayoutManager {
-    val linearLayoutManage = LinearLayoutManager(this)
-    linearLayoutManage.orientation = direction
-    return linearLayoutManage
-}
-
-fun Context.horizontalLayoutManager() =
-    linearLayoutManager(LinearLayoutManager.HORIZONTAL)
-
-fun Context.verticalLayoutManager() =
-    linearLayoutManager(LinearLayoutManager.VERTICAL)

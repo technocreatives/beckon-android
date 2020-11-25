@@ -1,15 +1,15 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'de.mannodermaus.android-junit5'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 22
-        targetSdkVersion 29
-        buildToolsVersion = "29.0.2"
+        targetSdkVersion 30
+        buildToolsVersion = "30.0.2"
         versionCode 1
         versionName "0.1.0"
 
@@ -63,14 +63,11 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    buildToolsVersion '30.0.2'
 }
 
 configurations {
     ktlint
-}
-
-androidExtensions {
-    experimental = true
 }
 
 dependencies {
@@ -78,7 +75,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
     // Android x
-    api 'androidx.core:core-ktx:1.2.0-alpha04'
+    api 'androidx.core:core-ktx:1.5.0-alpha05'
     api 'androidx.annotation:annotation:1.1.0'
 
     // RxJava
@@ -95,6 +92,7 @@ dependencies {
 
     implementation "com.jakewharton.timber:timber:$timber"
     implementation "com.squareup.moshi:moshi:$moshi"
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:$moshi")
     implementation "com.github.lenguyenthanh:simpleredux:$simpleredux"
 
     // Arrows
@@ -109,8 +107,8 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     testImplementation 'org.mockito:mockito-core:2.28.2'
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
-    testImplementation "org.assertj:assertj-core:3.13.2"
+    testImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
+    testImplementation 'org.assertj:assertj-core:3.18.1'
     testImplementation "io.strikt:strikt-core:0.22.2"
 }
 

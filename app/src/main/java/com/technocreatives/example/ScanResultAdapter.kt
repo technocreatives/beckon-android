@@ -3,9 +3,9 @@ package com.technocreatives.example
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.technocreatives.beckon.ScanResult
-import kotlinx.android.synthetic.main.view_item_device.view.*
 
 typealias OnSelectedResult = (ScanResult) -> Unit
 
@@ -34,6 +34,7 @@ class ScanResultAdapter(
     ) : RecyclerView.ViewHolder(viewItem) {
 
         fun bind(device: ScanResult) = with(viewItem) {
+            val tvDevice = viewItem.findViewById<TextView>(R.id.tvDevice)
             tvDevice.text = "${device.macAddress} ${device.name}"
             setOnClickListener {
                 onClick(device)

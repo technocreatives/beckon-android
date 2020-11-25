@@ -1,6 +1,7 @@
 package com.technocreatives.beckon
 
 import android.bluetooth.BluetoothDevice
+import com.squareup.moshi.JsonClass
 import java.util.UUID
 import no.nordicsemi.android.ble.data.Data
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
@@ -33,12 +34,14 @@ data class ScannerSetting(
     val useFilter: Boolean
 )
 
+@JsonClass(generateAdapter = true)
 data class Requirement(
     val uuid: UUID,
     val service: UUID,
     val property: Property
 ) // mandatory characteristic
 
+@JsonClass(generateAdapter = true)
 data class Descriptor(
     val requirements: List<Requirement> = emptyList(),
     val subscribes: List<Characteristic> = emptyList(),
@@ -94,6 +97,7 @@ sealed class BondState {
     }
 }
 
+@JsonClass(generateAdapter = true)
 data class Characteristic(val uuid: UUID, val service: UUID) {
     fun toRequirement(property: Property): Requirement {
         return Requirement(uuid, service, property)

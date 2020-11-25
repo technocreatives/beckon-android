@@ -2,11 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 22
-        targetSdkVersion 29
+        targetSdkVersion 30
         buildToolsVersion = "29.0.2"
         versionCode 1
         versionName "1.0"
@@ -39,6 +39,7 @@ android {
         targetCompatibility '1.8'
         sourceCompatibility '1.8'
     }
+    buildToolsVersion '30.0.2'
 }
 
 configurations {
@@ -50,7 +51,7 @@ dependencies {
     implementation project(':beckon')
 
     // Android x
-    api 'androidx.core:core-ktx:1.2.0-alpha03'
+    api 'androidx.core:core-ktx:1.5.0-alpha05'
     api 'androidx.annotation:annotation:1.1.0'
 
     // RxJava
@@ -60,13 +61,13 @@ dependencies {
     // Code quality tools
     ktlint "com.github.shyiko:ktlint:$ktlint_version"
 
-    implementation "com.jakewharton.timber:timber:$timber"
+    implementation "com.jakewharton.timber:timber:4.7.1"
 
     // Arrows
     implementation "io.arrow-kt:arrow-core-data:$arrow_version"
     implementation "io.arrow-kt:arrow-syntax:$arrow_version"
 
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.1'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }

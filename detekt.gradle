@@ -1,8 +1,14 @@
 apply plugin: 'io.gitlab.arturbosch.detekt'
 
 detekt {
-    config = files("$rootDir/detekt-config.yml")
-    filters = ".*build.*,.*/resources/.*,.*/tmp/.*"
-    //Optional baseline, uncomment & run gradle command detektBaseline to exclude existing issues
-    //baseline = file("detekt-baseline.xml")
+    failFast = true // fail build on any finding
+    buildUponDefaultConfig = true // preconfigure defaults
+    config = files("$rootDir/detekt-config.yml") // point to your custom config defining rules to run, overwriting default behavior
+//    baseline = file("$projectDir/config/baseline.xml") // a way of suppressing issues before introducing detekt
+
+    reports {
+        html.enabled = true // observe findings in your browser with structure and code snippets
+        xml.enabled = true // checkstyle like format mainly for integrations like Jenkins
+        txt.enabled = true // similar to the console output, contains issue signature to manually edit baseline files
+    }
 }

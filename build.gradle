@@ -4,16 +4,16 @@ buildscript {
     // all library versions
     ext.rxJava = '2.2.8'
     ext.rxAndroid = '2.1.1'
-    ext.kotlin_version = '1.3.50'
+    ext.kotlin_version = '1.4.20'
     ext.arrow_version = "0.10.0"
     ext.rxarrow = "5335e385bc"
     ext.timber = '4.7.1'
     ext.sharedPreferences = '1.1.0'
-    ext.rxBindingVersion = '3.0.0-alpha2'
+    ext.rxBindingVersion = '3.1.0'
     ext.nsScannerVersion = '1.4.3'
     ext.nsBleVersion = '2.1.1'
     ext.nsDfuVersion = '1.9.0'
-    ext.moshi = '1.8.0'
+    ext.moshi = '1.11.0'
 
     ext.simpleredux = '4a0dfa33d6'
     ext.statemachine = '0.02'
@@ -30,19 +30,21 @@ buildscript {
 
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.5.0'
+        classpath 'com.android.tools.build:gradle:4.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.4.2.1"
+        classpath "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
     }
 }
 
 plugins {
-    id "io.gitlab.arturbosch.detekt" version "1.0.0-RC14"
+    id "io.gitlab.arturbosch.detekt" version "1.3.1"
 }
 
 allprojects {
     apply from: "$rootDir/detekt.gradle"
 }
+
+tasks.detekt.jvmTarget = "1.8"
 
 allprojects {
     repositories {

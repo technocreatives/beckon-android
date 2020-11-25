@@ -6,7 +6,6 @@ import com.technocreatives.example.common.extension.toUuid
 import io.reactivex.functions.BiFunction
 import java.util.Date
 
-
 const val serviceUUID = "0000fff0-0000-1000-8000-00805f9b34fb"
 const val seatUuId = "0000fff3-0000-1000-8000-00805f9b34fb"
 const val temperatureUuid = "0000fff2-0000-1000-8000-00805f9b34fb"

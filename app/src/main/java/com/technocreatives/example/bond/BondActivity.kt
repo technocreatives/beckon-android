@@ -26,14 +26,7 @@ class BondActivity : AppCompatActivity(), EasyPermissions.PermissionCallbacks {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_test)
-        bindView()
-
         startBondService()
-
-    }
-
-    private fun bindView() {
-
     }
 
     override fun onResume() {

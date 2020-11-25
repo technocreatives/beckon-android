@@ -3,9 +3,6 @@ package com.technocreatives.example.bond
 import com.technocreatives.beckon.CharacteristicMapper
 import io.reactivex.functions.BiFunction
 
-
-
-//
 sealed class StateChange {
     class BondValue(val value: String) : StateChange()
     object UFO : StateChange()

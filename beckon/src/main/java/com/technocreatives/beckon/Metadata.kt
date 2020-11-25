@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.toOption
+import com.squareup.moshi.JsonClass
 import com.technocreatives.beckon.util.parallelValidate
 import com.technocreatives.beckon.util.toValidated
 import java.util.UUID
@@ -18,9 +19,9 @@ data class Metadata(
 
     fun savedMetadata(): SavedMetadata {
         return SavedMetadata(
-                macAddress,
-                name,
-                descriptor
+            macAddress,
+            name,
+            descriptor
         )
     }
 
@@ -45,7 +46,9 @@ internal fun checkRequirement(
 ): Either<CharacteristicFailed, CharacteristicSuccess> {
     return when {
         requirement.service !in services -> CharacteristicFailed.ServiceNotFound(requirement).left()
-        requirement.uuid !in characteristics.map { it.id } -> CharacteristicFailed.CharacteristicNotFound(requirement).left()
+        requirement.uuid !in characteristics.map { it.id } -> CharacteristicFailed.CharacteristicNotFound(
+            requirement
+        ).left()
         else -> characteristics.findCharacteristic(requirement)
     }
 }
@@ -56,10 +59,10 @@ internal fun checkRequirements(
     characteristics: List<CharacteristicSuccess>
 ): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess>> {
     return requirements
-            .map { checkRequirement(it, services, characteristics).toValidated() }
-            .parallelValidate()
-            .leftMap { ConnectionError.RequirementFailed(it.all) }
-            .toEither()
+        .map { checkRequirement(it, services, characteristics).toValidated() }
+        .parallelValidate()
+        .leftMap { ConnectionError.RequirementFailed(it.all) }
+        .toEither()
 }
 
 internal fun checkNotify(
@@ -67,8 +70,12 @@ internal fun checkNotify(
     services: List<UUID>,
     characteristics: List<CharacteristicSuccess>
 ): Either<CharacteristicFailed, CharacteristicSuccess.Notify> {
-    return checkRequirement(characteristic.toRequirement(Property.NOTIFY), services, characteristics)
-            .map { it as CharacteristicSuccess.Notify }
+    return checkRequirement(
+        characteristic.toRequirement(Property.NOTIFY),
+        services,
+        characteristics
+    )
+        .map { it as CharacteristicSuccess.Notify }
 }
 
 internal fun checkNotifyList(
@@ -76,8 +83,12 @@ internal fun checkNotifyList(
     services: List<UUID>,
     details: List<CharacteristicSuccess>
 ): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess.Notify>> {
-    return checkRequirements(characteristics.map { it.toRequirement(Property.NOTIFY) }, services, details)
-            .map { it.map { it as CharacteristicSuccess.Notify } }
+    return checkRequirements(
+        characteristics.map { it.toRequirement(Property.NOTIFY) },
+        services,
+        details
+    )
+        .map { it.map { it as CharacteristicSuccess.Notify } }
 }
 
 internal fun checkReadList(
@@ -85,14 +96,18 @@ internal fun checkReadList(
     services: List<UUID>,
     details: List<CharacteristicSuccess>
 ): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess.Read>> {
-    return checkRequirements(characteristics.map { it.toRequirement(Property.READ) }, services, details)
+    return checkRequirements(
+        characteristics.map { it.toRequirement(Property.READ) },
+        services,
+        details
+    )
         .map { it.map { it as CharacteristicSuccess.Read } }
 }
 
 internal fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
     return find { it.toRequirement() == requirement }
-            .toOption()
-            .toEither { requirement.toFailed() }
+        .toOption()
+        .toEither { requirement.toFailed() }
 }
 
 internal fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
@@ -105,9 +120,24 @@ internal fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Req
 sealed class CharacteristicSuccess {
     abstract val id: UUID
     abstract val service: UUID
-    data class Notify(override val id: UUID, override val service: UUID, val gatt: BluetoothGattCharacteristic) : CharacteristicSuccess()
-    data class Read(override val id: UUID, override val service: UUID, val gatt: BluetoothGattCharacteristic) : CharacteristicSuccess()
-    data class Write(override val id: UUID, override val service: UUID, val gatt: BluetoothGattCharacteristic) : CharacteristicSuccess()
+
+    data class Notify(
+        override val id: UUID,
+        override val service: UUID,
+        val gatt: BluetoothGattCharacteristic
+    ) : CharacteristicSuccess()
+
+    data class Read(
+        override val id: UUID,
+        override val service: UUID,
+        val gatt: BluetoothGattCharacteristic
+    ) : CharacteristicSuccess()
+
+    data class Write(
+        override val id: UUID,
+        override val service: UUID,
+        val gatt: BluetoothGattCharacteristic
+    ) : CharacteristicSuccess()
 
     private fun property(): Property {
         return when (this) {
@@ -138,6 +168,7 @@ fun Requirement.toFailed(): CharacteristicFailed {
     }
 }
 
+@JsonClass(generateAdapter = true)
 data class SavedMetadata(
     val macAddress: MacAddress,
     val name: String,

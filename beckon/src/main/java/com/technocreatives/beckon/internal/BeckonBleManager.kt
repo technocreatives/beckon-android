@@ -94,9 +94,9 @@ internal class BeckonBleManager(
         return devicesSubject.hide()
     }
 
-    fun connect(): Single<Either<ConnectionError, DeviceDetail>> {
+    fun connect(retryAttempts: Int = 3, retryDelay: Int = 100): Single<Either<ConnectionError, DeviceDetail>> {
         val request = connect(device)
-            .retry(3, 100)
+            .retry(retryAttempts, retryDelay)
             .useAutoConnect(true)
         return connect(request)
     }

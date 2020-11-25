@@ -45,4 +45,3 @@ class BondComponent(private val view: BondActivity) {
 }
 
 //"D5:CD:BF:86:27:AC"
-
