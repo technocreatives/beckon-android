@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'de.mannodermaus.android-junit5'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
-        minSdkVersion 23
-        targetSdkVersion 29
+        minSdkVersion 24
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0-alpha"
 
@@ -88,7 +88,7 @@ dependencies {
     implementation "io.arrow-kt:arrow-core-extensions:$arrow_version"
 
     // spek
-    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
+    testImplementation "org.spekframework.spek2:spek-runtime-jvm:$spek_version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
     // spek requires kotlin-reflect, omit when already in classpath
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
