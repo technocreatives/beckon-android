@@ -19,7 +19,7 @@ buildscript {
     ext.statemachine = '0.02'
 
     // Quality tools
-    ext.ktlint_version = '0.34.2'
+    ext.ktlint_version = '0.41.0'
 
     // test tools
     ext.spek_version = '2.0.6'

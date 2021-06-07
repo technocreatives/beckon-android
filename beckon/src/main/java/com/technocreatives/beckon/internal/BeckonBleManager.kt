@@ -34,14 +34,14 @@ import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.SingleSubject
-import java.util.UUID
-import java.util.concurrent.TimeUnit
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.ConnectRequest
 import no.nordicsemi.android.ble.callback.DataReceivedCallback
 import no.nordicsemi.android.ble.callback.DataSentCallback
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 // This one should be private and safe with Either
 internal class BeckonBleManager(
