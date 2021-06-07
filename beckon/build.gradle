@@ -7,7 +7,7 @@ android {
     compileSdkVersion 30
 
     defaultConfig {
-        minSdkVersion 22
+        minSdkVersion 24
         targetSdkVersion 30
         buildToolsVersion = "30.0.2"
         versionCode 1
@@ -108,7 +108,7 @@ dependencies {
 
     testImplementation 'org.mockito:mockito-core:3.11.0'
     testImplementation 'com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0'
-    testImplementation 'org.assertj:assertj-core:3.18.2'
+    testImplementation 'org.assertj:assertj-core:3.19.0'
     testImplementation "io.strikt:strikt-core:0.31.0"
 }
 
