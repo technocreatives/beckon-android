@@ -88,7 +88,7 @@ dependencies {
     api "no.nordicsemi.android:dfu:${nsDfuVersion}"
 
     // Code quality tools
-    ktlint "com.github.shyiko:ktlint:$ktlint_version"
+    ktlint "com.pinterest:ktlint:$ktlint_version"
 
     implementation "com.jakewharton.timber:timber:$timber"
     implementation "com.squareup.moshi:moshi:$moshi"

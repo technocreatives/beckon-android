@@ -24,8 +24,10 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher<Becko
     }
 
     override fun register(context: Context) {
-        context.registerReceiver(this,
-                IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        context.registerReceiver(
+            this,
+            IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+        )
 
         // Post initial state
         dispatcher.dispatch(BeckonAction.ChangeBluetoothState(BluetoothAdapter.getDefaultAdapter().state.toBluetoothState()))

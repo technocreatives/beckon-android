@@ -88,7 +88,7 @@ dependencies {
     implementation "io.arrow-kt:arrow-core-extensions:$arrow_version"
 
     // spek
-    testImplementation "org.spekframework.spek2:spek-runtime-jvm:$spek_version"
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
     // spek requires kotlin-reflect, omit when already in classpath
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"

@@ -27,11 +27,12 @@ fun <Change> BeckonDevice.changes(characteristicUUID: UUID, mapper: Characterist
 
 fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
     return Observable.combineLatest(
-            states(),
-            connectionStates(),
-            BiFunction<State, ConnectionState, BeckonState<State>> { t1, t2 ->
-                BeckonState(metadata(), t2, t1)
-            })
+        states(),
+        connectionStates(),
+        BiFunction<State, ConnectionState, BeckonState<State>> { t1, t2 ->
+            BeckonState(metadata(), t2, t1)
+        }
+    )
 }
 
 fun BeckonDevice.subscribe(subscribes: List<Characteristic>): Completable {

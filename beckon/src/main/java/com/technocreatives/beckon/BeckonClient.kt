@@ -91,7 +91,7 @@ interface BeckonClient {
     fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDevice>
     /**
      * Return a stream of state
-      */
+     */
     fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDevice>>
     fun connectedDevices(): Observable<List<Metadata>>
 

@@ -102,16 +102,20 @@ internal class BeckonBleManager(
     }
 
     fun subscribeBla(subscribes: List<Characteristic>, detail: DeviceDetail): Completable {
-        return when (val list =
-            checkNotifyList(subscribes, detail.services, detail.characteristics)) {
+        return when (
+            val list =
+                checkNotifyList(subscribes, detail.services, detail.characteristics)
+        ) {
             is Either.Left -> Completable.error(list.a.toException())
             is Either.Right -> subscribe(list.b)
         }
     }
 
     fun readBla(reads: List<Characteristic>, detail: DeviceDetail): Observable<Change> {
-        return when (val list =
-            checkReadList(reads, detail.services, detail.characteristics)) {
+        return when (
+            val list =
+                checkReadList(reads, detail.services, detail.characteristics)
+        ) {
             is Either.Left -> {
                 Observable.error(list.a.toException())
             }
@@ -136,16 +140,19 @@ internal class BeckonBleManager(
                         subscribeBla(descriptor.subscribes, detail)
                     }
                         .andThen(readBla(descriptor.reads, detail).ignoreElements())
-                        .subscribe({
-                            devicesSubject.onSuccess(detail.right())
-                        }, {
-                            devicesSubject.onSuccess(
-                                ConnectionError.GeneralError(
-                                    device.address,
-                                    it
-                                ).left()
-                            )
-                        })
+                        .subscribe(
+                            {
+                                devicesSubject.onSuccess(detail.right())
+                            },
+                            {
+                                devicesSubject.onSuccess(
+                                    ConnectionError.GeneralError(
+                                        device.address,
+                                        it
+                                    ).left()
+                                )
+                            }
+                        )
             } else {
                 devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
             }
