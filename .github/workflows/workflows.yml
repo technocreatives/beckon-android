@@ -12,11 +12,11 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
       - name: Test
-        run: ./gradlew test
+        run: ./gradlew check
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
       - name: Build the app
-        run: ./gradlew build
+        run: ./gradlew assemble
