@@ -2,9 +2,9 @@ package com.technocreatives.beckon
 
 import android.bluetooth.BluetoothDevice
 import com.squareup.moshi.JsonClass
-import java.util.UUID
 import no.nordicsemi.android.ble.data.Data
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
+import java.util.UUID
 
 typealias MacAddress = String
 

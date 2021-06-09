@@ -19,7 +19,7 @@ buildscript {
     ext.statemachine = '0.02'
 
     // Quality tools
-    ext.ktlint_version = '0.34.2'
+    ext.ktlint_version = '0.41.0'
 
     // test tools
     ext.spek_version = '2.0.6'
@@ -27,10 +27,10 @@ buildscript {
     repositories {
         google()
         jcenter()
-
+        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.1.1'
+        classpath 'com.android.tools.build:gradle:4.2.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "de.mannodermaus.gradle.plugins:android-junit5:1.6.2.0"
     }
@@ -52,6 +52,7 @@ allprojects {
         jcenter()
         maven { url 'https://jitpack.io' }
         maven { url "https://dl.bintray.com/arrow-kt/arrow-kt/" }
+        mavenCentral()
     }
 }
 

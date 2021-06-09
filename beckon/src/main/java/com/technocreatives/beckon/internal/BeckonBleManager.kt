@@ -34,14 +34,14 @@ import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.SingleSubject
-import java.util.UUID
-import java.util.concurrent.TimeUnit
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.ConnectRequest
 import no.nordicsemi.android.ble.callback.DataReceivedCallback
 import no.nordicsemi.android.ble.callback.DataSentCallback
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 // This one should be private and safe with Either
 internal class BeckonBleManager(
@@ -102,16 +102,20 @@ internal class BeckonBleManager(
     }
 
     fun subscribeBla(subscribes: List<Characteristic>, detail: DeviceDetail): Completable {
-        return when (val list =
-            checkNotifyList(subscribes, detail.services, detail.characteristics)) {
+        return when (
+            val list =
+                checkNotifyList(subscribes, detail.services, detail.characteristics)
+        ) {
             is Either.Left -> Completable.error(list.a.toException())
             is Either.Right -> subscribe(list.b)
         }
     }
 
     fun readBla(reads: List<Characteristic>, detail: DeviceDetail): Observable<Change> {
-        return when (val list =
-            checkReadList(reads, detail.services, detail.characteristics)) {
+        return when (
+            val list =
+                checkReadList(reads, detail.services, detail.characteristics)
+        ) {
             is Either.Left -> {
                 Observable.error(list.a.toException())
             }
@@ -136,16 +140,19 @@ internal class BeckonBleManager(
                         subscribeBla(descriptor.subscribes, detail)
                     }
                         .andThen(readBla(descriptor.reads, detail).ignoreElements())
-                        .subscribe({
-                            devicesSubject.onSuccess(detail.right())
-                        }, {
-                            devicesSubject.onSuccess(
-                                ConnectionError.GeneralError(
-                                    device.address,
-                                    it
-                                ).left()
-                            )
-                        })
+                        .subscribe(
+                            {
+                                devicesSubject.onSuccess(detail.right())
+                            },
+                            {
+                                devicesSubject.onSuccess(
+                                    ConnectionError.GeneralError(
+                                        device.address,
+                                        it
+                                    ).left()
+                                )
+                            }
+                        )
             } else {
                 devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
             }

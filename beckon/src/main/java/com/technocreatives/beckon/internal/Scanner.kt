@@ -7,12 +7,12 @@ import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
-import java.util.UUID
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
 import no.nordicsemi.android.support.v18.scanner.ScanFilter
-import no.nordicsemi.android.support.v18.scanner.ScanResult as BleScanResult
 import timber.log.Timber
+import java.util.UUID
+import no.nordicsemi.android.support.v18.scanner.ScanResult as BleScanResult
 
 interface Scanner {
     fun startScan(setting: ScannerSetting): Observable<ScanResult>

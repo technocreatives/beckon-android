@@ -25,11 +25,14 @@ fun savedMetadata(macAddress: MacAddress): SavedMetadata {
 }
 
 internal fun testBeckonStore(state: BeckonState): BeckonStore {
-    return Store(reducer, { state }, log = object : Log {
-        override fun log(tag: String, message: String) {
-            println("$tag: $message")
+    return Store(
+        reducer, { state },
+        log = object : Log {
+            override fun log(tag: String, message: String) {
+                println("$tag: $message")
+            }
         }
-    })
+    )
 }
 
 internal val initialState = BeckonState(emptyList(), emptyList(), BluetoothState.UNKNOWN)
