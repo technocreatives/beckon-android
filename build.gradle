@@ -4,8 +4,8 @@ buildscript {
     // all library versions
     ext.rxJava = '2.2.8'
     ext.rxAndroid = '2.1.1'
-    ext.kotlin_version = '1.4.20'
-    ext.arrow_version = "0.10.0"
+    ext.kotlin_version = '1.5.10'
+    ext.arrow_version = "0.13.2"
     ext.rxarrow = "5335e385bc"
     ext.timber = '4.7.1'
     ext.sharedPreferences = '1.1.0'
@@ -22,11 +22,10 @@ buildscript {
     ext.ktlint_version = '0.41.0'
 
     // test tools
-    ext.spek_version = '2.0.6'
+    ext.spek_version = '2.0.7'
 
     repositories {
         google()
-        jcenter()
         mavenCentral()
     }
     dependencies {
@@ -49,9 +48,7 @@ tasks.detekt.jvmTarget = "1.8"
 allprojects {
     repositories {
         google()
-        jcenter()
         maven { url 'https://jitpack.io' }
-        maven { url "https://dl.bintray.com/arrow-kt/arrow-kt/" }
         mavenCentral()
     }
 }
