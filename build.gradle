@@ -42,9 +42,9 @@ plugins {
 }
 
 
-allprojects {
-    apply from: "$rootDir/detekt.gradle"
-}
+//allprojects {
+//    apply from: "$rootDir/detekt.gradle"
+//}
 
 tasks.detekt.jvmTarget = "1.8"
 
