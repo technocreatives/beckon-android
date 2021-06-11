@@ -1,4 +1,4 @@
-# Beckon
+# Beckon [![](https://jitpack.io/v/technocreatives/beckon-android.svg)](https://jitpack.io/#technocreatives/beckon-android)
 
 A safe, correct and pleasant Bluetooth Low Energy (BLE) library for Android with functional data types and RxJava interface.
 
@@ -12,9 +12,27 @@ By using functional programming approach and Rxjava interface, this library (wil
   - The best error handling ever which is backed by [Arrow](https://arrow-kt.io/).
   - Support all BLE operations (read, write, notifications, bond). Thanks to [NordicSemiconductor/Android-BLE-Library](https://github.com/NordicSemiconductor/Android-BLE-Library)!
 
-## Install
+## Setup <a name = "setup"></a>
 
-You have to use Beckon as a submodule or subtree.
+You can get `Beckon` by using [Jitpack](https://jitpack.io/#technocreatives/beckon).
+
+```Gradle
+    repositories {
+        jcenter()
+        maven { url 'https://jitpack.io' }
+    }
+
+    implementation "com.github.technocreatives:beckon:$beckon"
+```
+
+## Compatibility <a name = "compatibility"></a>
+
+Supports RxJava2 and Arrow version `0.13.2`.
+
+## Contributing <a name = "contributing"></a>
+
+Any bug reports, feature requests, questions and pull requests are very welcome.
+
 
 ## Usage
 

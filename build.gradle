@@ -25,6 +25,7 @@ buildscript {
     ext.spek_version = '2.0.7'
 
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
     }
@@ -37,16 +38,19 @@ buildscript {
 
 plugins {
     id "io.gitlab.arturbosch.detekt" version "1.17.1"
+    id 'maven-publish'
 }
 
-allprojects {
-    apply from: "$rootDir/detekt.gradle"
-}
+
+//allprojects {
+//    apply from: "$rootDir/detekt.gradle"
+//}
 
 tasks.detekt.jvmTarget = "1.8"
 
 allprojects {
     repositories {
+        mavenLocal()
         google()
         maven { url 'https://jitpack.io' }
         mavenCentral()
@@ -56,3 +60,4 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
