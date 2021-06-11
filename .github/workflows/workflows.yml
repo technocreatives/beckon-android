@@ -12,7 +12,7 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
       - name: Test
-        run: ./gradlew check
+        run: ./gradlew :beckon:test
   build:
     runs-on: ubuntu-latest
     steps:
