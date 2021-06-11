@@ -13,7 +13,7 @@ buildscript {
     ext.nsScannerVersion = '1.4.3'
     ext.nsBleVersion = '2.1.1'
     ext.nsDfuVersion = '1.9.0'
-    ext.moshi = '1.11.0'
+    ext.moshi = '1.12.0'
 
     ext.simpleredux = '4a0dfa33d6'
     ext.statemachine = '0.02'
@@ -36,7 +36,7 @@ buildscript {
 }
 
 plugins {
-    id "io.gitlab.arturbosch.detekt" version "1.3.1"
+    id "io.gitlab.arturbosch.detekt" version "1.17.1"
 }
 
 allprojects {

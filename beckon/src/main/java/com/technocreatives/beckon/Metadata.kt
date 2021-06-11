@@ -6,7 +6,6 @@ import arrow.core.left
 import arrow.core.toOption
 import com.squareup.moshi.JsonClass
 import com.technocreatives.beckon.util.parallelValidate
-import com.technocreatives.beckon.util.toValidated
 import java.util.UUID
 
 data class Metadata(
@@ -61,7 +60,7 @@ internal fun checkRequirements(
     return requirements
         .map { checkRequirement(it, services, characteristics).toValidated() }
         .parallelValidate()
-        .leftMap { ConnectionError.RequirementFailed(it.all) }
+        .mapLeft { ConnectionError.RequirementFailed(it) }
         .toEither()
 }
 

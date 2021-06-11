@@ -96,8 +96,7 @@ dependencies {
     implementation "com.github.lenguyenthanh:simpleredux:$simpleredux"
 
     // Arrows
-    implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
-    implementation("io.arrow-kt:arrow-core")
+    implementation("io.arrow-kt:arrow-core:$arrow_version")
     implementation "com.github.lenguyenthanh:RxArrow:$rxarrow"
 
     // Spek

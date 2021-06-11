@@ -119,7 +119,7 @@ internal class BeckonClientImpl(
         Timber.d("findConnectedDevice $macAddress in ${beckonStore.currentState()}")
         return when (val device = beckonStore.currentState().findConnectedDevice(macAddress)) {
             is None -> Single.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
-            is Some -> Single.just(device.t)
+            is Some -> Single.just(device.value)
         }
     }
 
@@ -143,7 +143,7 @@ internal class BeckonClientImpl(
                             is Some -> BeckonDeviceError.Connecting(metadata).left()
                         }
                     }
-                    is Some -> device.t.right()
+                    is Some -> device.value.right()
                 }
             }
     }
@@ -152,7 +152,7 @@ internal class BeckonClientImpl(
         return deviceRepository.findDevice(macAddress).flatMap {
             when (it) {
                 is None -> Single.error(BeckonDeviceError.SavedDeviceNotFound(macAddress).toException())
-                is Some -> Single.just(it.t)
+                is Some -> Single.just(it.value)
             }
         }
     }
@@ -235,7 +235,7 @@ internal class BeckonClientImpl(
     override fun disconnect(macAddress: String): Completable {
         return when (val device = beckonStore.currentState().findConnectedDevice(macAddress)) {
             is None -> Completable.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
-            is Some -> disconnect(device.t)
+            is Some -> disconnect(device.value)
         }
     }
 
@@ -252,7 +252,7 @@ internal class BeckonClientImpl(
     override fun save(macAddress: String): Single<String> {
         return when (val device = beckonStore.currentState().findConnectedDevice(macAddress)) {
             is None -> Single.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
-            is Some -> createBond(device.t).andThen(saveDevice(device.t))
+            is Some -> createBond(device.value).andThen(saveDevice(device.value))
         }
     }
 
@@ -344,7 +344,7 @@ internal class BeckonClientImpl(
             val device =
                 context.bluetoothManager().findDevice(metadata.macAddress)
         ) {
-            is Some -> connect(device.t, metadata.descriptor).fix { BeckonException(it) }
+            is Some -> connect(device.value, metadata.descriptor).fix { BeckonException(it) }
             is None -> Single.error(BeckonDeviceError.BondedDeviceNotFound(metadata).toException())
         }
     }

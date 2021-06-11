@@ -37,8 +37,8 @@ fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
 
 fun BeckonDevice.subscribe(subscribes: List<Characteristic>): Completable {
     return when (val list = checkNotifyList(subscribes, metadata().services, metadata().characteristics)) {
-        is Either.Left -> Completable.error(list.a.toException())
-        is Either.Right -> subscribe(list.b)
+        is Either.Left -> Completable.error(list.value.toException())
+        is Either.Right -> subscribe(list.value)
     }
 }
 
