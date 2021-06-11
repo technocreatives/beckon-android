@@ -6,7 +6,7 @@ buildscript {
     ext.rxAndroid = '2.1.1'
     ext.kotlin_version = '1.5.10'
     ext.arrow_version = "0.13.2"
-    ext.rxarrow = "5335e385bc"
+    ext.rxarrow = "0.13.0"
     ext.timber = '4.7.1'
     ext.sharedPreferences = '1.1.0'
     ext.rxBindingVersion = '3.1.0'
