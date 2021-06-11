@@ -1,4 +1,4 @@
-# Beckon [![](https://jitpack.io/v/technocreatives/beckon.svg)](https://jitpack.io/#technocreatives/beckon)
+# Beckon [![](https://jitpack.io/v/technocreatives/beckon-android.svg)](https://jitpack.io/#technocreatives/beckon-android)
 
 A safe, correct and pleasant Bluetooth Low Energy (BLE) library for Android with functional data types and RxJava interface.
 
