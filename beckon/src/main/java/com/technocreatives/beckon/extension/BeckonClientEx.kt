@@ -4,12 +4,7 @@ import arrow.core.Either
 import arrow.core.identity
 import arrow.core.left
 import arrow.core.right
-import com.lenguyenthanh.rxarrow.either
-import com.lenguyenthanh.rxarrow.filterE
-import com.lenguyenthanh.rxarrow.flatMapE
-import com.lenguyenthanh.rxarrow.flatMapObservableEither
-import com.lenguyenthanh.rxarrow.flatMapSingleE
-import com.lenguyenthanh.rxarrow.flatMapSingleEither
+import com.lenguyenthanh.rxarrow.*
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
@@ -41,11 +36,11 @@ fun BeckonClient.devicesStates(addresses: List<String>): Observable<List<Either<
 fun BeckonClient.deviceStates(address: MacAddress): Observable<Either<BeckonDeviceError, BeckonState<State>>> {
     return findSavedDeviceE(address)
         .flatMapObservableEither { findConnectedDeviceO(it) }
-        .flatMapE { it.deviceStates() }
+        .flatMapZ { it.deviceStates() }
 }
 
 fun BeckonClient.findSavedDeviceE(macAddress: MacAddress): Single<Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata>> {
-    return findSavedDevice(macAddress).either { BeckonDeviceError.SavedDeviceNotFound(macAddress) }
+    return findSavedDevice(macAddress).z { BeckonDeviceError.SavedDeviceNotFound(macAddress) }
 }
 
 fun BeckonClient.scanAndConnect(
@@ -86,7 +81,7 @@ fun BeckonClient.scan(
             }
         }
         .distinct { it.macAddress }
-        .either(::identity)
+        .z(::identity)
         .doOnNext { Timber.d("Scan found $it") }
         .doOnDispose {
             Timber.d("Scan stream is disposed, stop scanning")
@@ -119,9 +114,9 @@ fun BeckonClient.scanAndSave(
     filter: (State) -> Boolean
 ): Observable<BeckonResult<MacAddress>> {
     return scanAndConnect(conditions.distinctUntilChanged(), setting, descriptor)
-        .flatMapE { it.deviceStates() }
-        .filterE { deviceState -> filter(deviceState.state) }
-        .flatMapSingleE { save(it.metadata.macAddress) }
+        .flatMapZ { it.deviceStates() }
+        .filterZ { deviceState -> filter(deviceState.state) }
+        .flatMapSingleZ { save(it.metadata.macAddress) }
         .doOnNext { Timber.d("scanAndSave found $it") }
 }
 

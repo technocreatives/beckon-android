@@ -103,9 +103,8 @@ dependencies {
 
 
     // Arrows
-    implementation "io.arrow-kt:arrow-core:$arrow_version"
-    implementation "io.arrow-kt:arrow-syntax:$arrow_version"
-
+    implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
+    implementation("io.arrow-kt:arrow-core")
 
     // Util
     implementation "com.jakewharton.timber:timber:$timber"

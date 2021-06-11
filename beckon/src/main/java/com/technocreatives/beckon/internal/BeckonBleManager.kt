@@ -5,11 +5,7 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Context
-import arrow.core.Either
-import arrow.core.Option
-import arrow.core.k
-import arrow.core.left
-import arrow.core.right
+import arrow.core.*
 import com.technocreatives.beckon.BleConnectionState
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
@@ -106,8 +102,8 @@ internal class BeckonBleManager(
             val list =
                 checkNotifyList(subscribes, detail.services, detail.characteristics)
         ) {
-            is Either.Left -> Completable.error(list.a.toException())
-            is Either.Right -> subscribe(list.b)
+            is Either.Left -> Completable.error(list.value.toException())
+            is Either.Right -> subscribe(list.value)
         }
     }
 
@@ -117,10 +113,10 @@ internal class BeckonBleManager(
                 checkReadList(reads, detail.services, detail.characteristics)
         ) {
             is Either.Left -> {
-                Observable.error(list.a.toException())
+                Observable.error(list.value.toException())
             }
             is Either.Right -> {
-                read(list.b)
+                read(list.value)
             }
         }
     }
@@ -185,8 +181,9 @@ internal class BeckonBleManager(
             service: BluetoothGattService,
             char: BluetoothGattCharacteristic
         ): List<CharacteristicSuccess> {
-            return Property.values().toList().k()
-                .filterMap { findCharacteristic(service, char, it) }
+            return Property.values().toList()
+                .map { findCharacteristic(service, char, it) }
+                .filterOption()
         }
 
         private fun findCharacteristic(
@@ -208,9 +205,9 @@ internal class BeckonBleManager(
             return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
                 char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
             ) {
-                Option.just(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
+                Option(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
             } else {
-                Option.empty()
+                None
             }
         }
 
@@ -219,9 +216,9 @@ internal class BeckonBleManager(
             char: BluetoothGattCharacteristic
         ): Option<CharacteristicSuccess.Read> {
             return if (char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
-                Option.just(CharacteristicSuccess.Read(char.uuid, service.uuid, char))
+                Option(CharacteristicSuccess.Read(char.uuid, service.uuid, char))
             } else {
-                Option.empty()
+                None
             }
         }
 
@@ -230,9 +227,9 @@ internal class BeckonBleManager(
             char: BluetoothGattCharacteristic
         ): Option<CharacteristicSuccess.Write> {
             return if (char.properties and BluetoothGattCharacteristic.PERMISSION_WRITE > 0) {
-                Option.just(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
+                Option(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
             } else {
-                Option.empty()
+                None
             }
         }
     }

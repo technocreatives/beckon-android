@@ -64,8 +64,9 @@ dependencies {
     implementation "com.jakewharton.timber:timber:4.7.1"
 
     // Arrows
-    implementation "io.arrow-kt:arrow-core-data:$arrow_version"
-    implementation "io.arrow-kt:arrow-syntax:$arrow_version"
+    implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
+    implementation("io.arrow-kt:arrow-core")
+
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
