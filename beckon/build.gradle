@@ -3,6 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'de.mannodermaus.android-junit5'
 
+plugins {
+    id 'maven-publish'
+}
+
 android {
     compileSdkVersion 30
 
