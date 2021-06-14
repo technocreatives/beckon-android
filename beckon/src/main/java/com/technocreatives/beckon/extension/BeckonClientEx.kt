@@ -4,7 +4,12 @@ import arrow.core.Either
 import arrow.core.identity
 import arrow.core.left
 import arrow.core.right
-import com.lenguyenthanh.rxarrow.*
+import com.lenguyenthanh.rxarrow.filterZ
+import com.lenguyenthanh.rxarrow.flatMapObservableEither
+import com.lenguyenthanh.rxarrow.flatMapSingleEither
+import com.lenguyenthanh.rxarrow.flatMapSingleZ
+import com.lenguyenthanh.rxarrow.flatMapZ
+import com.lenguyenthanh.rxarrow.z
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
