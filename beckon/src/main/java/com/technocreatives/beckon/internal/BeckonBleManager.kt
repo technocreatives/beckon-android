@@ -5,7 +5,12 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Context
-import arrow.core.*
+import arrow.core.Either
+import arrow.core.None
+import arrow.core.Option
+import arrow.core.filterOption
+import arrow.core.left
+import arrow.core.right
 import com.technocreatives.beckon.BleConnectionState
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
