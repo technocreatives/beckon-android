@@ -18,7 +18,7 @@ You can get `Beckon` by using [Jitpack](https://jitpack.io/#technocreatives/beck
 
 ```Gradle
     repositories {
-        jcenter()
+        mavenCentral()
         maven { url 'https://jitpack.io' }
     }
 
