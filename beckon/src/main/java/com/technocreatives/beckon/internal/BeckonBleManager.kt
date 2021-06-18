@@ -11,6 +11,7 @@ import arrow.core.Option
 import arrow.core.filterOption
 import arrow.core.left
 import arrow.core.right
+import com.lenguyenthanh.rxarrow.SingleZ
 import com.technocreatives.beckon.BleConnectionState
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
@@ -49,7 +50,7 @@ internal class BeckonBleManager(
     context: Context,
     val device: BluetoothDevice,
     val descriptor: Descriptor
-) : BleManager<BeckonManagerCallbacks>(context) {
+) : BleManager(context) {
 
     private var bluetoothGatt: BluetoothGatt? = null
 
@@ -75,7 +76,10 @@ internal class BeckonBleManager(
             stateSubject.onNext(newState)
         }
 
-        mCallbacks = BeckonManagerCallbacks(bondSubject, onStateChange)
+        // TODO
+//        mCallbacks = BeckonManagerCallbacks(bondSubject, onStateChange)
+        setConnectionObserver(BeckonConnectionObserver(onStateChange))
+        setBondingObserver(BeckonBondingObserver(bondSubject))
         // TODO Fix disposable
         val statesDisposable = states.subscribe { Timber.d("New states of $device $it") }
     }
@@ -95,7 +99,10 @@ internal class BeckonBleManager(
         return devicesSubject.hide()
     }
 
-    fun connect(retryAttempts: Int = 3, retryDelay: Int = 100): Single<Either<ConnectionError, DeviceDetail>> {
+    fun connect(
+        retryAttempts: Int = 3,
+        retryDelay: Int = 100
+    ): SingleZ<ConnectionError, DeviceDetail> {
         val request = connect(device)
             .retry(retryAttempts, retryDelay)
             .useAutoConnect(true)
@@ -242,7 +249,7 @@ internal class BeckonBleManager(
     fun doCreateBond(): Completable {
         bondSubject.onNext(BondState.CreatingBond)
         return Completable.create { emitter ->
-            createBond()
+            ensureBond()
                 .done { emitter.onComplete() }
                 .fail { device, status ->
                     emitter.onError(

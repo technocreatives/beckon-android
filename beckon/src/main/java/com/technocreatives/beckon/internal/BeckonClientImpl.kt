@@ -8,6 +8,7 @@ import arrow.core.Some
 import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
+import com.lenguyenthanh.rxarrow.SingleZ
 import com.lenguyenthanh.rxarrow.fix
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
@@ -176,7 +177,7 @@ internal class BeckonClientImpl(
     private fun connect(
         device: BluetoothDevice,
         descriptor: Descriptor
-    ): Single<Either<ConnectionError, BeckonDevice>> {
+    ): SingleZ<ConnectionError, BeckonDevice> {
         Timber.d("Connect BluetoothDevice: $device")
 
         val manager = BeckonBleManager(context, device, descriptor)
