@@ -46,7 +46,7 @@ interface BeckonClient {
     fun disconnectAllConnectedButNotSavedDevices(): Completable
 
     /**
-     * Search for all connected devices in the systems which satisfies ScannerSetting
+     * Search for all currently connected devices in the systems which satisfies ScannerSetting
      * If setting.useFilter == True, this function will ignore all connected and saved devices in Beckon
      */
     fun search(setting: ScannerSetting, descriptor: Descriptor): Observable<Either<ConnectionError, BeckonDevice>>

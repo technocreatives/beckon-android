@@ -11,7 +11,6 @@ import com.technocreatives.beckon.State
 import com.technocreatives.beckon.checkNotifyList
 import io.reactivex.Completable
 import io.reactivex.Observable
-import io.reactivex.functions.BiFunction
 import java.util.UUID
 
 data class BeckonState<State>(
@@ -29,7 +28,7 @@ fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
     return Observable.combineLatest(
         states(),
         connectionStates(),
-        BiFunction<State, ConnectionState, BeckonState<State>> { t1, t2 ->
+        { t1, t2 ->
             BeckonState(metadata(), t2, t1)
         }
     )
