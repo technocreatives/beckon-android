@@ -56,6 +56,7 @@ fun BeckonClient.scanAndConnect(
 
     val searchStream =
         search(conditions, setting, descriptor).map { it.mapLeft { BeckonException(it) } }
+
     val scanStream = scan(conditions, setting)
         .flatMapSingleEither { safeConnect(it, descriptor) }
 

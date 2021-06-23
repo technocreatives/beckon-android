@@ -133,123 +133,12 @@ internal class BeckonBleManager(
         }
     }
 
-    private val gattCallback = object : BleManagerGattCallback() {
-
-        override fun initialize() {
-            Timber.d("initialize")
-            if (bluetoothGatt != null) {
-                val services = bluetoothGatt!!.services.map { it.uuid }
-                val characteristics = allCharacteristics(bluetoothGatt!!)
-                val detail = DeviceDetail(services, characteristics)
-
-                // TODO Fix disposable
-                val disposable =
-                    Observable.just(Unit).delay(1600, TimeUnit.MILLISECONDS).flatMapCompletable {
-                        subscribeBla(descriptor.subscribes, detail)
-                    }
-                        .andThen(readBla(descriptor.reads, detail).ignoreElements())
-                        .subscribe(
-                            {
-                                devicesSubject.onSuccess(detail.right())
-                            },
-                            {
-                                devicesSubject.onSuccess(
-                                    ConnectionError.GeneralError(
-                                        device.address,
-                                        it
-                                    ).left()
-                                )
-                            }
-                        )
-            } else {
-                devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
-            }
-        }
-
-        override fun onDeviceDisconnected() {
-            Timber.d("onDeviceDisconnected gattCallback")
-        }
-
-        override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
-            Timber.d("isRequiredServiceSupported $gatt")
-            val services = gatt.services.map { it.uuid }
-            Timber.d("All discovered services $services")
-            bluetoothGatt = gatt
-
-            return true
-        }
-
-        private fun allCharacteristics(gatt: BluetoothGatt): List<CharacteristicSuccess> {
-            return gatt.services.flatMap { allCharacteristics(it) }
-        }
-
-        private fun allCharacteristics(service: BluetoothGattService): List<CharacteristicSuccess> {
-            return service.characteristics.flatMap {
-                allCharacteristics(service, it)
-            }
-        }
-
-        fun allCharacteristics(
-            service: BluetoothGattService,
-            char: BluetoothGattCharacteristic
-        ): List<CharacteristicSuccess> {
-            return Property.values().toList()
-                .map { findCharacteristic(service, char, it) }
-                .filterOption()
-        }
-
-        private fun findCharacteristic(
-            service: BluetoothGattService,
-            char: BluetoothGattCharacteristic,
-            type: Property
-        ): Option<CharacteristicSuccess> {
-            return when (type) {
-                Property.WRITE -> writeCharacteristic(service, char)
-                Property.READ -> readCharacteristic(service, char)
-                Property.NOTIFY -> notifyCharacteristic(service, char)
-            }
-        }
-
-        private fun notifyCharacteristic(
-            service: BluetoothGattService,
-            char: BluetoothGattCharacteristic
-        ): Option<CharacteristicSuccess.Notify> {
-            return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
-                char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
-            ) {
-                Option(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
-            } else {
-                None
-            }
-        }
-
-        private fun readCharacteristic(
-            service: BluetoothGattService,
-            char: BluetoothGattCharacteristic
-        ): Option<CharacteristicSuccess.Read> {
-            return if (char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
-                Option(CharacteristicSuccess.Read(char.uuid, service.uuid, char))
-            } else {
-                None
-            }
-        }
-
-        private fun writeCharacteristic(
-            service: BluetoothGattService,
-            char: BluetoothGattCharacteristic
-        ): Option<CharacteristicSuccess.Write> {
-            return if (char.properties and BluetoothGattCharacteristic.PERMISSION_WRITE > 0) {
-                Option(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
-            } else {
-                None
-            }
-        }
-    }
+    // private val gattCallback =
 
     fun doCreateBond(): Completable {
         bondSubject.onNext(BondState.CreatingBond)
         return Completable.create { emitter ->
-            ensureBond()
+            createBondInsecure()
                 .done { emitter.onComplete() }
                 .fail { device, status ->
                     emitter.onError(
@@ -281,7 +170,118 @@ internal class BeckonBleManager(
     }
 
     override fun getGattCallback(): BleManagerGattCallback {
-        return gattCallback
+        return object : BleManagerGattCallback() {
+
+            override fun initialize() {
+                Timber.d("initialize")
+                if (bluetoothGatt != null) {
+                    val services = bluetoothGatt!!.services.map { it.uuid }
+                    val characteristics = allCharacteristics(bluetoothGatt!!)
+                    val detail = DeviceDetail(services, characteristics)
+
+                    // TODO Fix disposable
+                    val disposable =
+                        Observable.just(Unit).delay(1600, TimeUnit.MILLISECONDS).flatMapCompletable {
+                            subscribeBla(descriptor.subscribes, detail)
+                        }
+                            .andThen(readBla(descriptor.reads, detail).ignoreElements())
+                            .subscribe(
+                                {
+                                    devicesSubject.onSuccess(detail.right())
+                                },
+                                {
+                                    devicesSubject.onSuccess(
+                                        ConnectionError.GeneralError(
+                                            device.address,
+                                            it
+                                        ).left()
+                                    )
+                                }
+                            )
+                } else {
+                    devicesSubject.onSuccess(ConnectionError.BluetoothGattNull(device.address).left())
+                }
+            }
+
+            override fun onDeviceDisconnected() {
+                Timber.d("onDeviceDisconnected gattCallback")
+            }
+
+            override fun isRequiredServiceSupported(gatt: BluetoothGatt): Boolean {
+                Timber.d("isRequiredServiceSupported $gatt")
+                val services = gatt.services.map { it.uuid }
+                Timber.d("All discovered services $services")
+                bluetoothGatt = gatt
+
+                return true
+            }
+
+            private fun allCharacteristics(gatt: BluetoothGatt): List<CharacteristicSuccess> {
+                return gatt.services.flatMap { allCharacteristics(it) }
+            }
+
+            private fun allCharacteristics(service: BluetoothGattService): List<CharacteristicSuccess> {
+                return service.characteristics.flatMap {
+                    allCharacteristics(service, it)
+                }
+            }
+
+            fun allCharacteristics(
+                service: BluetoothGattService,
+                char: BluetoothGattCharacteristic
+            ): List<CharacteristicSuccess> {
+                return Property.values().toList()
+                    .map { findCharacteristic(service, char, it) }
+                    .filterOption()
+            }
+
+            private fun findCharacteristic(
+                service: BluetoothGattService,
+                char: BluetoothGattCharacteristic,
+                type: Property
+            ): Option<CharacteristicSuccess> {
+                return when (type) {
+                    Property.WRITE -> writeCharacteristic(service, char)
+                    Property.READ -> readCharacteristic(service, char)
+                    Property.NOTIFY -> notifyCharacteristic(service, char)
+                }
+            }
+
+            private fun notifyCharacteristic(
+                service: BluetoothGattService,
+                char: BluetoothGattCharacteristic
+            ): Option<CharacteristicSuccess.Notify> {
+                return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
+                    char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
+                ) {
+                    Option(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
+                } else {
+                    None
+                }
+            }
+
+            private fun readCharacteristic(
+                service: BluetoothGattService,
+                char: BluetoothGattCharacteristic
+            ): Option<CharacteristicSuccess.Read> {
+                return if (char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
+                    Option(CharacteristicSuccess.Read(char.uuid, service.uuid, char))
+                } else {
+                    None
+                }
+            }
+
+            private fun writeCharacteristic(
+                service: BluetoothGattService,
+                char: BluetoothGattCharacteristic
+            ): Option<CharacteristicSuccess.Write> {
+                return if (char.properties and BluetoothGattCharacteristic.PERMISSION_WRITE > 0) {
+                    Option(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
+                } else {
+                    None
+                }
+            }
+        }
     }
 
     fun connectionState(): Observable<ConnectionState> {

@@ -95,8 +95,6 @@ internal class BeckonClientImpl(
         descriptor: Descriptor
     ): Observable<Either<ConnectionError, BeckonDevice>> {
         Timber.d("Search: $setting")
-
-        Timber.d("Search: $setting")
         val connectedDevicesInSystem = context.bluetoothManager()
             .connectedDevices()
             .filter { device -> setting.filters.any { it.filter(device) } }
@@ -249,7 +247,7 @@ internal class BeckonClientImpl(
             .doFinally { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device)) }
     }
 
-    // error can happen
+    // exception can happen
     override fun save(macAddress: String): Single<String> {
         return when (val device = beckonStore.currentState().findConnectedDevice(macAddress)) {
             is None -> Single.error(ConnectionError.ConnectedDeviceNotFound(macAddress).toException())
