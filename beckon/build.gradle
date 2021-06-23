@@ -101,8 +101,13 @@ dependencies {
     implementation "com.github.lenguyenthanh:simpleredux:$simpleredux"
 
     // Arrows
-    implementation("io.arrow-kt:arrow-core:$arrow_version")
     implementation "com.github.lenguyenthanh:RxArrow:$rxarrow"
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.5.0")
+    implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
+    implementation("io.arrow-kt:arrow-core")
+    implementation("io.arrow-kt:arrow-fx-coroutines")
 
     // Spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"

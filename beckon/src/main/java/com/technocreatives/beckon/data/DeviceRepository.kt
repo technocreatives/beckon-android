@@ -1,22 +1,20 @@
 package com.technocreatives.beckon.data
 
-import arrow.core.Option
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.SavedMetadata
-import io.reactivex.Observable
-import io.reactivex.Single
+import kotlinx.coroutines.flow.Flow
 
-internal interface DeviceRepository {
+// return Either
+interface DeviceRepository {
+    suspend fun currentDevices(): List<SavedMetadata>
 
-    fun currentDevices(): List<SavedMetadata>
+    suspend fun addDevice(metadata: SavedMetadata): List<SavedMetadata>
 
-    fun addDevice(metadata: SavedMetadata): Single<List<SavedMetadata>>
+    suspend fun removeDevice(macAddress: MacAddress): List<SavedMetadata>
 
-    fun removeDevice(macAddress: MacAddress): Single<List<SavedMetadata>>
+    suspend fun findDevice(macAddress: MacAddress): SavedMetadata?
 
-    fun findDevice(macAddress: MacAddress): Single<Option<SavedMetadata>>
+    suspend fun saveDevices(devices: List<SavedMetadata>): List<SavedMetadata>
 
-    fun saveDevices(devices: List<SavedMetadata>): Single<List<SavedMetadata>>
-
-    fun devices(): Observable<List<SavedMetadata>>
+    fun devices(): Flow<List<SavedMetadata>>
 }

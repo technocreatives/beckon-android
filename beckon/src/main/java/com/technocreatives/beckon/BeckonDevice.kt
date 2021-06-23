@@ -1,33 +1,35 @@
 package com.technocreatives.beckon
 
+import arrow.core.Either
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ble.data.Data
 
 interface BeckonDevice {
 
-    fun connectionStates(): Observable<ConnectionState>
-    fun bondStates(): Observable<BondState>
+    fun connectionStates(): Flow<ConnectionState>
+    fun bondStates(): Flow<BondState>
 
-    fun changes(): Observable<Change>
-    fun states(): Observable<State>
+    fun changes(): Flow<Change>
+    fun states(): Flow<State>
 
     fun currentState(): ConnectionState
 
-    fun disconnect(): Completable
+    suspend fun disconnect(): Either<Throwable, Unit>
 
     fun metadata(): Metadata
 
-    fun createBond(): Completable
-    fun removeBond(): Completable
+    suspend fun createBond(): Either<Throwable, Unit>
+    suspend fun removeBond(): Either<Throwable, Unit>
 
-    fun read(characteristic: CharacteristicSuccess.Read): Single<Change>
+    suspend fun read(characteristic: CharacteristicSuccess.Read): Change
 
-    fun write(data: Data, characteristic: CharacteristicSuccess.Write): Single<Change>
+    suspend fun write(data: Data, characteristic: CharacteristicSuccess.Write): Change
 
-    fun subscribe(notify: CharacteristicSuccess.Notify): Completable
-    fun subscribe(list: List<CharacteristicSuccess.Notify>): Completable
-    fun unsubscribe(notify: CharacteristicSuccess.Notify): Completable
-    fun unsubscribe(list: List<CharacteristicSuccess.Notify>): Completable
+    suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit>
+    suspend fun subscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit>
+    suspend fun unsubscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit>
+    suspend fun unsubscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit>
 }

@@ -1,7 +1,13 @@
 package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothDevice
+import arrow.core.Either
+import arrow.core.left
+import arrow.core.right
+import arrow.core.traverseEither
+import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.BeckonDeviceRx
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.CharacteristicSuccess
@@ -9,97 +15,88 @@ import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.State
-import com.technocreatives.beckon.extension.plus
-import com.technocreatives.beckon.extension.subscribe
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.rx2.await
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
+import kotlin.coroutines.CoroutineContext
 
 internal class BeckonDeviceImpl(
     private val bluetoothDevice: BluetoothDevice,
     private val manager: BeckonBleManager,
     private val metadata: Metadata
 ) : BeckonDevice {
-
-    override fun connectionStates(): Observable<ConnectionState> {
-        return manager.connectionState()
+    override fun connectionStates(): Flow<ConnectionState> {
+        return manager.connectionState().asFlow()
     }
 
-    override fun changes(): Observable<Change> {
-        return manager.changes()
+    override fun bondStates(): Flow<BondState> {
+        return manager.bondStates().asFlow()
     }
 
-    override fun states(): Observable<State> {
-        return manager.states()
+    override fun changes(): Flow<Change> {
+        return manager.changes().asFlow()
+    }
+
+    override fun states(): Flow<State> {
+        return manager.states().asFlow()
     }
 
     override fun currentState(): ConnectionState {
         return manager.currentState()
     }
 
-    // This may never complete if bluetooth system is messed up
-    override fun disconnect(): Completable {
-        Timber.d("disconnect ${metadata.macAddress}")
-        return Completable.create { emitter ->
-            manager.disconnect()
-                .done {
-                    Timber.d("Disconnect success ${metadata.macAddress}")
-                    emitter.onComplete()
-                }
-                .fail { device, status -> emitter.onError(ConnectionError.DisconnectDeviceFailed(device.address, status).toException()) }
-                .enqueue()
+    override suspend fun disconnect(): Either<Throwable, Unit> {
+        return Either.catch {
+            manager.disconnect().await()
         }
-    }
-
-    internal fun bluetoothDevice(): BluetoothDevice {
-        return bluetoothDevice
     }
 
     override fun metadata(): Metadata {
         return metadata
     }
 
-    override fun bondStates(): Observable<BondState> {
-        return manager.bondStates()
+    override suspend fun createBond(): Either<Throwable, Unit> {
+
+        return manager.doCreateBond().await().right()
     }
 
-    override fun createBond(): Completable {
-        return manager.doCreateBond()
+    override suspend fun removeBond(): Either<Throwable, Unit> {
+        return manager.doRemoveBond().await().right()
+
     }
 
-    override fun removeBond(): Completable {
-        return manager.doRemoveBond()
+    override suspend fun read(characteristic: CharacteristicSuccess.Read): Change {
+        return manager.read(characteristic.id, characteristic.gatt).await()
     }
 
-    override fun read(characteristic: CharacteristicSuccess.Read): Single<Change> {
-        return manager.read(characteristic.id, characteristic.gatt)
+    override suspend fun write(data: Data, characteristic: CharacteristicSuccess.Write): Change {
+        return manager.write(data, characteristic.id, characteristic.gatt).await()
     }
 
-    override fun write(data: Data, characteristic: CharacteristicSuccess.Write): Single<Change> {
-        return manager.write(data, characteristic.id, characteristic.gatt)
+    override suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit> {
+        return manager.subscribe(notify).await().right()
     }
 
-    override fun subscribe(notify: CharacteristicSuccess.Notify): Completable {
-        return manager.subscribe(notify)
+    override suspend fun subscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit> {
+        if (list.isEmpty()) return IllegalArgumentException("Empty notify list").left()
+        return list.parTraverseEither { subscribe(it) }.map { Unit }
     }
 
-    override fun subscribe(list: List<CharacteristicSuccess.Notify>): Completable {
-        if (list.isEmpty()) return Completable.error(IllegalArgumentException("Empty notify list"))
-        return Completable.merge(list.map { subscribe(it) })
+    override suspend fun unsubscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit> {
+        return manager.unsubscribe(notify).await().right()
     }
 
-    override fun unsubscribe(notify: CharacteristicSuccess.Notify): Completable {
-        return manager.unsubscribe(notify)
+    override suspend fun unsubscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit> {
+        if (list.isEmpty()) return IllegalArgumentException("Empty notify list").left()
+        return list.parTraverseEither { unsubscribe(it) }.map { Unit }
     }
 
-    override fun unsubscribe(list: List<CharacteristicSuccess.Notify>): Completable {
-        if (list.isEmpty()) return Completable.error(IllegalArgumentException("Empty notify list"))
-        return Completable.merge(list.map { unsubscribe(it) })
-    }
-
-    override fun toString(): String {
-        return "BeckonDevice address: ${metadata.macAddress} connectionState: ${currentState()} bondState: ${manager.currentBondState()}"
-    }
 }

@@ -2,31 +2,26 @@ package com.technocreatives.beckon.data
 
 import android.content.Context
 import androidx.core.content.edit
-import arrow.core.Either
-import arrow.core.identity
+import arrow.core.Option
+import arrow.core.toOption
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.ToJson
 import com.squareup.moshi.Types
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.SavedMetadata
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.withContext
-import java.util.*
+import io.reactivex.Observable
+import io.reactivex.Single
+import io.reactivex.subjects.BehaviorSubject
+import java.util.UUID
 
 private const val KEY_DEVICES = "key.saved.devices"
 
-
-internal class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
+internal class DeviceRepositoryImplRx(private val context: Context) : DeviceRepositoryRx {
 
     private val devicesSubject by lazy {
-        MutableSharedFlow<List<SavedMetadata>>(1)
+        BehaviorSubject.createDefault(currentDevices())
     }
-
-    private val devicesFlow = devicesSubject.asSharedFlow()
 
     private val sharedPreferences by lazy {
         context.getSharedPreferences(
@@ -50,55 +45,57 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         moshi.adapter<List<SavedMetadata>>(type)
     }
 
-    override suspend fun currentDevices(): List<SavedMetadata> {
+    override fun currentDevices(): List<SavedMetadata> {
         val json = sharedPreferences.getString(KEY_DEVICES, "")!!
         return if (json.isBlank()) {
             emptyList()
         } else {
-            Either.catch {
-                withContext(Dispatchers.IO) {
-                    adapter.fromJson(json)!!
-                }
-            }.fold({ emptyList() }, ::identity)
+            adapter.fromJson(json)!!
         }
     }
 
-    override suspend fun addDevice(metadata: SavedMetadata): List<SavedMetadata> {
+    override fun addDevice(metadata: SavedMetadata): Single<List<SavedMetadata>> {
         val currentDevices = currentDevices()
         return if (!currentDevices.any { it.macAddress == metadata.macAddress }) {
             val devices = currentDevices + metadata
             saveDevices(devices)
         } else {
-            currentDevices
+            Single.just(currentDevices)
         }
     }
 
-    override suspend fun removeDevice(macAddress: String): List<SavedMetadata> {
+    override fun removeDevice(macAddress: String): Single<List<SavedMetadata>> {
         val currentDevices = currentDevices()
         val device = currentDevices.find { it.macAddress == macAddress }
         return if (device != null) {
             val devices = currentDevices - device
             saveDevices(devices)
         } else {
-            currentDevices
+            Single.just(currentDevices)
         }
     }
 
-    override suspend fun findDevice(macAddress: MacAddress): SavedMetadata? {
+    override fun findDevice(macAddress: MacAddress): Single<Option<SavedMetadata>> {
         val currentDevices = currentDevices()
-        return currentDevices.find { it.macAddress == macAddress }
+        return Single.just(currentDevices.find { it.macAddress == macAddress }.toOption())
     }
 
-    override suspend fun saveDevices(devices: List<SavedMetadata>): List<SavedMetadata> {
-        val json = adapter.toJson(devices)
-        sharedPreferences.edit(commit = true) {
-            this.putString(KEY_DEVICES, json)
+    override fun saveDevices(devices: List<SavedMetadata>): Single<List<SavedMetadata>> {
+        return Single.create { emitter ->
+            try {
+                val json = adapter.toJson(devices)
+                sharedPreferences.edit(commit = true) {
+                    this.putString(KEY_DEVICES, json)
+                }
+                emitter.onSuccess(devices)
+                devicesSubject.onNext(devices)
+            } catch (ex: Throwable) {
+                emitter.onError(ex)
+            }
         }
-        devicesSubject.emit(devices)
-        return devices
     }
 
-    override fun devices(): Flow<List<SavedMetadata>> {
-        return devicesFlow
+    override fun devices(): Observable<List<SavedMetadata>> {
+        return devicesSubject.hide()
     }
 }

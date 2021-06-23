@@ -1,6 +1,7 @@
 package com.technocreatives.beckon.redux
 
 import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.BeckonDeviceRx
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.SavedMetadata
 
