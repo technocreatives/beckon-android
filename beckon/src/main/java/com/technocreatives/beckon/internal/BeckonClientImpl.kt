@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.asFlow
 import kotlinx.coroutines.rx2.await
+import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 
@@ -127,7 +128,7 @@ internal class BeckonClientImpl(
         result: ScanResult,
         descriptor: Descriptor
     ): Either<ConnectionError, BeckonDevice> {
-        return with(Dispatchers.IO) {
+        return withContext(Dispatchers.IO) {
             connect(result.device, descriptor).await()
         }
     }
@@ -138,7 +139,7 @@ internal class BeckonClientImpl(
             val device =
                 context.bluetoothManager().findDevice(metadata.macAddress)
         ) {
-            is Some -> return with(Dispatchers.IO) {
+            is Some -> return withContext(Dispatchers.IO) {
                 connect(device.value, metadata.descriptor).await()
             }
             is None -> BeckonDeviceError.BondedDeviceNotFound(metadata).left()
