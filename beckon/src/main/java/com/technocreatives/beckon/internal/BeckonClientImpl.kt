@@ -38,6 +38,7 @@ import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.beckon.util.findDevice
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
@@ -240,20 +241,24 @@ internal class BeckonClientImpl(
 
         // do scan to check if bluetooth turn on from off state
         beckonStore.states()
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.io())
             .map { it.bluetoothState }
             .distinctUntilChanged()
             .filter { it == BluetoothState.ON }
-            .map { runBlocking { deviceRepository.currentDevices() } }
-            .subscribe { runBlocking { reconnectSavedDevices(it) } }
+            .map { runBlocking(Dispatchers.IO) { deviceRepository.currentDevices() } }
+            .subscribe { runBlocking(Dispatchers.IO) { reconnectSavedDevices(it) } }
             .disposedBy(bag)
 
         beckonStore.states()
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.io())
             .map { it.bluetoothState }
             .distinctUntilChanged()
             .filter { it == BluetoothState.OFF }
             .subscribe {
                 beckonStore.currentState().connectedDevices.onEach {
-                    runBlocking {
+                    runBlocking(Dispatchers.IO) {
                         it.disconnect().fold(
                             {
                                 Timber.d("Disconnect after BT_OFF success")

@@ -34,6 +34,7 @@ import com.technocreatives.beckon.util.toBondState
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import io.reactivex.subjects.SingleSubject
 import no.nordicsemi.android.ble.BleManager
@@ -180,10 +181,12 @@ internal class BeckonBleManager(
                     val detail = DeviceDetail(services, characteristics)
 
                     // TODO Fix disposable
+                    // TODO wtf is 1600?
                     val disposable =
                         Observable.just(Unit).delay(1600, TimeUnit.MILLISECONDS).flatMapCompletable {
                             subscribeBla(descriptor.subscribes, detail)
-                        }
+                        }.observeOn(Schedulers.io())
+                            .subscribeOn(Schedulers.io())
                             .andThen(readBla(descriptor.reads, detail).ignoreElements())
                             .subscribe(
                                 {

@@ -7,6 +7,7 @@ import com.lenguyenthanh.rxarrow.mapZ
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.asObservable
 import kotlinx.coroutines.rx2.rxCompletable
@@ -16,7 +17,7 @@ import no.nordicsemi.android.ble.data.Data
 fun BeckonClient.rx(): BeckonClientRx {
     return object : BeckonClientRx {
         override fun startScan(setting: ScannerSetting): Observable<ScanResult> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 this@rx.startScan(setting).asObservable()
             }
 
@@ -33,50 +34,50 @@ fun BeckonClient.rx(): BeckonClientRx {
             setting: ScannerSetting,
             descriptor: Descriptor
         ): Observable<Either<ConnectionError, BeckonDeviceRx>> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 this@rx.search(setting, descriptor).asObservable().mapZ { it.rx() }
             }
 
         override fun connect(result: ScanResult, descriptor: Descriptor): Single<BeckonDeviceRx> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.connect(result, descriptor) }
                     .mapZ { it.rx() }
                     .fix { it.toException() }
             }
 
         override fun connect(metadata: SavedMetadata): Single<BeckonDeviceRx> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.connect(metadata) }
                     .mapZ { it.rx() }
                     .fix { it.toException() }
             }
 
         override fun disconnect(macAddress: MacAddress): Completable =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxCompletable { this@rx.disconnect(macAddress) }
             }
 
         override fun save(macAddress: MacAddress): Single<MacAddress> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.save(macAddress) }
                     .fix()
             }
 
         override fun remove(macAddress: MacAddress): Single<MacAddress> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.remove(macAddress) }
                     .fix()
             }
 
         override fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDeviceRx> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.findConnectedDevice(macAddress) }
                     .fix { it.toException() }
                     .map { it.rx() }
             }
 
         override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDeviceRx>> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 this@rx.findConnectedDeviceO(metadata)
                     .asObservable()
                     .mapZ { it.rx() }
@@ -86,7 +87,7 @@ fun BeckonClient.rx(): BeckonClientRx {
             this@rx.connectedDevices().asObservable()
 
         override fun findSavedDevice(macAddress: MacAddress): Single<SavedMetadata> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.findSavedDevice(macAddress) }
                     .fix { it.toException() }
             }
@@ -95,13 +96,13 @@ fun BeckonClient.rx(): BeckonClientRx {
             this@rx.savedDevices().asObservable()
 
         override fun register(context: Context) {
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 this@rx.register(context)
             }
         }
 
         override fun unregister(context: Context) {
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 this@rx.unregister(context)
             }
         }
@@ -114,7 +115,7 @@ fun BeckonClient.rx(): BeckonClientRx {
             characteristic: CharacteristicSuccess.Write,
             data: Data
         ): Single<Change> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.write(macAddress, characteristic, data) }
                     .fix()
             }
@@ -123,7 +124,7 @@ fun BeckonClient.rx(): BeckonClientRx {
             macAddress: MacAddress,
             characteristic: CharacteristicSuccess.Read
         ): Single<Change> =
-            runBlocking {
+            runBlocking(Dispatchers.IO) {
                 rxSingle {
                     this@rx.read(macAddress, characteristic)
                 }.fix()
