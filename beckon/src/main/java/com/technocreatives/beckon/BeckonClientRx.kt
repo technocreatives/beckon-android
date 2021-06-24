@@ -3,7 +3,6 @@ package com.technocreatives.beckon
 import android.content.Context
 import arrow.core.Either
 import com.technocreatives.beckon.data.DeviceRepositoryImpl
-import com.technocreatives.beckon.data.DeviceRepositoryImplRx
 import com.technocreatives.beckon.internal.BeckonClientImpl
 import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
 import com.technocreatives.beckon.internal.ScannerImpl

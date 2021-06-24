@@ -1,9 +1,6 @@
 package com.technocreatives.beckon
 
 import arrow.core.Either
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.Single
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ble.data.Data
 

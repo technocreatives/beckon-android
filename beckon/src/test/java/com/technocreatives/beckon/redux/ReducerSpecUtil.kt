@@ -4,14 +4,14 @@ import com.lenguyenthanh.redux.Log
 import com.lenguyenthanh.redux.Store
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
-import com.technocreatives.beckon.BeckonDeviceRx
+import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
 
-fun beckonDevice(macAddress: MacAddress): BeckonDeviceRx {
-    val device = mock<BeckonDeviceRx>()
+fun beckonDevice(macAddress: MacAddress): BeckonDevice {
+    val device = mock<BeckonDevice>()
     val metadata = mock<Metadata>()
     whenever(metadata.macAddress).thenReturn(macAddress)
     whenever(device.metadata()).thenReturn(metadata)

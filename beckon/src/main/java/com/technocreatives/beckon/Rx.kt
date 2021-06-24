@@ -2,9 +2,7 @@ package com.technocreatives.beckon
 
 import android.content.Context
 import arrow.core.Either
-import arrow.core.identity
 import com.lenguyenthanh.rxarrow.fix
-import com.lenguyenthanh.rxarrow.mapLeft
 import com.lenguyenthanh.rxarrow.mapZ
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -130,7 +128,6 @@ fun BeckonClient.rx(): BeckonClientRx {
                     this@rx.read(macAddress, characteristic)
                 }.fix()
             }
-
     }
 }
 
@@ -216,6 +213,5 @@ fun BeckonDevice.rx(): BeckonDeviceRx {
                 this@rx.unsubscribe(list)
             }
         }
-
     }
 }

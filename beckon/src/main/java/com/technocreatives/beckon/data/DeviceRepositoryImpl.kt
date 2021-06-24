@@ -19,7 +19,6 @@ import java.util.*
 
 private const val KEY_DEVICES = "key.saved.devices"
 
-
 internal class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
 
     private val devicesSubject by lazy {

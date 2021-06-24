@@ -139,18 +139,18 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
     args "-F", "src/**/*.kt"
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            // Creates a Maven publication called "release".
-            release(MavenPublication) {
-                // Applies the component for the release build variant.
-                from components.release
-                // You can then customize attributes of the publication as shown below.
-                groupId = 'com.technocreatives'
-                artifactId = 'beckon'
-                version = '0.1.0'
-            }
-        }
-    }
-}
+//afterEvaluate {
+//    publishing {
+//        publications {
+//             Creates a Maven publication called "release".
+//            release(MavenPublication) {
+//                 Applies the component for the release build variant.
+//                from components.release
+//                 You can then customize attributes of the publication as shown below.
+//                groupId = 'com.technocreatives'
+//                artifactId = 'beckon'
+//                version = '0.1.0'
+//            }
+//        }
+//    }
+//}

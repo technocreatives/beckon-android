@@ -1,25 +1,25 @@
-//package com.technocreatives.beckon.internal
+// package com.technocreatives.beckon.internal
 //
-//import android.bluetooth.BluetoothDevice
-//import com.technocreatives.beckon.BeckonDeviceRx
-//import com.technocreatives.beckon.BondState
-//import com.technocreatives.beckon.Change
-//import com.technocreatives.beckon.CharacteristicSuccess
-//import com.technocreatives.beckon.ConnectionError
-//import com.technocreatives.beckon.ConnectionState
-//import com.technocreatives.beckon.Metadata
-//import com.technocreatives.beckon.State
-//import io.reactivex.Completable
-//import io.reactivex.Observable
-//import io.reactivex.Single
-//import no.nordicsemi.android.ble.data.Data
-//import timber.log.Timber
+// import android.bluetooth.BluetoothDevice
+// import com.technocreatives.beckon.BeckonDeviceRx
+// import com.technocreatives.beckon.BondState
+// import com.technocreatives.beckon.Change
+// import com.technocreatives.beckon.CharacteristicSuccess
+// import com.technocreatives.beckon.ConnectionError
+// import com.technocreatives.beckon.ConnectionState
+// import com.technocreatives.beckon.Metadata
+// import com.technocreatives.beckon.State
+// import io.reactivex.Completable
+// import io.reactivex.Observable
+// import io.reactivex.Single
+// import no.nordicsemi.android.ble.data.Data
+// import timber.log.Timber
 //
-//internal class BeckonDeviceImplRx(
+// internal class BeckonDeviceImplRx(
 //    private val bluetoothDevice: BluetoothDevice,
 //    private val manager: BeckonBleManager,
 //    private val metadata: Metadata
-//) : BeckonDeviceRx {
+// ) : BeckonDeviceRx {
 //
 //    override fun connectionStates(): Observable<ConnectionState> {
 //        return manager.connectionState()
@@ -100,4 +100,4 @@
 //    override fun toString(): String {
 //        return "BeckonDevice address: ${metadata.macAddress} connectionState: ${currentState()} bondState: ${manager.currentBondState()}"
 //    }
-//}
+// }

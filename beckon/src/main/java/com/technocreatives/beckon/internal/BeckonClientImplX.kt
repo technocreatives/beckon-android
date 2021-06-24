@@ -1,53 +1,53 @@
-//package com.technocreatives.beckon.internal
+// package com.technocreatives.beckon.internal
 //
-//import android.bluetooth.BluetoothDevice
-//import android.content.Context
-//import arrow.core.Either
-//import arrow.core.None
-//import arrow.core.Some
-//import arrow.core.flatMap
-//import arrow.core.left
-//import arrow.core.right
-//import com.lenguyenthanh.rxarrow.SingleZ
-//import com.lenguyenthanh.rxarrow.fix
-//import com.technocreatives.beckon.BeckonClientRx
-//import com.technocreatives.beckon.BeckonDeviceRx
-//import com.technocreatives.beckon.BeckonDeviceError
-//import com.technocreatives.beckon.BeckonException
-//import com.technocreatives.beckon.BluetoothState
-//import com.technocreatives.beckon.Change
-//import com.technocreatives.beckon.CharacteristicSuccess
-//import com.technocreatives.beckon.ConnectionError
-//import com.technocreatives.beckon.Descriptor
-//import com.technocreatives.beckon.DeviceDetail
-//import com.technocreatives.beckon.MacAddress
-//import com.technocreatives.beckon.Metadata
-//import com.technocreatives.beckon.SavedMetadata
-//import com.technocreatives.beckon.ScanResult
-//import com.technocreatives.beckon.ScannerSetting
-//import com.technocreatives.beckon.checkRequirements
-//import com.technocreatives.beckon.data.DeviceRepositoryRx
-//import com.technocreatives.beckon.extension.subscribe
-//import com.technocreatives.beckon.redux.BeckonAction
-//import com.technocreatives.beckon.redux.BeckonStore
-//import com.technocreatives.beckon.util.bluetoothManager
-//import com.technocreatives.beckon.util.connectedDevices
-//import com.technocreatives.beckon.util.disposedBy
-//import com.technocreatives.beckon.util.findDevice
-//import io.reactivex.Completable
-//import io.reactivex.Observable
-//import io.reactivex.Single
-//import io.reactivex.disposables.CompositeDisposable
-//import no.nordicsemi.android.ble.data.Data
-//import timber.log.Timber
+// import android.bluetooth.BluetoothDevice
+// import android.content.Context
+// import arrow.core.Either
+// import arrow.core.None
+// import arrow.core.Some
+// import arrow.core.flatMap
+// import arrow.core.left
+// import arrow.core.right
+// import com.lenguyenthanh.rxarrow.SingleZ
+// import com.lenguyenthanh.rxarrow.fix
+// import com.technocreatives.beckon.BeckonClientRx
+// import com.technocreatives.beckon.BeckonDeviceRx
+// import com.technocreatives.beckon.BeckonDeviceError
+// import com.technocreatives.beckon.BeckonException
+// import com.technocreatives.beckon.BluetoothState
+// import com.technocreatives.beckon.Change
+// import com.technocreatives.beckon.CharacteristicSuccess
+// import com.technocreatives.beckon.ConnectionError
+// import com.technocreatives.beckon.Descriptor
+// import com.technocreatives.beckon.DeviceDetail
+// import com.technocreatives.beckon.MacAddress
+// import com.technocreatives.beckon.Metadata
+// import com.technocreatives.beckon.SavedMetadata
+// import com.technocreatives.beckon.ScanResult
+// import com.technocreatives.beckon.ScannerSetting
+// import com.technocreatives.beckon.checkRequirements
+// import com.technocreatives.beckon.data.DeviceRepositoryRx
+// import com.technocreatives.beckon.extension.subscribe
+// import com.technocreatives.beckon.redux.BeckonAction
+// import com.technocreatives.beckon.redux.BeckonStore
+// import com.technocreatives.beckon.util.bluetoothManager
+// import com.technocreatives.beckon.util.connectedDevices
+// import com.technocreatives.beckon.util.disposedBy
+// import com.technocreatives.beckon.util.findDevice
+// import io.reactivex.Completable
+// import io.reactivex.Observable
+// import io.reactivex.Single
+// import io.reactivex.disposables.CompositeDisposable
+// import no.nordicsemi.android.ble.data.Data
+// import timber.log.Timber
 //
-//internal class BeckonClientImplX(
+// internal class BeckonClientImplX(
 //    private val context: Context,
 //    private val beckonStore: BeckonStore,
 //    private val deviceRepository: DeviceRepositoryRx,
 //    private val bluetoothReceiver: Receiver,
 //    private val scanner: Scanner
-//) : BeckonClientRx {
+// ) : BeckonClientRx {
 //
 //    private val bag = CompositeDisposable()
 //
@@ -371,4 +371,4 @@
 //    ): Single<Change> {
 //        return findConnectedDevice(macAddress).flatMap { it.read(characteristic) }
 //    }
-//}
+// }

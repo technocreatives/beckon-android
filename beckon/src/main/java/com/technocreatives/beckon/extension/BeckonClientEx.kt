@@ -11,8 +11,8 @@ import com.lenguyenthanh.rxarrow.flatMapSingleZ
 import com.lenguyenthanh.rxarrow.flatMapZ
 import com.lenguyenthanh.rxarrow.z
 import com.technocreatives.beckon.BeckonClientRx
-import com.technocreatives.beckon.BeckonDeviceRx
 import com.technocreatives.beckon.BeckonDeviceError
+import com.technocreatives.beckon.BeckonDeviceRx
 import com.technocreatives.beckon.BeckonException
 import com.technocreatives.beckon.BeckonResult
 import com.technocreatives.beckon.ConnectionError

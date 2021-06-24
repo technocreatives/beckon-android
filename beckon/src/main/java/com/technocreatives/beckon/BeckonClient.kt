@@ -4,7 +4,6 @@ import android.content.Context
 import arrow.core.Either
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ble.data.Data
-import javax.crypto.Mac
 
 interface BeckonClient {
 

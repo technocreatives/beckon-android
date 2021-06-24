@@ -214,7 +214,6 @@ internal class BeckonClientImpl(
 
     override fun connectedDevices(): Flow<List<Metadata>> {
         return beckonStore.states().map { it.connectedDevices.map { it.metadata() } }.asFlow()
-
     }
 
     override suspend fun findSavedDevice(macAddress: MacAddress): Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata> {
