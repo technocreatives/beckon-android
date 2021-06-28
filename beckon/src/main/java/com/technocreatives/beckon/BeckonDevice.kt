@@ -12,18 +12,16 @@ interface BeckonDevice {
     fun changes(): Flow<Change>
     fun states(): Flow<State>
 
-    fun currentState(): ConnectionState
-
     suspend fun disconnect(): Either<Throwable, Unit>
 
     fun metadata(): Metadata
 
-    suspend fun createBond(): Either<Throwable, Unit>
-    suspend fun removeBond(): Either<Throwable, Unit>
+    suspend fun createBond(): Either<ConnectionError.CreateBondFailed, Unit>
+    suspend fun removeBond(): Either<ConnectionError.RemoveBondFailed, Unit>
 
-    suspend fun read(characteristic: CharacteristicSuccess.Read): Change
+    suspend fun read(characteristic: CharacteristicSuccess.Read): Either<ReadDataException, Change>
 
-    suspend fun write(data: Data, characteristic: CharacteristicSuccess.Write): Change
+    suspend fun write(data: Data, characteristic: CharacteristicSuccess.Write): Either<WriteDataException, Change>
 
     suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit>
     suspend fun subscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit>

@@ -1,9 +1,25 @@
-package com.technocreatives.beckon
+package com.technocreatives.beckon.rx2
 
 import android.content.Context
 import arrow.core.Either
 import com.lenguyenthanh.rxarrow.fix
 import com.lenguyenthanh.rxarrow.mapZ
+import com.technocreatives.beckon.BeckonClient
+import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.BeckonDeviceError
+import com.technocreatives.beckon.BluetoothState
+import com.technocreatives.beckon.BondState
+import com.technocreatives.beckon.Change
+import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.ConnectionError
+import com.technocreatives.beckon.ConnectionState
+import com.technocreatives.beckon.Descriptor
+import com.technocreatives.beckon.MacAddress
+import com.technocreatives.beckon.Metadata
+import com.technocreatives.beckon.SavedMetadata
+import com.technocreatives.beckon.ScanResult
+import com.technocreatives.beckon.ScannerSetting
+import com.technocreatives.beckon.State
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -77,11 +93,9 @@ fun BeckonClient.rx(): BeckonClientRx {
             }
 
         override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDeviceRx>> =
-            runBlocking(Dispatchers.IO) {
                 this@rx.findConnectedDeviceO(metadata)
                     .asObservable()
                     .mapZ { it.rx() }
-            }
 
         override fun connectedDevices(): Observable<List<Metadata>> =
             this@rx.connectedDevices().asObservable()
@@ -150,9 +164,9 @@ fun BeckonDevice.rx(): BeckonDeviceRx {
             return this@rx.states().asObservable()
         }
 
-        override fun currentState(): ConnectionState {
-            return this@rx.currentState()
-        }
+        // override fun currentState(): ConnectionState {
+        //     return this@rx.currentState()
+        // }
 
         override fun disconnect(): Completable {
             return rxCompletable {
@@ -179,7 +193,7 @@ fun BeckonDevice.rx(): BeckonDeviceRx {
         override fun read(characteristic: CharacteristicSuccess.Read): Single<Change> {
             return rxSingle {
                 this@rx.read(characteristic)
-            }
+            }.fix()
         }
 
         override fun write(
@@ -188,7 +202,7 @@ fun BeckonDevice.rx(): BeckonDeviceRx {
         ): Single<Change> {
             return rxSingle {
                 this@rx.write(data, characteristic)
-            }
+            }.fix()
         }
 
         override fun subscribe(notify: CharacteristicSuccess.Notify): Completable {

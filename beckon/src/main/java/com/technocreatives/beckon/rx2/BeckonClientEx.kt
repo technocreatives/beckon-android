@@ -1,4 +1,4 @@
-package com.technocreatives.beckon.extension
+package com.technocreatives.beckon.rx2
 
 import arrow.core.Either
 import arrow.core.identity
@@ -10,9 +10,7 @@ import com.lenguyenthanh.rxarrow.flatMapSingleEither
 import com.lenguyenthanh.rxarrow.flatMapSingleZ
 import com.lenguyenthanh.rxarrow.flatMapZ
 import com.lenguyenthanh.rxarrow.z
-import com.technocreatives.beckon.BeckonClientRx
 import com.technocreatives.beckon.BeckonDeviceError
-import com.technocreatives.beckon.BeckonDeviceRx
 import com.technocreatives.beckon.BeckonException
 import com.technocreatives.beckon.BeckonResult
 import com.technocreatives.beckon.ConnectionError
@@ -68,6 +66,7 @@ fun BeckonClientRx.safeConnect(
     descriptor: Descriptor
 ): Single<BeckonResult<BeckonDeviceRx>> {
     return connect(result, descriptor).map { it.right() as BeckonResult<BeckonDeviceRx> }
+        .doOnSuccess { Timber.d("safe Connect $it") }
         .onErrorReturn { it.left() }
 }
 
@@ -120,8 +119,13 @@ fun BeckonClientRx.scanAndSave(
     filter: (State) -> Boolean
 ): Observable<BeckonResult<MacAddress>> {
     return scanAndConnect(conditions.distinctUntilChanged(), setting, descriptor)
+        .doOnNext { Timber.d("Scan And Connect: $it") }
         .flatMapZ { it.deviceStates() }
-        .filterZ { deviceState -> filter(deviceState.state) }
+        // .doOnNext { Timber.d("Device state: $it") }
+        .filterZ {
+                deviceState ->
+            Timber.d("Device state: ${deviceState.state}")
+            filter(deviceState.state) }
         .flatMapSingleZ { save(it.metadata.macAddress) }
         .doOnNext { Timber.d("scanAndSave found $it") }
 }

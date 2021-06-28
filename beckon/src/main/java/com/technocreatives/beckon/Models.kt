@@ -107,6 +107,10 @@ data class Characteristic(val uuid: UUID, val service: UUID) {
 data class Change(val uuid: UUID, val data: Data)
 typealias State = Map<UUID, Data>
 
+operator fun State.plus(change: Change): State {
+    return this + (change.uuid to change.data)
+}
+
 enum class Property {
     WRITE,
     NOTIFY,

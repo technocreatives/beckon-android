@@ -1,11 +1,22 @@
-package com.technocreatives.beckon
+package com.technocreatives.beckon.rx2
 
 import android.content.Context
 import arrow.core.Either
+import com.technocreatives.beckon.BeckonDeviceError
+import com.technocreatives.beckon.BluetoothState
+import com.technocreatives.beckon.Change
+import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.ConnectionError
+import com.technocreatives.beckon.Descriptor
+import com.technocreatives.beckon.MacAddress
+import com.technocreatives.beckon.Metadata
+import com.technocreatives.beckon.SavedMetadata
+import com.technocreatives.beckon.ScanResult
+import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.data.DeviceRepositoryImpl
 import com.technocreatives.beckon.internal.BeckonClientImpl
 import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
-import com.technocreatives.beckon.internal.ScannerImpl
+import com.technocreatives.beckon.internal.ScannerRxImpl
 import com.technocreatives.beckon.redux.createBeckonStore
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -24,7 +35,7 @@ interface BeckonClientRx {
             val beckonStore = createBeckonStore()
             val deviceRepository = DeviceRepositoryImpl(context)
             val receiver = BluetoothAdapterReceiver(beckonStore)
-            val scanner = ScannerImpl()
+            val scanner = ScannerRxImpl()
 
             if (beckonClient == null) {
                 beckonClient =

@@ -1,7 +1,7 @@
 // package com.technocreatives.beckon.internal
 //
 // import android.bluetooth.BluetoothDevice
-// import com.technocreatives.beckon.BeckonDeviceRx
+// import com.technocreatives.beckon.rx2.BeckonDeviceRx
 // import com.technocreatives.beckon.BondState
 // import com.technocreatives.beckon.Change
 // import com.technocreatives.beckon.CharacteristicSuccess

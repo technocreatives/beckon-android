@@ -6,13 +6,11 @@ import arrow.core.Either
 import arrow.core.None
 import arrow.core.Some
 import arrow.core.computations.either
-import arrow.core.flatMap
 import arrow.core.identity
 import arrow.core.left
 import arrow.core.right
 import arrow.core.rightIfNotNull
 import arrow.fx.coroutines.parTraverseEither
-import com.lenguyenthanh.rxarrow.SingleZ
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
@@ -36,15 +34,13 @@ import com.technocreatives.beckon.util.bluetoothManager
 import com.technocreatives.beckon.util.connectedDevices
 import com.technocreatives.beckon.util.disposedBy
 import com.technocreatives.beckon.util.findDevice
-import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.asFlow
-import kotlinx.coroutines.rx2.await
-import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 
@@ -53,7 +49,7 @@ internal class BeckonClientImpl(
     private val beckonStore: BeckonStore,
     private val deviceRepository: DeviceRepository,
     private val bluetoothReceiver: Receiver,
-    private val scanner: Scanner
+    private val scanner: ScannerRx
 ) : BeckonClient {
 
     // TODO remove
@@ -119,19 +115,23 @@ internal class BeckonClientImpl(
         } else {
             connectedDevicesInSystem
         }
+        return flow {
+            connectedDevices.forEach {
+                emit(connectWithValidRequirement(it, descriptor))
+            }
+        }
 
-        return Observable.fromArray(*connectedDevices.toTypedArray())
-            .flatMapSingle { connect(it, descriptor) }
-            .asFlow()
+        // return Observable.fromArray(*connectedDevices.toTypedArray())
+        //     .flatMapSingle { connect(it, descriptor) }
+        //     .asFlow()
     }
 
     override suspend fun connect(
         result: ScanResult,
         descriptor: Descriptor
     ): Either<ConnectionError, BeckonDevice> {
-        return withContext(Dispatchers.IO) {
-            connect(result.device, descriptor).await()
-        }
+        Timber.d("Connecting to: $result")
+        return connectWithValidRequirement(result.device, descriptor)
     }
 
     override suspend fun connect(metadata: SavedMetadata): Either<BeckonError, BeckonDevice> {
@@ -140,9 +140,7 @@ internal class BeckonClientImpl(
             val device =
                 context.bluetoothManager().findDevice(metadata.macAddress)
         ) {
-            is Some -> return withContext(Dispatchers.IO) {
-                connect(device.value, metadata.descriptor).await()
-            }
+            is Some -> connectWithValidRequirement(device.value, metadata.descriptor)
             is None -> BeckonDeviceError.BondedDeviceNotFound(metadata).left()
         }
     }
@@ -229,15 +227,15 @@ internal class BeckonClientImpl(
     override suspend fun register(context: Context) {
         bluetoothReceiver.register(context)
 
-        beckonStore.states()
-            .map { it.connectedDevices }
-            .doOnNext { Timber.d("All connected devices $it") }
-            .map { it.map { it.currentState() } }
-            .distinctUntilChanged()
-            .subscribe {
-                // process devices states
-                Timber.d("ConnectionSate of all BeckonDevices $it")
-            }.disposedBy(bag)
+        // beckonStore.states()
+        //     .map { it.connectedDevices }
+        //     .doOnNext { Timber.d("All connected devices $it") }
+        //     .map { it.map { it.currentState() } }
+        //     .distinctUntilChanged()
+        //     .subscribe {
+        // process devices states
+        // Timber.d("ConnectionSate of all BeckonDevices $it")
+        // }.disposedBy(bag)
 
         // do scan to check if bluetooth turn on from off state
         beckonStore.states()
@@ -246,8 +244,8 @@ internal class BeckonClientImpl(
             .map { it.bluetoothState }
             .distinctUntilChanged()
             .filter { it == BluetoothState.ON }
-            .map { runBlocking(Dispatchers.IO) { deviceRepository.currentDevices() } }
-            .subscribe { runBlocking(Dispatchers.IO) { reconnectSavedDevices(it) } }
+            .map { runBlocking { deviceRepository.currentDevices() } }
+            .subscribe { runBlocking { reconnectSavedDevices(it) } }
             .disposedBy(bag)
 
         beckonStore.states()
@@ -293,7 +291,7 @@ internal class BeckonClientImpl(
         data: Data
     ): Either<Throwable, Change> = either {
         val device = findConnectedDevice(macAddress).mapLeft { it.toException() }.bind()
-        device.write(data, characteristic)
+        device.write(data, characteristic).bind()
     }
 
     override suspend fun read(
@@ -301,7 +299,7 @@ internal class BeckonClientImpl(
         characteristic: CharacteristicSuccess.Read
     ): Either<Throwable, Change> = either {
         val device = findConnectedDevice(macAddress).mapLeft { it.toException() }.bind()
-        device.read(characteristic)
+        device.read(characteristic).bind()
     }
 
     /**
@@ -314,42 +312,72 @@ internal class BeckonClientImpl(
             .map { device.metadata().macAddress }
     }
 
-    private fun connect(
+    /***
+     * Connect to the bluetooth device
+     * Verify if it satisfies requirement
+     * if not disconnect
+     * otherwise return BeckonDevice
+     * TODO handle requirement better
+     */
+    private suspend fun connectWithValidRequirement(
         device: BluetoothDevice,
         descriptor: Descriptor
-    ): SingleZ<ConnectionError, BeckonDevice> {
+    ): Either<ConnectionError, BeckonDevice> {
         Timber.d("Connect BluetoothDevice: $device")
-
         val manager = BeckonBleManager(context, device, descriptor)
         val savedMetadata = SavedMetadata(device.address, device.name, descriptor)
         beckonStore.dispatch(BeckonAction.AddConnectingDevice(savedMetadata))
-
-        return manager.connect()
-            .doOnSuccess { Timber.d("Connected to device success: $it") }
-            .map { either -> either.flatMap { checkRequirements(it, descriptor, device) } }
-            .map {
-                it.fold(
-                    { error ->
-                        if (error is ConnectionError.RequirementFailed) {
-                            manager.disconnect().enqueue()
-                        }
-                        beckonStore.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata))
-                        it as Either<ConnectionError, BeckonDevice>
-                    },
-                    { metadata ->
-                        val beckonDevice = BeckonDeviceImpl(device, manager, metadata)
-                        beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
-                        beckonDevice.right()
-                    }
-                )
+        val result = either<ConnectionError, BeckonDevice> {
+            val deviceDetail = manager.connectS().bind()
+            val metadata = checkRequirements(deviceDetail, descriptor, device).bind()
+            val beckonDevice = BeckonDeviceImpl(device, manager, metadata)
+            beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
+            beckonDevice
+        }
+        return result.mapLeft {
+            if (it is ConnectionError.RequirementFailed) {
+                manager.disconnect().enqueue()
             }
+            beckonStore.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata))
+            it
+        }
     }
+
+    // private fun connect(
+    //     device: BluetoothDevice,
+    //     descriptor: Descriptor
+    // ): SingleZ<ConnectionError, BeckonDevice> {
+    //     Timber.d("Connect BluetoothDevice: $device")
+    //     val manager = BeckonBleManager(context, device, descriptor)
+    //     val savedMetadata = SavedMetadata(device.address, device.name, descriptor)
+    //     beckonStore.dispatch(BeckonAction.AddConnectingDevice(savedMetadata))
+    //     return manager.connect()
+    //         .doOnSuccess { Timber.d("Connected to device success: $it") }
+    //         .map { either -> either.flatMap { checkRequirements(it, descriptor, device) } }
+    //         .map {
+    //             it.fold(
+    //                 { error ->
+    //                     if (error is ConnectionError.RequirementFailed) {
+    //                         manager.disconnect().enqueue()
+    //                     }
+    //                     beckonStore.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata))
+    //                     it as Either<ConnectionError, BeckonDevice>
+    //                 },
+    //                 { metadata ->
+    //                     val beckonDevice = BeckonDeviceImpl(device, manager, metadata)
+    //                     beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
+    //                     beckonDevice.right()
+    //                 }
+    //             )
+    //         }
+    // }
 
     private fun checkRequirements(
         detail: DeviceDetail,
         descriptor: Descriptor,
         device: BluetoothDevice
     ): Either<ConnectionError.RequirementFailed, Metadata> {
+        Timber.d("Check Requirements $detail, $descriptor, $device")
         return checkRequirements(descriptor.requirements, detail.services, detail.characteristics)
             .map {
                 Metadata(

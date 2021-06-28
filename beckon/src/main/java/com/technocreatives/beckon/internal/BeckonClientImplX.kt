@@ -10,8 +10,8 @@
 // import arrow.core.right
 // import com.lenguyenthanh.rxarrow.SingleZ
 // import com.lenguyenthanh.rxarrow.fix
-// import com.technocreatives.beckon.BeckonClientRx
-// import com.technocreatives.beckon.BeckonDeviceRx
+// import com.technocreatives.beckon.rx2.BeckonClientRx
+// import com.technocreatives.beckon.rx2.BeckonDeviceRx
 // import com.technocreatives.beckon.BeckonDeviceError
 // import com.technocreatives.beckon.BeckonException
 // import com.technocreatives.beckon.BluetoothState

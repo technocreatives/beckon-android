@@ -1,5 +1,11 @@
-package com.technocreatives.beckon
+package com.technocreatives.beckon.rx2
 
+import com.technocreatives.beckon.BondState
+import com.technocreatives.beckon.Change
+import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.ConnectionState
+import com.technocreatives.beckon.Metadata
+import com.technocreatives.beckon.State
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -13,7 +19,7 @@ interface BeckonDeviceRx {
     fun changes(): Observable<Change>
     fun states(): Observable<State>
 
-    fun currentState(): ConnectionState
+    // fun currentState(): ConnectionState
 
     fun disconnect(): Completable
 
