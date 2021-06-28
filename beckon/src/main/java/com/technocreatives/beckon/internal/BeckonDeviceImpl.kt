@@ -53,32 +53,26 @@ internal class BeckonDeviceImpl(
     }
 
     override suspend fun createBond(): Either<ConnectionError.CreateBondFailed, Unit> {
-        // return withContext(Dispatchers.IO) {
-        //     manager.doCreateBond().await().right()
-        // }
-        return manager.doCreateBondS()
+        return manager.doCreateBond()
     }
 
     override suspend fun removeBond(): Either<ConnectionError.RemoveBondFailed, Unit> {
-        // return withContext(Dispatchers.IO) {
-        //     manager.doRemoveBond().await().right()
-        // }
-        return manager.doRemoveBondS()
+        return manager.doRemoveBond()
     }
 
     override suspend fun read(characteristic: CharacteristicSuccess.Read): Either<ReadDataException, Change> {
-        return manager.readS(characteristic.id, characteristic.gatt)
+        return manager.read(characteristic.id, characteristic.gatt)
     }
 
     override suspend fun write(
         data: Data,
         characteristic: CharacteristicSuccess.Write
     ): Either<WriteDataException, Change> {
-        return manager.writeS(data, characteristic.id, characteristic.gatt)
+        return manager.write(data, characteristic.id, characteristic.gatt)
     }
 
     override suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit> {
-        return manager.subscribeS(notify.id, notify.gatt)
+        return manager.subscribe(notify.id, notify.gatt)
     }
 
     override suspend fun subscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit> {
@@ -87,7 +81,7 @@ internal class BeckonDeviceImpl(
     }
 
     override suspend fun unsubscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit> {
-        return manager.unsubscribeS(notify)
+        return manager.unsubscribe(notify)
     }
 
     override suspend fun unsubscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit> {

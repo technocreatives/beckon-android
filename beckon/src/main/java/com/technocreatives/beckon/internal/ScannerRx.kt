@@ -7,6 +7,7 @@ import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
 import io.reactivex.Observable
 import io.reactivex.subjects.PublishSubject
+import kotlinx.coroutines.flow.flow
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
 import no.nordicsemi.android.support.v18.scanner.ScanFilter

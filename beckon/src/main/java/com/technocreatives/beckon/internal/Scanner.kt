@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.internal
 
+import arrow.core.Either
 import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
@@ -12,7 +13,7 @@ import timber.log.Timber
 import no.nordicsemi.android.support.v18.scanner.ScanResult as BleScanResult
 
 interface Scanner {
-    fun startScan(setting: ScannerSetting): Flow<ScanResult>
+    fun startScan(setting: ScannerSetting): Flow<Either<Throwable, ScanResult>>
     fun stopScan()
 }
 //

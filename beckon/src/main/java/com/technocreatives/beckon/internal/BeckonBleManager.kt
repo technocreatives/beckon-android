@@ -31,11 +31,7 @@ import com.technocreatives.beckon.WriteDataException
 import com.technocreatives.beckon.checkNotifyList
 import com.technocreatives.beckon.checkReadList
 import com.technocreatives.beckon.plus
-import com.technocreatives.beckon.util.safe
 import com.technocreatives.beckon.util.toBondState
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.Single
 import io.reactivex.subjects.SingleSubject
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -67,12 +63,10 @@ internal class BeckonBleManager(
     private var bluetoothGatt: BluetoothGatt? = null
 
     private val stateSubject by lazy {
-        // BehaviorSubject.createDefault(ConnectionState.NotConnected)
         MutableSharedFlow<ConnectionState>(1)
     }
 
     private val bondSubject by lazy {
-        // BehaviorSubject.createDefault(device.bondState.toBondState())
         // todo default value
         MutableSharedFlow<BondState>(1)
     }
@@ -98,16 +92,13 @@ internal class BeckonBleManager(
             }
         }
 
-        // TODO
         setConnectionObserver(BeckonConnectionObserver(onStateChange))
         setBondingObserver(BeckonBondingObserver(bondSubject))
-        // TODO Fix disposable
-        // val statesDisposable = states.collect { Timber.d("New states of $device $it") }
     }
 
     fun states() = states
 
-    private suspend fun connectS(request: ConnectRequest): Either<ConnectionError, DeviceDetail> {
+    private suspend fun connect(request: ConnectRequest): Either<ConnectionError, DeviceDetail> {
         Timber.d("Connect ${request.device}")
         request
             .fail { device, status ->
@@ -122,22 +113,7 @@ internal class BeckonBleManager(
         return deviceConnectionEmitter.await()
     }
 
-    // private fun connect(request: ConnectRequest): Single<Either<ConnectionError, DeviceDetail>> {
-    //     Timber.d("Connect ${request.device}")
-    //     request
-    //         .fail { device, status ->
-    //             Timber.e("ConnectionError ${device.address} status: $status")
-    //             devicesSubject.onSuccess(
-    //                 ConnectionError.BleConnectFailed(
-    //                     device.address,
-    //                     status
-    //                 ).left()
-    //             )
-    //         }.enqueue()
-    //     return devicesSubject.hide()
-    // }
-
-    suspend fun connectS(
+    suspend fun connect(
         retryAttempts: Int = 3,
         retryDelay: Int = 100
     ): Either<ConnectionError, DeviceDetail> {
@@ -145,67 +121,32 @@ internal class BeckonBleManager(
         val request = connect(device)
             .retry(retryAttempts, retryDelay)
             .useAutoConnect(true)
-        return connectS(request)
+        return connect(request)
     }
 
-    // fun connect(
-    //     retryAttempts: Int = 3,
-    //     retryDelay: Int = 100
-    // ): SingleZ<ConnectionError, DeviceDetail> {
-    //     Timber.d("SingleZ connect")
-    //     val request = connect(device)
-    //         .retry(retryAttempts, retryDelay)
-    //         .useAutoConnect(true)
-    //     return connect(request)
-    // }
-
-    // fun subscribeBla(subscribes: List<Characteristic>, detail: DeviceDetail): Completable {
-    //     return when (
-    //         val list =
-    //             checkNotifyList(subscribes, detail.services, detail.characteristics)
-    //     ) {
-    //         is Either.Left -> Completable.error(list.value.toException())
-    //         is Either.Right -> subscribe(list.value)
-    //     }
-    // }
-
-    suspend fun subscribeBlaS(
+    suspend fun subscribe(
         subscribes: List<Characteristic>,
         detail: DeviceDetail
     ): Either<BeckonError, Unit> {
         return either {
             val list =
                 checkNotifyList(subscribes, detail.services, detail.characteristics).bind()
-            subscribeS(list).bind()
+            subscribe(list).bind()
         }
     }
-    //
-    // fun readBla(reads: List<Characteristic>, detail: DeviceDetail): Observable<Change> {
-    //     return when (
-    //         val list =
-    //             checkReadList(reads, detail.services, detail.characteristics)
-    //     ) {
-    //         is Either.Left -> {
-    //             Observable.error(list.value.toException())
-    //         }
-    //         is Either.Right -> {
-    //             read(list.value)
-    //         }
-    //     }
-    // }
 
-    suspend fun readBlaS(
+    suspend fun read(
         reads: List<Characteristic>,
         detail: DeviceDetail
     ): Either<BeckonError, Unit> {
         return either {
             val list =
                 checkReadList(reads, detail.services, detail.characteristics).bind()
-            readS(list).bind()
+            read(list).bind()
         }
     }
 
-    suspend fun doCreateBondS(): Either<ConnectionError.CreateBondFailed, Unit> {
+    suspend fun doCreateBond(): Either<ConnectionError.CreateBondFailed, Unit> {
         val emitter = CompletableDeferred<Either<ConnectionError.CreateBondFailed, Unit>>()
         createBondInsecure()
             .done { emitter.complete(Unit.right()) }
@@ -222,26 +163,7 @@ internal class BeckonBleManager(
         return emitter.await()
     }
 
-    fun doCreateBond(): Completable {
-        runBlocking {
-            bondSubject.tryEmit(BondState.CreatingBond)
-        }
-        return Completable.create { emitter ->
-            createBondInsecure()
-                .done { emitter.onComplete() }
-                .fail { device, status ->
-                    emitter.onError(
-                        ConnectionError.CreateBondFailed(
-                            device.address,
-                            status
-                        ).toException()
-                    )
-                }
-                .enqueue()
-        }
-    }
-
-    suspend fun doRemoveBondS(): Either<ConnectionError.RemoveBondFailed, Unit> {
+    suspend fun doRemoveBond(): Either<ConnectionError.RemoveBondFailed, Unit> {
         val emitter = CompletableDeferred<Either<ConnectionError.RemoveBondFailed, Unit>>()
         removeBond()
             .done { emitter.complete(Unit.right()) }
@@ -259,25 +181,6 @@ internal class BeckonBleManager(
         return emitter.await()
     }
 
-    fun doRemoveBond(): Completable {
-        runBlocking {
-            bondSubject.tryEmit(BondState.CreatingBond)
-        }
-        return Completable.create { emitter ->
-            removeBond()
-                .done { emitter.onComplete() }
-                .fail { device, status ->
-                    emitter.onError(
-                        ConnectionError.RemoveBondFailed(
-                            device.address,
-                            status
-                        ).toException()
-                    )
-                }
-                .enqueue()
-        }
-    }
-
     @DelicateCoroutinesApi
     override fun getGattCallback(): BleManagerGattCallback {
         return object : BleManagerGattCallback() {
@@ -293,13 +196,11 @@ internal class BeckonBleManager(
                     GlobalScope.launch {
                         // TODO Add timeout error???
                         either<BeckonError, Unit> {
-                            val delayTime = 1600L
+                            // val delayTime = 1600L
+                            val delayTime = 0L
                             delay(delayTime)
-                            Timber.d("$delayTime initialize")
-                            subscribeBlaS(descriptor.subscribes, detail).bind()
-                            Timber.d("subscribeS initialize")
-                            readBlaS(descriptor.reads, detail).bind()
-                            Timber.d("readS initialize")
+                            subscribe(descriptor.subscribes, detail).bind()
+                            read(descriptor.reads, detail).bind()
                         }.fold({
                             Timber.w("Initialize failed: $detail")
                             deviceConnectionEmitter.complete(
@@ -313,30 +214,6 @@ internal class BeckonBleManager(
                             deviceConnectionEmitter.complete(detail.right())
                         })
                     }
-
-                    // TODO Fix disposable
-                    // TODO wtf is 1600?
-                    // val disposable =
-                    //     Observable.just(Unit).delay(1600, TimeUnit.MILLISECONDS)
-                    //         .flatMapCompletable {
-                    //             subscribeBla(descriptor.subscribes, detail)
-                    //         }
-                    //         .observeOn(Schedulers.io())
-                    //         .subscribeOn(Schedulers.io())
-                    //         .andThen(readBla(descriptor.reads, detail).ignoreElements())
-                    //         .subscribe(
-                    //             {
-                    //                 devicesSubject.onSuccess(detail.right())
-                    //             },
-                    //             {
-                    //                 devicesSubject.onSuccess(
-                    //                     ConnectionError.GeneralError(
-                    //                         device.address,
-                    //                         it
-                    //                     ).left()
-                    //                 )
-                    //             }
-                    //         )
                 } else {
                     devicesSubject.onSuccess(
                         ConnectionError.BluetoothGattNull(device.address).left()
@@ -441,31 +318,7 @@ internal class BeckonBleManager(
         return changeSubject.distinctUntilChanged()
     }
 
-    // fun currentState(): ConnectionState {
-    //     return currentState
-    // }
-
-    // fun currentBondState(): BondState {
-        // return bondSubject.value!!
-        // return device.bondState.toBondState()
-    // }
-
-    fun write(data: Data, uuid: UUID, gatt: BluetoothGattCharacteristic): Single<Change> {
-        return Single.create { emitter ->
-            val callback = DataSentCallback { device, data ->
-                Timber.d("write DataSentCallback uuid: $uuid device: $device data: $data")
-                emitter.onSuccess(Change(uuid, data))
-            }
-            writeCharacteristic(gatt, data)
-                .with(callback)
-                .fail { device, status ->
-                    emitter.onError(WriteDataException(device.address, uuid, status))
-                }
-                .enqueue()
-        }
-    }
-
-    suspend fun writeS(
+    suspend fun write(
         data: Data,
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
@@ -474,10 +327,9 @@ internal class BeckonBleManager(
             val callback = DataSentCallback { device, data ->
                 Timber.d("write DataSentCallback uuid: $uuid device: $device data: $data")
                 val change = Change(uuid, data)
-                // TODO should emit change here?
-                // runBlocking {
-                //     changeSubject.emit(change)
-                // }
+                runBlocking {
+                    changeSubject.emit(change)
+                }
                 cont.resume(change.right())
             }
             writeCharacteristic(gatt, data)
@@ -489,30 +341,7 @@ internal class BeckonBleManager(
         }
     }
 
-    fun read(uuid: UUID, gatt: BluetoothGattCharacteristic): Single<Change> {
-        return Single.create { emitter ->
-            val callback = DataReceivedCallback { device, data ->
-                Timber.d("read DataReceivedCallback address: ${this.device.address} uuid: $uuid device: $device data: $data")
-                val change = Change(uuid, data)
-                // todo yes
-                // changeSubject.emit(change)
-                emitter.onSuccess(change)
-            }
-            readCharacteristic(gatt)
-                .with(callback)
-                .fail { device, status ->
-                    emitter.onError(ReadDataException(device.address, uuid, status))
-                }
-                .enqueue()
-        }
-    }
-
-    fun read(list: List<CharacteristicSuccess.Read>): Observable<Change> {
-        if (list.isEmpty()) return Observable.empty()
-        return Observable.merge(list.map { read(it.id, it.gatt).toObservable() })
-    }
-
-    suspend fun readS(
+    suspend fun read(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
     ): Either<ReadDataException, Change> {
@@ -536,66 +365,22 @@ internal class BeckonBleManager(
         return result.await()
     }
 
-    suspend fun readS(list: List<CharacteristicSuccess.Read>): Either<ReadDataException, List<Change>> {
+    suspend fun read(list: List<CharacteristicSuccess.Read>): Either<ReadDataException, List<Change>> {
         if (list.isEmpty()) return emptyList<Change>().right()
-        return list.parTraverseEither { readS(it.id, it.gatt) }
+        return list.parTraverseEither { read(it.id, it.gatt) }
     }
 
-    fun subscribe(list: List<CharacteristicSuccess.Notify>): Completable {
-        if (list.isEmpty()) return Completable.complete()
-        return Completable.merge(list.map { subscribe(it) })
+    suspend fun subscribe(list: List<CharacteristicSuccess.Notify>): Either<SubscribeDataException, Unit> {
+        if (list.isEmpty()) return Unit.right()
+        return list.parTraverseEither { subscribe(it) }.map { }
     }
 
-    fun subscribe(notify: CharacteristicSuccess.Notify): Completable {
+    suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<SubscribeDataException, Unit> {
         return subscribe(notify.id, notify.gatt)
     }
 
-    fun subscribe(uuid: UUID, gatt: BluetoothGattCharacteristic): Completable {
-        return Completable.create { emitter ->
-            Timber.d("setNotification callback $uuid")
-            val callback = DataReceivedCallback { device, data ->
-                Timber.d("notify DataReceivedCallback $device $data")
-                // changeSubject.emit(Change(uuid, data))
-            }
-            val readCallback = DataReceivedCallback { device, data ->
-                Timber.d("Read DataReceivedCallback $device $data")
-                // changeSubject.emit(Change(uuid, data))
-            }
-            setNotificationCallback(gatt).with(callback)
-            enableNotifications(gatt)
-                .fail { device, status ->
-                    Timber.w("EnableNotification request failed: $device $status")
-                    emitter.safe {
-                        onError(
-                            SubscribeDataException(
-                                device.address,
-                                uuid,
-                                status
-                            )
-                        )
-                    }
-                }
-                .done {
-                    emitter.safe { onComplete() }
-                }
-                .enqueue()
-            readCharacteristic(gatt).with(readCallback)
-                .fail { device, status -> Timber.w("Read request failed: $device $status") }
-                .enqueue()
-        }
-    }
-
-    suspend fun subscribeS(list: List<CharacteristicSuccess.Notify>): Either<SubscribeDataException, Unit> {
-        if (list.isEmpty()) return Unit.right()
-        return list.parTraverseEither { subscribeS(it) }.map { }
-    }
-
-    suspend fun subscribeS(notify: CharacteristicSuccess.Notify): Either<SubscribeDataException, Unit> {
-        return subscribeS(notify.id, notify.gatt)
-    }
-
     // todo enqueue doesn't work for some reason.
-    suspend fun subscribeS(
+    suspend fun subscribe(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
     ): Either<SubscribeDataException, Unit> {
@@ -615,9 +400,6 @@ internal class BeckonBleManager(
         }
         setNotificationCallback(gatt).with(callback)
         enableNotifications(gatt)
-            .before {
-                Timber.d("Before EnableNotification $uuid")
-            }
             .invalid {
                 result.complete(
                     SubscribeDataException(
@@ -649,25 +431,7 @@ internal class BeckonBleManager(
         return result.await()
     }
 
-    // fun unsubscribe(notify: CharacteristicSuccess.Notify): Completable {
-    //     return Completable.create { emitter ->
-    //         disableNotifications(notify.gatt)
-    //             .fail { device, status ->
-    //                 Timber.w("DisableNotification request failed: $device $status")
-    //                 emitter.onError(
-    //                     SubscribeDataException(
-    //                         device.address,
-    //                         notify.id,
-    //                         status
-    //                     )
-    //                 )
-    //             }
-    //             .done { emitter.onComplete() }
-    //             .enqueue()
-    //     }
-    // }
-
-    suspend fun unsubscribeS(notify: CharacteristicSuccess.Notify): Either<SubscribeDataException, Unit> {
+    suspend fun unsubscribe(notify: CharacteristicSuccess.Notify): Either<SubscribeDataException, Unit> {
         return suspendCoroutine { emitter ->
             disableNotifications(notify.gatt)
                 .fail { device, status ->

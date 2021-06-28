@@ -56,7 +56,7 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         } else {
             Either.catch {
                 withContext(Dispatchers.IO) {
-                    adapter.fromJson(json)!!
+                    adapter.fromJson(json) ?: emptyList()
                 }
             }.fold({ emptyList() }, ::identity)
         }
