@@ -1,10 +1,10 @@
 package com.technocreatives.example.bond.domain
 
 import arrow.core.Either
-import com.technocreatives.beckon.BeckonClientRx
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.extension.scanAndSave
+import com.technocreatives.beckon.rx2.BeckonClientRx
+import com.technocreatives.beckon.rx2.scanAndSave
 import io.reactivex.Observable
 import timber.log.Timber
 

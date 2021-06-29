@@ -2,7 +2,7 @@ package com.technocreatives.example
 
 import android.app.Application
 import android.content.Context
-import com.technocreatives.beckon.BeckonClientRx
+import com.technocreatives.beckon.rx2.BeckonClientRx
 import timber.log.Timber
 
 class App : Application() {
