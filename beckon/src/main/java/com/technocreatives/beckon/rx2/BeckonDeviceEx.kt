@@ -1,7 +1,6 @@
 package com.technocreatives.beckon.rx2
 
 import arrow.core.Either
-import com.technocreatives.beckon.rx2.BeckonDeviceRx
 import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicMapper
@@ -40,4 +39,3 @@ fun BeckonDeviceRx.subscribe(subscribes: List<Characteristic>): Completable {
         is Either.Right -> subscribe(list.value)
     }
 }
-

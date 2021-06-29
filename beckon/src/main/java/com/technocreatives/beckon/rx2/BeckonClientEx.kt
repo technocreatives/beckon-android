@@ -123,9 +123,10 @@ fun BeckonClientRx.scanAndSave(
         .flatMapZ { it.deviceStates() }
         // .doOnNext { Timber.d("Device state: $it") }
         .filterZ {
-                deviceState ->
+            deviceState ->
             Timber.d("Device state: ${deviceState.state}")
-            filter(deviceState.state) }
+            filter(deviceState.state)
+        }
         .flatMapSingleZ { save(it.metadata.macAddress) }
         .doOnNext { Timber.d("scanAndSave found $it") }
 }

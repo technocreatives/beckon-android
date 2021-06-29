@@ -196,23 +196,26 @@ internal class BeckonBleManager(
                     GlobalScope.launch {
                         // TODO Add timeout error???
                         either<BeckonError, Unit> {
-                            // val delayTime = 1600L
-                            val delayTime = 0L
+                            val delayTime = 1600L
+                            // val delayTime = 0L
                             delay(delayTime)
                             subscribe(descriptor.subscribes, detail).bind()
                             read(descriptor.reads, detail).bind()
-                        }.fold({
-                            Timber.w("Initialize failed: $detail")
-                            deviceConnectionEmitter.complete(
-                                ConnectionError.GeneralError(
-                                    device.address,
-                                    it.toException()
-                                ).left()
-                            )
-                        }, {
-                            Timber.d("Initialize Success: $detail")
-                            deviceConnectionEmitter.complete(detail.right())
-                        })
+                        }.fold(
+                            {
+                                Timber.w("Initialize failed: $detail")
+                                deviceConnectionEmitter.complete(
+                                    ConnectionError.GeneralError(
+                                        device.address,
+                                        it.toException()
+                                    ).left()
+                                )
+                            },
+                            {
+                                Timber.d("Initialize Success: $detail")
+                                deviceConnectionEmitter.complete(detail.right())
+                            }
+                        )
                     }
                 } else {
                     devicesSubject.onSuccess(

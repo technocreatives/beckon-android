@@ -11,6 +11,7 @@ import arrow.core.left
 import arrow.core.right
 import arrow.core.rightIfNotNull
 import arrow.fx.coroutines.parTraverseEither
+import com.lenguyenthanh.rxarrow.filterZ
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
@@ -24,6 +25,7 @@ import com.technocreatives.beckon.DeviceDetail
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
+import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.checkRequirements
@@ -33,6 +35,7 @@ import com.technocreatives.beckon.redux.BeckonStore
 import com.technocreatives.beckon.util.bluetoothManager
 import com.technocreatives.beckon.util.connectedDevices
 import com.technocreatives.beckon.util.disposedBy
+import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.findDevice
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -49,29 +52,27 @@ internal class BeckonClientImpl(
     private val beckonStore: BeckonStore,
     private val deviceRepository: DeviceRepository,
     private val bluetoothReceiver: Receiver,
-    private val scanner: ScannerRx
+    private val scanner: Scanner
 ) : BeckonClient {
 
     // TODO remove
     private val bag = CompositeDisposable()
 
-    override suspend fun startScan(setting: ScannerSetting): Flow<ScanResult> {
+    override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
         val originalScanStream = scanner.startScan(setting)
         return if (setting.useFilter) {
             val connected =
                 beckonStore.currentState().connectedDevices.map { it.metadata().macAddress }
             val saved = deviceRepository.currentDevices().map { it.macAddress }
             originalScanStream
-                .filter { it.device.address !in connected }
-                .filter { it.device.address !in saved }
-                .asFlow()
+                .filterZ { it.device.address !in connected }
+                .filterZ { it.device.address !in saved }
         } else {
             originalScanStream
-                .asFlow()
         }
     }
 
-    override fun stopScan() {
+    override suspend fun stopScan() {
         if (beckonStore.currentState().bluetoothState == BluetoothState.ON) {
             scanner.stopScan()
         } else {
@@ -184,7 +185,7 @@ internal class BeckonClientImpl(
         }
     }
 
-    override fun findConnectedDeviceO(metadata: SavedMetadata): Flow<Either<BeckonDeviceError, BeckonDevice>> {
+    override fun findConnectedDevice(metadata: SavedMetadata): Flow<Either<BeckonDeviceError, BeckonDevice>> {
         Timber.d("findConnectedDeviceO ${metadata.macAddress} in ${beckonStore.currentState()}")
 
         return beckonStore.states()

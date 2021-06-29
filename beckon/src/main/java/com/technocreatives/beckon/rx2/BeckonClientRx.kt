@@ -16,7 +16,7 @@ import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.data.DeviceRepositoryImpl
 import com.technocreatives.beckon.internal.BeckonClientImpl
 import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
-import com.technocreatives.beckon.internal.ScannerRxImpl
+import com.technocreatives.beckon.internal.ScannerImpl
 import com.technocreatives.beckon.redux.createBeckonStore
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -35,7 +35,7 @@ interface BeckonClientRx {
             val beckonStore = createBeckonStore()
             val deviceRepository = DeviceRepositoryImpl(context)
             val receiver = BluetoothAdapterReceiver(beckonStore)
-            val scanner = ScannerRxImpl()
+            val scanner = ScannerImpl()
 
             if (beckonClient == null) {
                 beckonClient =

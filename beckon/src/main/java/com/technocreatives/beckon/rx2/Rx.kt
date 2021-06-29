@@ -35,10 +35,13 @@ fun BeckonClient.rx(): BeckonClientRx {
         override fun startScan(setting: ScannerSetting): Observable<ScanResult> =
             runBlocking(Dispatchers.IO) {
                 this@rx.startScan(setting).asObservable()
+                    .fix { it.toException() }
             }
 
         override fun stopScan() {
-            this@rx.stopScan()
+            runBlocking(Dispatchers.IO) {
+                this@rx.stopScan()
+            }
         }
 
         override fun disconnectAllConnectedButNotSavedDevices(): Completable =
@@ -93,9 +96,9 @@ fun BeckonClient.rx(): BeckonClientRx {
             }
 
         override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDeviceRx>> =
-                this@rx.findConnectedDeviceO(metadata)
-                    .asObservable()
-                    .mapZ { it.rx() }
+            this@rx.findConnectedDevice(metadata)
+                .asObservable()
+                .mapZ { it.rx() }
 
         override fun connectedDevices(): Observable<List<Metadata>> =
             this@rx.connectedDevices().asObservable()

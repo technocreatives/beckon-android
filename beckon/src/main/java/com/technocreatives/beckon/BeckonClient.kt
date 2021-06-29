@@ -8,13 +8,9 @@ import no.nordicsemi.android.ble.data.Data
 interface BeckonClient {
 
     /*===========================Scanning and connecting==========================*/
-    /**
-     * return stream of @ScanResult
-     * this may throw exception if something goes wrong
-     */
-    suspend fun startScan(setting: ScannerSetting): Flow<ScanResult>
+    suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>>
 
-    fun stopScan()
+    suspend fun stopScan()
 
     suspend fun disconnectAllConnectedButNotSavedDevices(): Either<Throwable, Unit>
 
@@ -70,7 +66,7 @@ interface BeckonClient {
     /**
      * Return a stream of state
      */
-    fun findConnectedDeviceO(metadata: SavedMetadata): Flow<Either<BeckonDeviceError, BeckonDevice>>
+    fun findConnectedDevice(metadata: SavedMetadata): Flow<Either<BeckonDeviceError, BeckonDevice>>
     fun connectedDevices(): Flow<List<Metadata>>
 
     suspend fun findSavedDevice(macAddress: MacAddress): Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata>
