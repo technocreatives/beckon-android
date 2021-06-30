@@ -11,7 +11,6 @@ import arrow.core.left
 import arrow.core.right
 import arrow.core.rightIfNotNull
 import arrow.fx.coroutines.parTraverseEither
-import com.lenguyenthanh.rxarrow.filterZ
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonDeviceError
@@ -41,9 +40,16 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.subscribe
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.rx2.asFlow
+import kotlinx.coroutines.rx2.asObservable
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 
@@ -118,7 +124,7 @@ internal class BeckonClientImpl(
         }
         return flow {
             connectedDevices.forEach {
-                emit(connectWithValidRequirement(it, descriptor))
+                emit(connectAndValidateRequirements(it, descriptor))
             }
         }
 
@@ -132,7 +138,7 @@ internal class BeckonClientImpl(
         descriptor: Descriptor
     ): Either<ConnectionError, BeckonDevice> {
         Timber.d("Connecting to: $result")
-        return connectWithValidRequirement(result.device, descriptor)
+        return connectAndValidateRequirements(result.device, descriptor)
     }
 
     override suspend fun connect(metadata: SavedMetadata): Either<BeckonError, BeckonDevice> {
@@ -141,7 +147,7 @@ internal class BeckonClientImpl(
             val device =
                 context.bluetoothManager().findDevice(metadata.macAddress)
         ) {
-            is Some -> connectWithValidRequirement(device.value, metadata.descriptor)
+            is Some -> connectAndValidateRequirements(device.value, metadata.descriptor)
             is None -> BeckonDeviceError.BondedDeviceNotFound(metadata).left()
         }
     }
@@ -188,8 +194,7 @@ internal class BeckonClientImpl(
     override fun findConnectedDevice(metadata: SavedMetadata): Flow<Either<BeckonDeviceError, BeckonDevice>> {
         Timber.d("findConnectedDeviceO ${metadata.macAddress} in ${beckonStore.currentState()}")
 
-        return beckonStore.states()
-            .distinctUntilChanged()
+        return beckonStore.states().asObservable()
             .map { state ->
                 Timber.d("State changed $state")
                 when (val device = state.findConnectedDevice(metadata.macAddress)) {
@@ -213,7 +218,7 @@ internal class BeckonClientImpl(
     }
 
     override fun connectedDevices(): Flow<List<Metadata>> {
-        return beckonStore.states().map { it.connectedDevices.map { it.metadata() } }.asFlow()
+        return beckonStore.states().map { it.connectedDevices.map { it.metadata() } }
     }
 
     override suspend fun findSavedDevice(macAddress: MacAddress): Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata> {
@@ -230,22 +235,19 @@ internal class BeckonClientImpl(
 
         // do scan to check if bluetooth turn on from off state
         beckonStore.states()
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.io())
+//            .subscribeOn(Schedulers.io())
+//            .observeOn(Schedulers.io())
             .map { it.bluetoothState }
             .distinctUntilChanged()
             .filter { it == BluetoothState.ON }
-            .map { runBlocking { deviceRepository.currentDevices() } }
-            .subscribe { runBlocking { reconnectSavedDevices(it) } }
-            .disposedBy(bag)
+            .map {  deviceRepository.currentDevices()  }
+            .collect { reconnectSavedDevices(it) }
 
         beckonStore.states()
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.io())
             .map { it.bluetoothState }
             .distinctUntilChanged()
             .filter { it == BluetoothState.OFF }
-            .subscribe {
+            .collect {
                 beckonStore.currentState().connectedDevices.onEach {
                     runBlocking(Dispatchers.IO) {
                         it.disconnect().fold(
@@ -259,7 +261,7 @@ internal class BeckonClientImpl(
                     }
                 }
                 beckonStore.dispatch(BeckonAction.RemoveAllConnectedDevices)
-            }.disposedBy(bag)
+            }
     }
 
     private suspend fun reconnectSavedDevices(devices: List<SavedMetadata>): Either<BeckonError, List<BeckonDevice>> {
@@ -273,7 +275,7 @@ internal class BeckonClientImpl(
     }
 
     override fun bluetoothState(): Flow<BluetoothState> {
-        return beckonStore.states().map { it.bluetoothState }.distinctUntilChanged().asFlow()
+        return beckonStore.states().map { it.bluetoothState }
     }
 
     override suspend fun write(
@@ -310,7 +312,7 @@ internal class BeckonClientImpl(
      * otherwise return BeckonDevice
      * TODO handle requirement better
      */
-    private suspend fun connectWithValidRequirement(
+    private suspend fun connectAndValidateRequirements(
         device: BluetoothDevice,
         descriptor: Descriptor
     ): Either<ConnectionError, BeckonDevice> {

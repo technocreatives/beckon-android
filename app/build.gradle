@@ -99,7 +99,7 @@ dependencies {
     implementation "no.nordicsemi.android:dfu:$nsDfuVersion"
 
     implementation "pub.devrel:easypermissions:3.0.0"
-    implementation "com.github.lenguyenthanh:simpleredux:$simpleredux"
+    implementation "com.github.lenguyenthanh:simpleredux:7420d4da2f"
 
 
     // Arrows

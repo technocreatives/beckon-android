@@ -15,7 +15,6 @@ buildscript {
     ext.nsDfuVersion = '1.9.0'
     ext.moshi = '1.12.0'
 
-    ext.simpleredux = '4a0dfa33d6'
     ext.statemachine = '0.02'
 
     // Quality tools
