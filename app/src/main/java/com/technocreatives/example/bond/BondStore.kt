@@ -1,7 +1,7 @@
 package com.technocreatives.example.bond
 
-import com.lenguyenthanh.redux.Reducer
-import com.lenguyenthanh.redux.Store
+import com.lenguyenthanh.redux.core.Reducer
+import com.lenguyenthanh.redux.rx2.RxStore
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.example.bond.domain.LocationPermissionState
 
@@ -16,10 +16,10 @@ private val reducer: Reducer<AppState, BondAction> = { state, action ->
         is BondAction.UpdateLocationPermissionState -> state.copy(locationPermissionState = action.state)
     }
 }
-typealias AppStore = Store<AppState, BondAction>
+typealias AppStore = RxStore<AppState, BondAction>
 
 fun createStore(): AppStore {
-    return Store(reducer, { AppState(BluetoothState.UNKNOWN, LocationPermissionState.UNKNOWN) })
+    return RxStore(reducer, { AppState(BluetoothState.UNKNOWN, LocationPermissionState.UNKNOWN) })
 }
 
 data class AppState(
