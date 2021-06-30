@@ -8,7 +8,7 @@ This library is to solve all the pains that many Android developers have to endu
 
 By using functional programming approach and Rxjava interface, this library (will) provides:
 
-  - Sane and simple Api with [Rxjava](https://github.com/ReactiveX/RxJava).
+  - Sane and simple Api with Coroutines/Flow and [Rxjava](https://github.com/ReactiveX/RxJava).
   - The best error handling ever which is backed by [Arrow](https://arrow-kt.io/).
   - Support all BLE operations (read, write, notifications, bond). Thanks to [NordicSemiconductor/Android-BLE-Library](https://github.com/NordicSemiconductor/Android-BLE-Library)!
 
@@ -22,7 +22,8 @@ You can get `Beckon` by using [Jitpack](https://jitpack.io/#technocreatives/beck
         maven { url 'https://jitpack.io' }
     }
 
-    implementation "com.github.technocreatives:beckon:$beckon"
+    implementation "com.github.technocreatives.beckon-android:beckon:$beckon"
+    implementation "com.github.technocreatives.beckon-android:beckon-rx2:$beckon"
 ```
 
 ## Compatibility <a name = "compatibility"></a>
@@ -34,9 +35,6 @@ Supports RxJava2 and Arrow version `0.13.2`.
 Any bug reports, feature requests, questions and pull requests are very welcome.
 
 
-## Usage
-
-TBD (You can check the included example or Axkid project)
 
 ## Feature
 

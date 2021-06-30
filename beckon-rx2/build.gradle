@@ -12,7 +12,7 @@ android {
         targetSdkVersion 30
         buildToolsVersion = "30.0.2"
         versionCode 1
-        versionName "1.0"
+        versionName "0.3.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -106,7 +106,7 @@ afterEvaluate {
                 from components.release
                 groupId = 'com.technocreatives.beckon-android'
                 artifactId = 'beckon-rx2'
-                version = '0.1.0'
+                version = '0.3.0'
             }
         }
     }
