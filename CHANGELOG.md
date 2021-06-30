@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## Version 0.3.0
+
+  - Coroutines interfaces
+  - Update NRF BLE 2.3.0
+  - Add rx2 module
+
 ## Version 0.2.1
 
     - Fix regression bugs for version 0.2.0
