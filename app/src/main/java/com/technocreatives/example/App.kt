@@ -7,7 +7,7 @@ import timber.log.Timber
 
 class App : Application() {
 
-    private lateinit var beckonClient: BeckonClientRx
+    private lateinit var beckonClient: com.technocreatives.beckon.rx2.BeckonClientRx
 
     companion object {
         operator fun get(context: Context) =
@@ -19,7 +19,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         Timber.plant(Timber.DebugTree())
-        beckonClient = BeckonClientRx.create(this)
+        beckonClient = com.technocreatives.beckon.rx2.BeckonClientRx.create(this)
     }
 
 }

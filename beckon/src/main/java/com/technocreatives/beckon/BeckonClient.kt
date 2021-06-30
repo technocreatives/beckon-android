@@ -2,10 +2,35 @@ package com.technocreatives.beckon
 
 import android.content.Context
 import arrow.core.Either
+import com.technocreatives.beckon.data.DeviceRepositoryImpl
+import com.technocreatives.beckon.internal.BeckonClientImpl
+import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
+import com.technocreatives.beckon.internal.ScannerImpl
+import com.technocreatives.beckon.redux.createBeckonStore
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ble.data.Data
 
 interface BeckonClient {
+
+    companion object {
+        // todo using by lazy
+
+        private var beckonClient: BeckonClient? = null
+
+        // return a singleton instance of client
+        fun create(context: Context): BeckonClient {
+            val beckonStore = createBeckonStore()
+            val deviceRepository = DeviceRepositoryImpl(context)
+            val receiver = BluetoothAdapterReceiver(beckonStore)
+            val scanner = ScannerImpl()
+
+            if (beckonClient == null) {
+                beckonClient =
+                    BeckonClientImpl(context, beckonStore, deviceRepository, receiver, scanner)
+            }
+            return beckonClient!!
+        }
+    }
 
     /*===========================Scanning and connecting==========================*/
     suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>>

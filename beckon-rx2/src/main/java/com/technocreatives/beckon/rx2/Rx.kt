@@ -30,8 +30,8 @@ import kotlinx.coroutines.rx2.rxCompletable
 import kotlinx.coroutines.rx2.rxSingle
 import no.nordicsemi.android.ble.data.Data
 
-fun BeckonClient.rx(): BeckonClientRx {
-    return object : BeckonClientRx {
+fun BeckonClient.rx(): com.technocreatives.beckon.rx2.BeckonClientRx {
+    return object : com.technocreatives.beckon.rx2.BeckonClientRx {
         override fun startScan(setting: ScannerSetting): Observable<ScanResult> =
             runBlocking(Dispatchers.IO) {
                 this@rx.startScan(setting).asObservable()
@@ -52,19 +52,19 @@ fun BeckonClient.rx(): BeckonClientRx {
         override fun search(
             setting: ScannerSetting,
             descriptor: Descriptor
-        ): Observable<Either<ConnectionError, BeckonDeviceRx>> =
+        ): Observable<Either<ConnectionError, com.technocreatives.beckon.rx2.BeckonDeviceRx>> =
             runBlocking(Dispatchers.IO) {
                 this@rx.search(setting, descriptor).asObservable().mapZ { it.rx() }
             }
 
-        override fun connect(result: ScanResult, descriptor: Descriptor): Single<BeckonDeviceRx> =
+        override fun connect(result: ScanResult, descriptor: Descriptor): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx> =
             runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.connect(result, descriptor) }
                     .mapZ { it.rx() }
                     .fix { it.toException() }
             }
 
-        override fun connect(metadata: SavedMetadata): Single<BeckonDeviceRx> =
+        override fun connect(metadata: SavedMetadata): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx> =
             runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.connect(metadata) }
                     .mapZ { it.rx() }
@@ -88,14 +88,14 @@ fun BeckonClient.rx(): BeckonClientRx {
                     .fix()
             }
 
-        override fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDeviceRx> =
+        override fun findConnectedDevice(macAddress: MacAddress): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx> =
             runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.findConnectedDevice(macAddress) }
                     .fix { it.toException() }
                     .map { it.rx() }
             }
 
-        override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDeviceRx>> =
+        override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, com.technocreatives.beckon.rx2.BeckonDeviceRx>> =
             this@rx.findConnectedDevice(metadata)
                 .asObservable()
                 .mapZ { it.rx() }
@@ -149,8 +149,8 @@ fun BeckonClient.rx(): BeckonClientRx {
     }
 }
 
-fun BeckonDevice.rx(): BeckonDeviceRx {
-    return object : BeckonDeviceRx {
+fun BeckonDevice.rx(): com.technocreatives.beckon.rx2.BeckonDeviceRx {
+    return object : com.technocreatives.beckon.rx2.BeckonDeviceRx {
         override fun connectionStates(): Observable<ConnectionState> {
             return this@rx.connectionStates().asObservable()
         }

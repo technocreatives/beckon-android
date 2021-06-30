@@ -50,7 +50,7 @@ fun BeckonClientRx.scanAndConnect(
     conditions: Observable<Boolean>,
     setting: ScannerSetting,
     descriptor: Descriptor
-): Observable<BeckonResult<BeckonDeviceRx>> {
+): Observable<BeckonResult<com.technocreatives.beckon.rx2.BeckonDeviceRx>> {
 
     val searchStream =
         search(conditions, setting, descriptor).map { it.mapLeft { BeckonException(it) } }
@@ -64,8 +64,8 @@ fun BeckonClientRx.scanAndConnect(
 fun BeckonClientRx.safeConnect(
     result: ScanResult,
     descriptor: Descriptor
-): Single<BeckonResult<BeckonDeviceRx>> {
-    return connect(result, descriptor).map { it.right() as BeckonResult<BeckonDeviceRx> }
+): Single<BeckonResult<com.technocreatives.beckon.rx2.BeckonDeviceRx>> {
+    return connect(result, descriptor).map { it.right() as BeckonResult<com.technocreatives.beckon.rx2.BeckonDeviceRx> }
         .doOnSuccess { Timber.d("safe Connect $it") }
         .onErrorReturn { it.left() }
 }
@@ -98,7 +98,7 @@ fun BeckonClientRx.search(
     conditions: Observable<Boolean>,
     setting: ScannerSetting,
     descriptor: Descriptor
-): Observable<Either<ConnectionError, BeckonDeviceRx>> {
+): Observable<Either<ConnectionError, com.technocreatives.beckon.rx2.BeckonDeviceRx>> {
     return conditions
         .switchMap {
             if (it) {
@@ -131,6 +131,6 @@ fun BeckonClientRx.scanAndSave(
         .doOnNext { Timber.d("scanAndSave found $it") }
 }
 
-fun BeckonClientRx.connectSavedDevice(macAddress: MacAddress): Single<BeckonDeviceRx> {
+fun BeckonClientRx.connectSavedDevice(macAddress: MacAddress): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx> {
     return findSavedDevice(macAddress).flatMap { connect(it) }
 }

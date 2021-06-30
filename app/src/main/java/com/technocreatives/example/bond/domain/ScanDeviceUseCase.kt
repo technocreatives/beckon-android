@@ -9,7 +9,7 @@ import io.reactivex.Observable
 import timber.log.Timber
 
 class ScanDeviceUseCase(
-    private val beckonClient: BeckonClientRx,
+    private val beckonClient: com.technocreatives.beckon.rx2.BeckonClientRx,
     private val scanConditionUseCase: ScanConditionUseCase
 ) {
     operator fun invoke(setting: ScannerSetting, descriptor: Descriptor): Observable<Either<Throwable, String>> {

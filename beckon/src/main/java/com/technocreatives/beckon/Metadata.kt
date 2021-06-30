@@ -38,7 +38,7 @@ data class DeviceDetail(
     val characteristics: List<CharacteristicSuccess>
 )
 
-internal fun checkRequirement(
+fun checkRequirement(
     requirement: Requirement,
     services: List<UUID>,
     characteristics: List<CharacteristicSuccess>
@@ -52,7 +52,7 @@ internal fun checkRequirement(
     }
 }
 
-internal fun checkRequirements(
+fun checkRequirements(
     requirements: List<Requirement>,
     services: List<UUID>,
     characteristics: List<CharacteristicSuccess>
@@ -64,7 +64,7 @@ internal fun checkRequirements(
         .toEither()
 }
 
-internal fun checkNotify(
+fun checkNotify(
     characteristic: Characteristic,
     services: List<UUID>,
     characteristics: List<CharacteristicSuccess>
@@ -77,7 +77,7 @@ internal fun checkNotify(
         .map { it as CharacteristicSuccess.Notify }
 }
 
-internal fun checkNotifyList(
+fun checkNotifyList(
     characteristics: List<Characteristic>,
     services: List<UUID>,
     details: List<CharacteristicSuccess>
@@ -90,7 +90,7 @@ internal fun checkNotifyList(
         .map { it.map { it as CharacteristicSuccess.Notify } }
 }
 
-internal fun checkReadList(
+fun checkReadList(
     characteristics: List<Characteristic>,
     services: List<UUID>,
     details: List<CharacteristicSuccess>
@@ -103,13 +103,13 @@ internal fun checkReadList(
         .map { it.map { it as CharacteristicSuccess.Read } }
 }
 
-internal fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
+fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
     return find { it.toRequirement() == requirement }
         .toOption()
         .toEither { requirement.toFailed() }
 }
 
-internal fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
+fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
     return this.filterIsInstance(CharacteristicSuccess.Read::class.java)
         .find { it.toRequirement() == requirement }
         .toOption()
