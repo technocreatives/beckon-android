@@ -3,7 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'de.mannodermaus.android-junit5'
 
-group='com.github.technocreatives'
+group='com.github.technocreatives.beckon-android'
 
 android {
     compileSdkVersion 30
