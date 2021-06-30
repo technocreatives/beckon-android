@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'de.mannodermaus.android-junit5'
 
+group='com.github.technocreatives'
 
 android {
     compileSdkVersion 30
@@ -143,8 +144,9 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                groupId = 'com.technocreatives.beckon'
-                artifactId = 'core'
+                from components.debug
+                groupId = 'com.technocreatives.beckon-android'
+                artifactId = 'beckon'
                 version = '0.1.0'
             }
         }

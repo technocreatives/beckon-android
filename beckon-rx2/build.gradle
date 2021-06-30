@@ -1,6 +1,9 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
+group='com.github.technocreatives'
+
+
 android {
     compileSdkVersion 30
 
@@ -96,14 +99,15 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
     args "-F", "src/**/*.kt"
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                groupId = 'com.technocreatives.beckon'
-                artifactId = 'rx2'
-                version = '0.1.0'
-            }
-        }
-    }
-}
+//afterEvaluate {
+//    publishing {
+//        publications {
+//            release(MavenPublication) {
+//                from components.release
+//                groupId = 'com.technocreatives.beckon-android'
+//                artifactId = 'beckon-rx2'
+//                version = '0.1.0'
+//            }
+//        }
+//    }
+//}
