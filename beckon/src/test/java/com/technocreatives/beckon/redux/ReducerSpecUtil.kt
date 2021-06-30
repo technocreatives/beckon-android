@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.redux
 
-import com.lenguyenthanh.redux.Log
-import com.lenguyenthanh.redux.Store
+import com.lenguyenthanh.redux.core.Log
+import com.lenguyenthanh.redux.flow.FlowStore
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import com.technocreatives.beckon.BeckonDevice
@@ -25,7 +25,7 @@ fun savedMetadata(macAddress: MacAddress): SavedMetadata {
 }
 
 internal fun testBeckonStore(state: BeckonState): BeckonStore {
-    return Store(
+    return FlowStore(
         reducer, { state },
         log = object : Log {
             override fun log(tag: String, message: String) {

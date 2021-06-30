@@ -1,8 +1,6 @@
-package com.technocreatives.beckon.extension
+package com.technocreatives.beckon.rx2
 
 import arrow.core.Either
-import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicMapper
 import com.technocreatives.beckon.ConnectionState
@@ -19,12 +17,12 @@ data class BeckonState<State>(
     val state: State
 )
 
-fun <Change> BeckonDevice.changes(characteristicUUID: UUID, mapper: CharacteristicMapper<Change>): Observable<Change> {
+fun <Change> com.technocreatives.beckon.rx2.BeckonDeviceRx.changes(characteristicUUID: UUID, mapper: CharacteristicMapper<Change>): Observable<Change> {
     return changes().filter { it.uuid == characteristicUUID }
         .map { mapper(it) }
 }
 
-fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
+fun com.technocreatives.beckon.rx2.BeckonDeviceRx.deviceStates(): Observable<BeckonState<State>> {
     return Observable.combineLatest(
         states(),
         connectionStates(),
@@ -34,13 +32,9 @@ fun BeckonDevice.deviceStates(): Observable<BeckonState<State>> {
     )
 }
 
-fun BeckonDevice.subscribe(subscribes: List<Characteristic>): Completable {
+fun com.technocreatives.beckon.rx2.BeckonDeviceRx.subscribe(subscribes: List<Characteristic>): Completable {
     return when (val list = checkNotifyList(subscribes, metadata().services, metadata().characteristics)) {
         is Either.Left -> Completable.error(list.value.toException())
         is Either.Right -> subscribe(list.value)
     }
-}
-
-operator fun State.plus(change: Change): State {
-    return this + (change.uuid to change.data)
 }

@@ -3,9 +3,9 @@ package com.technocreatives.beckon
 import arrow.core.Either
 import java.util.UUID
 
-data class WriteDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
-data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
-data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable()
+data class WriteDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(), BeckonError
+data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(), BeckonError
+data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(), BeckonError
 
 // todo use BeckonException instead of Throwable
 typealias BeckonResult<T> = Either<Throwable, T>

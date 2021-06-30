@@ -57,6 +57,7 @@ dependencies {
     // RxJava
     api "io.reactivex.rxjava2:rxjava:$rxJava"
     api "io.reactivex.rxjava2:rxandroid:$rxAndroid"
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.5.0")
 
     // Code quality tools
     ktlint "com.pinterest:ktlint:$ktlint_version"
@@ -66,7 +67,11 @@ dependencies {
     // Arrows
     implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
     implementation("io.arrow-kt:arrow-core")
+    implementation "com.github.lenguyenthanh:RxArrow:$rxarrow"
 
+
+    // Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
@@ -89,4 +94,16 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
     classpath = configurations.ktlint
     main = "com.pinterest.ktlint.Main"
     args "-F", "src/**/*.kt"
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                groupId = 'com.technocreatives.beckon'
+                artifactId = 'rx2'
+                version = '0.1.0'
+            }
+        }
+    }
 }

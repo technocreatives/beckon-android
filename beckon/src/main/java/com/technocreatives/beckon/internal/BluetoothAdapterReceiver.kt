@@ -5,7 +5,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import com.lenguyenthanh.redux.Dispatcher
+import com.lenguyenthanh.redux.core.Dispatcher
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.redux.BeckonAction
 

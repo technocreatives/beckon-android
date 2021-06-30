@@ -1,16 +1,16 @@
 package com.technocreatives.example.bond.domain
 
 import arrow.core.Either
-import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.extension.scanAndSave
+import com.technocreatives.beckon.rx2.BeckonClientRx
+import com.technocreatives.beckon.rx2.scanAndSave
 import io.reactivex.Observable
 import timber.log.Timber
 
 class ScanDeviceUseCase(
-        private val beckonClient: BeckonClient,
-        private val scanConditionUseCase: ScanConditionUseCase
+    private val beckonClient: com.technocreatives.beckon.rx2.BeckonClientRx,
+    private val scanConditionUseCase: ScanConditionUseCase
 ) {
     operator fun invoke(setting: ScannerSetting, descriptor: Descriptor): Observable<Either<Throwable, String>> {
         return beckonClient

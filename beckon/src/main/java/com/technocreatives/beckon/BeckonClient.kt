@@ -7,9 +7,7 @@ import com.technocreatives.beckon.internal.BeckonClientImpl
 import com.technocreatives.beckon.internal.BluetoothAdapterReceiver
 import com.technocreatives.beckon.internal.ScannerImpl
 import com.technocreatives.beckon.redux.createBeckonStore
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.Single
+import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ble.data.Data
 
 interface BeckonClient {
@@ -27,48 +25,48 @@ interface BeckonClient {
             val scanner = ScannerImpl()
 
             if (beckonClient == null) {
-                beckonClient = BeckonClientImpl(context, beckonStore, deviceRepository, receiver, scanner)
+                beckonClient =
+                    BeckonClientImpl(context, beckonStore, deviceRepository, receiver, scanner)
             }
             return beckonClient!!
         }
     }
 
     /*===========================Scanning and connecting==========================*/
+    suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>>
 
-    /**
-     * return stream of @ScanResult
-     * this may throw exception if something goes wrong
-     */
-    fun startScan(setting: ScannerSetting): Observable<ScanResult>
+    suspend fun stopScan()
 
-    fun stopScan()
-
-    fun disconnectAllConnectedButNotSavedDevices(): Completable
+    suspend fun disconnectAllConnectedButNotSavedDevices(): Either<Throwable, Unit>
 
     /**
      * Search for all currently connected devices in the systems which satisfies ScannerSetting
      * If setting.useFilter == True, this function will ignore all connected and saved devices in Beckon
      */
-    fun search(setting: ScannerSetting, descriptor: Descriptor): Observable<Either<ConnectionError, BeckonDevice>>
+    suspend fun search(
+        setting: ScannerSetting,
+        descriptor: Descriptor
+    ): Flow<Either<ConnectionError, BeckonDevice>>
 
     /*
     * Connect to a scanned device and then verify if all characteristics work
     * Return @BeckonDevice or ConnectFailedException when it fails
     * */
-    fun connect(
+    suspend fun connect(
         result: ScanResult,
         descriptor: Descriptor
-    ): Single<BeckonDevice>
+    ): Either<ConnectionError, BeckonDevice>
 
     /*
     * Connect to a saved device and then verify if all characteristics work
     * This function only works with bonded device
     * Return @BeckonDevice or ConnectFailedException when it fails
     * */
-    fun connect(
+    suspend fun connect(
         metadata: SavedMetadata
-    ): Single<BeckonDevice>
-    fun disconnect(macAddress: MacAddress): Completable
+    ): Either<BeckonError, BeckonDevice>
+
+    suspend fun disconnect(macAddress: MacAddress): Either<Throwable, MacAddress>
 
     /*===========================Device management==========================*/
 
@@ -78,7 +76,7 @@ interface BeckonClient {
      * - create bond if necessary (Bonded success or @CreateBondFailed)
      * - save to database
      */
-    fun save(macAddress: MacAddress): Single<MacAddress>
+    suspend fun save(macAddress: MacAddress): Either<Throwable, MacAddress>
 
     /**
      * Remove a saved device
@@ -86,28 +84,35 @@ interface BeckonClient {
      * - Remove from store
      * - This function does not remove Bond so you have to removeBond before use this function if you want.
      */
-    fun remove(macAddress: MacAddress): Single<MacAddress>
+    suspend fun remove(macAddress: MacAddress): Either<Throwable, MacAddress>
 
-    fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDevice>
+    suspend fun findConnectedDevice(macAddress: MacAddress): Either<ConnectionError, BeckonDevice>
+
     /**
      * Return a stream of state
      */
-    fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDevice>>
-    fun connectedDevices(): Observable<List<Metadata>>
+    fun findConnectedDevice(metadata: SavedMetadata): Flow<Either<BeckonDeviceError, BeckonDevice>>
+    fun connectedDevices(): Flow<List<Metadata>>
 
-    fun findSavedDevice(macAddress: MacAddress): Single<SavedMetadata>
-    fun savedDevices(): Observable<List<SavedMetadata>>
+    suspend fun findSavedDevice(macAddress: MacAddress): Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata>
+    fun savedDevices(): Flow<List<SavedMetadata>>
 
     // hook up functions
-    fun register(context: Context)
+    suspend fun register(context: Context)
 
-    fun unregister(context: Context)
+    suspend fun unregister(context: Context)
 
     // utilities
-    fun bluetoothState(): Observable<BluetoothState>
+    // todo remove
+    fun bluetoothState(): Flow<BluetoothState>
 
     /*===========================Work with devices==========================*/
-    fun write(macAddress: MacAddress, characteristic: CharacteristicSuccess.Write, data: Data): Single<Change>
-    fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Single<Change>
+    suspend fun write(
+        macAddress: MacAddress,
+        characteristic: CharacteristicSuccess.Write,
+        data: Data
+    ): Either<Throwable, Change>
+
+    suspend fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Either<Throwable, Change>
     // todo add subscribe function
 }

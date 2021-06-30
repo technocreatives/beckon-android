@@ -2,12 +2,12 @@ package com.technocreatives.example
 
 import android.app.Application
 import android.content.Context
-import com.technocreatives.beckon.BeckonClient
+import com.technocreatives.beckon.rx2.BeckonClientRx
 import timber.log.Timber
 
 class App : Application() {
 
-    private lateinit var beckonClient: BeckonClient
+    private lateinit var beckonClient: BeckonClientRx
 
     companion object {
         operator fun get(context: Context) =
@@ -19,7 +19,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         Timber.plant(Timber.DebugTree())
-        beckonClient = BeckonClient.create(this)
+        beckonClient = BeckonClientRx.create(this)
     }
 
 }

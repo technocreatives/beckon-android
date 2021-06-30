@@ -8,7 +8,7 @@ import arrow.core.Either
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.Requirement
-import com.technocreatives.beckon.extension.devicesStates
+import com.technocreatives.beckon.rx2.devicesStates
 import com.technocreatives.example.R
 import io.reactivex.Observable
 import io.reactivex.disposables.CompositeDisposable

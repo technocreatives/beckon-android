@@ -1,10 +1,10 @@
 package com.technocreatives.example.bond.domain
 
-import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BluetoothState
+import com.technocreatives.beckon.rx2.BeckonClientRx
 import io.reactivex.Observable
 
-class BluetoothStateUseCase(private val beckonClient: BeckonClient) {
+class BluetoothStateUseCase(private val beckonClient: com.technocreatives.beckon.rx2.BeckonClientRx) {
     operator fun invoke(): Observable<BluetoothState> {
         return beckonClient.bluetoothState()
     }
