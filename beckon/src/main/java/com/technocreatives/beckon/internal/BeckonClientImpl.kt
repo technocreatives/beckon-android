@@ -54,7 +54,6 @@ internal class BeckonClientImpl(
     private val scanner: Scanner
 ) : BeckonClient {
 
-
     // TODO remove
 //    private val bag = CompositeDisposable()
 
