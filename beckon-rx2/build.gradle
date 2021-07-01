@@ -3,7 +3,6 @@ apply plugin: 'kotlin-android'
 
 group='com.github.technocreatives.beckon-android'
 
-
 android {
     compileSdkVersion 30
 
@@ -12,7 +11,6 @@ android {
         targetSdkVersion 30
         buildToolsVersion = "30.0.2"
         versionCode 1
-        versionName "0.3.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -104,10 +102,16 @@ afterEvaluate {
         publications {
             debug(MavenPublication) {
                 from components.release
-                groupId = 'com.technocreatives.beckon-android'
+                groupId = findProperty("GROUP")
                 artifactId = 'beckon-rx2'
-                version = '0.3.0'
+                version = findProperty("VERSION_NAME")
+                artifact(sourceJar)
             }
         }
     }
+}
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
 }
