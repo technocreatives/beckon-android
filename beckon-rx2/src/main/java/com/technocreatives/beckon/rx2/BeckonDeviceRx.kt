@@ -19,8 +19,6 @@ interface BeckonDeviceRx {
     fun changes(): Observable<Change>
     fun states(): Observable<State>
 
-    // fun currentState(): ConnectionState
-
     fun disconnect(): Completable
 
     fun metadata(): Metadata

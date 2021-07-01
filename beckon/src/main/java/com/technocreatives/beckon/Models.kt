@@ -126,3 +126,9 @@ enum class BluetoothState {
     ON,
     OFF;
 }
+
+data class BeckonState<State>(
+    val metadata: Metadata,
+    val connectionState: ConnectionState,
+    val state: State
+)
