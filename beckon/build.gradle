@@ -13,7 +13,6 @@ android {
         targetSdkVersion 30
         buildToolsVersion = "30.0.2"
         versionCode 1
-        versionName "0.3.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -84,14 +83,10 @@ dependencies {
     api 'androidx.core:core-ktx:1.6.0-beta02'
     api 'androidx.annotation:annotation:1.3.0-alpha01'
 
-    // RxJava
-//    api "io.reactivex.rxjava2:rxjava:$rxJava"
-//    api "io.reactivex.rxjava2:rxandroid:$rxAndroid"
-
     // Bluetooth
     api "no.nordicsemi.android.support.v18:scanner:$nsScannerVersion"
     api "no.nordicsemi.android:ble:$nsBleVersion"
-    api "no.nordicsemi.android:dfu:${nsDfuVersion}"
+    api "no.nordicsemi.android:dfu:$nsDfuVersion"
 
     // Code quality tools
     ktlint "com.pinterest:ktlint:$ktlint_version"
@@ -101,11 +96,9 @@ dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:$moshi")
     implementation "com.github.lenguyenthanh:simpleredux:7420d4da2f"
 
-    // Arrows
-//    implementation "com.github.lenguyenthanh:RxArrow:$rxarrow"
-
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
-//    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-rx2:1.5.0")
+
+    // Arrows
     implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
     implementation("io.arrow-kt:arrow-core")
     implementation("io.arrow-kt:arrow-fx-coroutines")
@@ -144,11 +137,17 @@ afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                from components.debug
-                groupId = 'com.technocreatives.beckon-android'
+                from components.release
+                groupId = findProperty("GROUP")
                 artifactId = 'beckon'
-                version = '0.3.0'
+                version = findProperty("VERSION_NAME")
+                artifact(sourceJar)
             }
         }
     }
+}
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
 }
