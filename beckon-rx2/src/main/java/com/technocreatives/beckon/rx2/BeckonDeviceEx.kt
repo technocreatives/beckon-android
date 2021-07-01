@@ -4,8 +4,6 @@ import arrow.core.Either
 import com.technocreatives.beckon.BeckonState
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicMapper
-import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.State
 import com.technocreatives.beckon.checkNotifyList
 import io.reactivex.Completable

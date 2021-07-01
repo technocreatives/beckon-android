@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
-import kotlin.experimental.ExperimentalTypeInference
 
 fun <E, A> List<Validated<E, A>>.parallelValidate(): Validated<Nel<E>, List<A>> {
     return this.map { it.mapLeft { nonEmptyListOf(it) } }
@@ -54,15 +53,18 @@ inline fun <E, T> Flow<Either<E, T>>.filterZ(crossinline f: (T) -> Boolean): Flo
     }
 }
 
-//@OptIn(ExperimentalTypeInference::class)
+// @OptIn(ExperimentalTypeInference::class)
 // @BuilderInference
 fun <E, T, R> Flow<Either<E, T>>.scanZ(
     initialValue: R,
     operation: suspend (accumulator: R, value: T) -> R
 ): Flow<Either<E, R>> {
-    return scan(initialValue.right() as Either<E, R>, { t1, t2 ->
-        t2.map { v2 -> operation(t1.getOrElse { initialValue }, v2) }
-    })
+    return scan(
+        initialValue.right() as Either<E, R>,
+        { t1, t2 ->
+            t2.map { v2 -> operation(t1.getOrElse { initialValue }, v2) }
+        }
+    )
 }
 
 inline fun <E1, E2, E, T, R> Either<E1, T>.flatMapFlowEither(crossinline mapper: (T) -> FlowZ<E2, R>): FlowZ<E, R>
