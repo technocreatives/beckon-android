@@ -45,7 +45,7 @@ internal class ScannerImpl : Scanner {
             override fun onScanResult(callbackType: Int, result: BleScanResult) {
                 Timber.d("onScanResult $callbackType $result")
                 runBlocking {
-                    scanSubject?.emit(ScanResult(result.device, result.rssi).right())
+                    scanSubject?.emit(ScanResult(result.device, result.rssi, result.scanRecord).right())
                 }
             }
 
@@ -54,7 +54,7 @@ internal class ScannerImpl : Scanner {
                 results.forEach { result ->
                     runBlocking {
                         scanSubject?.let {
-                            it.emit(ScanResult(result.device, result.rssi).right())
+                            it.emit(ScanResult(result.device, result.rssi, result.scanRecord).right())
                         }
                     }
                 }

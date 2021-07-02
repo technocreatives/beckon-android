@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import androidx.annotation.IntRange
 import com.squareup.moshi.JsonClass
 import no.nordicsemi.android.ble.data.Data
+import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import java.util.UUID
 
@@ -62,7 +63,7 @@ data class NewDescriptor(
     val ActionsOnConnected: List<BleAction> = emptyList()
 )
 
-data class ScanResult(internal val device: BluetoothDevice, val rssi: Int) {
+data class ScanResult(internal val device: BluetoothDevice, val rssi: Int, val scanRecord: ScanRecord?) {
     val macAddress: String = device.address
     val name: String? = device.name
 }
