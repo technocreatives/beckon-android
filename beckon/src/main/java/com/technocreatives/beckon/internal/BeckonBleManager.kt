@@ -1,6 +1,5 @@
 package com.technocreatives.beckon.internal
 
-import android.app.Notification
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
@@ -129,11 +128,11 @@ internal class BeckonBleManager(
     }
 
     suspend fun applyActions(actions: List<BleAction>, detail: DeviceDetail): Either<BeckonError, Unit> {
-       return actions.parTraverseEither { applyAction(it, detail) }.map {  }
+        return actions.parTraverseEither { applyAction(it, detail) }.map { }
     }
 
     suspend fun applyAction(action: BleAction, detail: DeviceDetail): Either<BeckonError, Unit> {
-        return when(action) {
+        return when (action) {
             is BleAction.Subscribe -> {
                 subscribe(action.characteristic, detail)
             }
@@ -141,7 +140,7 @@ internal class BeckonBleManager(
                 read(action.characteristic, detail)
             }
             is BleAction.RequestMTU -> {
-                doRequestMtu(action.mtu).map {  }
+                doRequestMtu(action.mtu).map { }
             }
         }
     }
@@ -193,7 +192,7 @@ internal class BeckonBleManager(
         reads: Characteristic,
         detail: DeviceDetail
     ): Either<BeckonError, Unit> {
-      return read(listOf(reads), detail)
+        return read(listOf(reads), detail)
     }
 
     suspend fun doCreateBond(): Either<ConnectionError.CreateBondFailed, Unit> {
@@ -249,7 +248,7 @@ internal class BeckonBleManager(
                             val delayTime = 1600L
                             // val delayTime = 0L
                             delay(delayTime)
-                            if(descriptor.actionsOnConnected.isEmpty()) {
+                            if (descriptor.actionsOnConnected.isEmpty()) {
                                 subscribe(descriptor.subscribes, detail).bind()
                                 read(descriptor.reads, detail).bind()
                             } else {

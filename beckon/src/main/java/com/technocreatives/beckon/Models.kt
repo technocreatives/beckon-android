@@ -51,11 +51,10 @@ data class Descriptor(
     val actionsOnConnected: List<BleAction> = emptyList()
 )
 
-
 sealed class BleAction {
-    data class RequestMTU(@IntRange(from = 23, to = 517) val mtu: Int): BleAction()
-    data class Read(val characteristic: Characteristic): BleAction()
-    data class Subscribe(val characteristic: Characteristic): BleAction()
+    data class RequestMTU(@IntRange(from = 23, to = 517) val mtu: Int) : BleAction()
+    data class Read(val characteristic: Characteristic) : BleAction()
+    data class Subscribe(val characteristic: Characteristic) : BleAction()
 }
 
 data class NewDescriptor(
