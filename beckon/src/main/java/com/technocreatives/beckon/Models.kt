@@ -1,6 +1,7 @@
 package com.technocreatives.beckon
 
 import android.bluetooth.BluetoothDevice
+import androidx.annotation.IntRange
 import com.squareup.moshi.JsonClass
 import no.nordicsemi.android.ble.data.Data
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
@@ -45,7 +46,20 @@ data class Requirement(
 data class Descriptor(
     val requirements: List<Requirement> = emptyList(),
     val subscribes: List<Characteristic> = emptyList(),
-    val reads: List<Characteristic> = emptyList()
+    val reads: List<Characteristic> = emptyList(),
+    val actionsOnConnected: List<BleAction> = emptyList()
+)
+
+
+sealed class BleAction {
+    data class RequestMTU(@IntRange(from = 23, to = 517) val mtu: Int): BleAction()
+    data class Read(val characteristic: Characteristic): BleAction()
+    data class Subscribe(val characteristic: Characteristic): BleAction()
+}
+
+data class NewDescriptor(
+    val requirements: List<Requirement> = emptyList(),
+    val ActionsOnConnected: List<BleAction> = emptyList()
 )
 
 data class ScanResult(internal val device: BluetoothDevice, val rssi: Int) {

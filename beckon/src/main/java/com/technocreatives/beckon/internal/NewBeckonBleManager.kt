@@ -1,6 +1,5 @@
 package com.technocreatives.beckon.internal
 
-import android.app.Notification
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
@@ -15,7 +14,6 @@ import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.BeckonError
-import com.technocreatives.beckon.BleAction
 import com.technocreatives.beckon.BleConnectionState
 import com.technocreatives.beckon.BondState
 import com.technocreatives.beckon.Change
@@ -25,7 +23,6 @@ import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.ConnectionState
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceDetail
-import com.technocreatives.beckon.MtuRequestException
 import com.technocreatives.beckon.Property
 import com.technocreatives.beckon.ReadDataException
 import com.technocreatives.beckon.State
@@ -50,7 +47,6 @@ import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.ConnectRequest
 import no.nordicsemi.android.ble.callback.DataReceivedCallback
 import no.nordicsemi.android.ble.callback.DataSentCallback
-import no.nordicsemi.android.ble.callback.MtuCallback
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 import java.util.UUID
@@ -58,7 +54,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 // This one should be private and safe with Either
-internal class BeckonBleManager(
+internal class NewBeckonBleManager(
     context: Context,
     val device: BluetoothDevice,
     val descriptor: Descriptor
@@ -128,39 +124,6 @@ internal class BeckonBleManager(
         return connect(request)
     }
 
-    suspend fun applyActions(actions: List<BleAction>, detail: DeviceDetail): Either<BeckonError, Unit> {
-       return actions.parTraverseEither { applyAction(it, detail) }.map {  }
-    }
-
-    suspend fun applyAction(action: BleAction, detail: DeviceDetail): Either<BeckonError, Unit> {
-        return when(action) {
-            is BleAction.Subscribe -> {
-                subscribe(action.characteristic, detail)
-            }
-            is BleAction.Read -> {
-                read(action.characteristic, detail)
-            }
-            is BleAction.RequestMTU -> {
-                doRequestMtu(action.mtu).map {  }
-            }
-        }
-    }
-
-    suspend fun doRequestMtu(mtu: Int): Either<MtuRequestException, Int> {
-        val result = CompletableDeferred<Either<MtuRequestException, Int>>()
-        val callback = MtuCallback { device, mtu ->
-            result.complete(mtu.right())
-        }
-        requestMtu(mtu)
-            .with(callback)
-            .fail { device, status ->
-                result.complete(MtuRequestException(device.address, status).left())
-            }
-            .invalid { result.complete(MtuRequestException(device.address, -1).left()) }
-            .enqueue()
-        return result.await()
-    }
-
     suspend fun subscribe(
         subscribes: List<Characteristic>,
         detail: DeviceDetail
@@ -172,13 +135,6 @@ internal class BeckonBleManager(
         }
     }
 
-    suspend fun subscribe(
-        subscribes: Characteristic,
-        detail: DeviceDetail
-    ): Either<BeckonError, Unit> {
-        return subscribe(listOf(subscribes), detail)
-    }
-
     suspend fun read(
         reads: List<Characteristic>,
         detail: DeviceDetail
@@ -188,12 +144,6 @@ internal class BeckonBleManager(
                 checkReadList(reads, detail.services, detail.characteristics).bind()
             read(list).bind()
         }
-    }
-    suspend fun read(
-        reads: Characteristic,
-        detail: DeviceDetail
-    ): Either<BeckonError, Unit> {
-      return read(listOf(reads), detail)
     }
 
     suspend fun doCreateBond(): Either<ConnectionError.CreateBondFailed, Unit> {
@@ -249,12 +199,8 @@ internal class BeckonBleManager(
                             val delayTime = 1600L
                             // val delayTime = 0L
                             delay(delayTime)
-                            if(descriptor.actionsOnConnected.isEmpty()) {
-                                subscribe(descriptor.subscribes, detail).bind()
-                                read(descriptor.reads, detail).bind()
-                            } else {
-                                applyActions(descriptor.actionsOnConnected, detail)
-                            }
+                            subscribe(descriptor.subscribes, detail).bind()
+                            read(descriptor.reads, detail).bind()
                         }.fold(
                             {
                                 Timber.w("Initialize failed: $detail")
