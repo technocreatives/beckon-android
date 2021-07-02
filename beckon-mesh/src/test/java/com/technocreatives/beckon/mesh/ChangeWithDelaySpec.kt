@@ -1,4 +1,4 @@
-package com.technocreatives.beckon.mock
+package com.technocreatives.beckon.mesh
 
 import com.nhaarman.mockitokotlin2.mock
 import com.technocreatives.beckon.Change
@@ -27,8 +27,8 @@ object ChangeWithDelaySpec : Spek({
 
                 it("should have correct delay") {
                     testObserver.assertSubscribed()
-                            .assertValueCount(1)
-                            .assertValue(change)
+                        .assertValueCount(1)
+                        .assertValue(change)
                 }
             }
         }

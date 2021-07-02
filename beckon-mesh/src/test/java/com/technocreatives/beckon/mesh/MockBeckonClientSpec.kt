@@ -1,4 +1,4 @@
-package com.technocreatives.beckon.mock
+package com.technocreatives.beckon.mesh
 
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
@@ -24,14 +24,14 @@ object MockBeckonClientSpec : Spek({
 
         it("should return correct size") {
             testObserver.assertSubscribed()
-                    .assertValueCount(1)
-                    .assertNotComplete()
-                    .assertValueAt(0) {
-                        it.size == 1
-                    }
-                    .assertValueAt(0) {
-                        it[0] == metadata
-                    }
+                .assertValueCount(1)
+                .assertNotComplete()
+                .assertValueAt(0) {
+                    it.size == 1
+                }
+                .assertValueAt(0) {
+                    it[0] == metadata
+                }
         }
     }
 })

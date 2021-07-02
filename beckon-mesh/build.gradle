@@ -2,6 +2,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'de.mannodermaus.android-junit5'
 
+group='com.github.technocreatives.beckon-android'
+
 android {
     compileSdkVersion 30
 
@@ -9,7 +11,6 @@ android {
         minSdkVersion 24
         targetSdkVersion 30
         versionCode 1
-        versionName "1.0-alpha"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -70,10 +71,6 @@ dependencies {
 
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    // Android x
-    api 'androidx.core:core-ktx:1.2.0-alpha02'
-    api 'androidx.annotation:annotation:1.1.0'
-
     // RxJava
     api "io.reactivex.rxjava2:rxjava:$rxJava"
     api "io.reactivex.rxjava2:rxandroid:$rxAndroid"
@@ -84,8 +81,9 @@ dependencies {
     implementation "com.jakewharton.timber:timber:$timber"
 
     // Arrows
-    implementation "io.arrow-kt:arrow-core-data:$arrow_version"
-    implementation "io.arrow-kt:arrow-core-extensions:$arrow_version"
+    implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
+    implementation("io.arrow-kt:arrow-core")
+    implementation("io.arrow-kt:arrow-fx-coroutines")
 
     // spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
@@ -114,4 +112,23 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
     classpath = configurations.ktlint
     main = "com.pinterest.ktlint.Main"
     args "-F", "src/**/*.kt"
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            mesh(MavenPublication) {
+                from components.release
+                groupId = findProperty("GROUP")
+                artifactId = 'beckon-mesh'
+                version = findProperty("VERSION_NAME")
+                artifact(sourceJar)
+            }
+        }
+    }
+}
+
+task sourceJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier "sources"
 }

@@ -1,4 +1,4 @@
-package com.technocreatives.beckon.mock
+package com.technocreatives.beckon.mesh
 
 import android.bluetooth.BluetoothGattCharacteristic
 import assertk.assertThat
@@ -8,8 +8,8 @@ import com.technocreatives.beckon.Change
 import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.CharacteristicResult
 import com.technocreatives.beckon.DeviceMetadata
-import com.technocreatives.beckon.WritableDeviceMetadata
 import com.technocreatives.beckon.Type
+import com.technocreatives.beckon.WritableDeviceMetadata
 import io.reactivex.observers.TestObserver
 import io.reactivex.schedulers.TestScheduler
 import no.nordicsemi.android.ble.data.Data
@@ -30,14 +30,14 @@ object MockDeviceBuilderSpec : Spek({
         val randomUUID = "1111fff3-0000-1000-8000-00805f9b34fb"
 
         val characteristics = listOf(
-                Characteristic(temperatureUuid.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
-                Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
-                Characteristic(randomUUID.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = false)
+            Characteristic(temperatureUuid.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
+            Characteristic(seatUuId.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = true),
+            Characteristic(randomUUID.toUuid(), serviceUUID.toUuid(), listOf(Type.NOTIFY), required = false)
         )
 
         val metadata = WritableDeviceMetadata("macaddress", "axkid", characteristics)
         val characteristicResults =
-                characteristics.map { CharacteristicResult.Success(it, BluetoothGattCharacteristic(it.uuid, 0, 0)) }
+            characteristics.map { CharacteristicResult.Success(it, BluetoothGattCharacteristic(it.uuid, 0, 0)) }
         val discoveredDevice = DeviceMetadata(metadata.macAddress, metadata.name, characteristicResults)
         val c1 = byteArrayOf(1.toByte(), 0.toByte(), 0.toByte(), 0.toByte())
         val c2 = byteArrayOf(0.toByte(), 0.toByte(), 0.toByte(), 0.toByte())
@@ -47,16 +47,16 @@ object MockDeviceBuilderSpec : Spek({
 
         val mockDevice by memoized {
             MockDeviceBuilder()
-                    .metadata(metadata)
-                    .discoveredDevice(discoveredDevice)
-                    .enqueue(Change(metadata, characteristics[1], Data(c2)), 0L)
-                    .enqueue(Change(metadata, characteristics[1], Data(c1)), 0L)
-                    .enqueue(Change(metadata, characteristics[1], Data(c2)), 30)
-                    .enqueue(Change(metadata, characteristics[1], Data(c1)), 30)
-                    .enqueue(Change(metadata, characteristics[1], Data(c2)), 30)
-                    .enqueue(Change(metadata, characteristics[1], Data(c1)), 30)
-                    .scheduler(testScheduler)
-                    .build()
+                .metadata(metadata)
+                .discoveredDevice(discoveredDevice)
+                .enqueue(Change(metadata, characteristics[1], Data(c2)), 0L)
+                .enqueue(Change(metadata, characteristics[1], Data(c1)), 0L)
+                .enqueue(Change(metadata, characteristics[1], Data(c2)), 30)
+                .enqueue(Change(metadata, characteristics[1], Data(c1)), 30)
+                .enqueue(Change(metadata, characteristics[1], Data(c2)), 30)
+                .enqueue(Change(metadata, characteristics[1], Data(c1)), 30)
+                .scheduler(testScheduler)
+                .build()
         }
 
         lateinit var testObserver: TestObserver<Change>
@@ -69,8 +69,8 @@ object MockDeviceBuilderSpec : Spek({
 
             it("should emit first change immediately") {
                 testObserver
-                        .assertSubscribed()
-                        .assertValueCount(2)
+                    .assertSubscribed()
+                    .assertValueCount(2)
             }
 
             describe("after 30 seconds") {
@@ -79,8 +79,8 @@ object MockDeviceBuilderSpec : Spek({
 
                 it("should emit 1 change") {
                     testObserver
-                            .assertSubscribed()
-                            .assertValueCount(3)
+                        .assertSubscribed()
+                        .assertValueCount(3)
                 }
             }
 
@@ -90,8 +90,8 @@ object MockDeviceBuilderSpec : Spek({
 
                 it("should emit 2 changes") {
                     testObserver
-                            .assertSubscribed()
-                            .assertValueCount(4)
+                        .assertSubscribed()
+                        .assertValueCount(4)
                 }
             }
         }
@@ -113,13 +113,13 @@ object MockDeviceBuilderSpec : Spek({
 
             beforeEach {
                 builder = mockDeviceBuilder.metadata(metadata)
-                        .discoveredDevice(discoveredDevice)
-                        .enqueue(change, 30)
-                        .enqueue(change, 30)
-                        .enqueue(change, 30)
-                        .enqueue(change, 30)
-                        .enqueue(change, 30)
-                        .scheduler(testScheduler)
+                    .discoveredDevice(discoveredDevice)
+                    .enqueue(change, 30)
+                    .enqueue(change, 30)
+                    .enqueue(change, 30)
+                    .enqueue(change, 30)
+                    .enqueue(change, 30)
+                    .scheduler(testScheduler)
             }
 
             it("changesQueue should have 5 items") {
@@ -150,8 +150,8 @@ object MockDeviceBuilderSpec : Spek({
 
             beforeEach {
                 val builder = mockDeviceBuilder.metadata(metadata)
-                        .discoveredDevice(discoveredDevice)
-                        .scheduler(testScheduler)
+                    .discoveredDevice(discoveredDevice)
+                    .scheduler(testScheduler)
 
                 changes.forEach {
                     println("Change $it")
@@ -163,8 +163,8 @@ object MockDeviceBuilderSpec : Spek({
 
             it("should emit first change immediately") {
                 testObserver
-                        .assertSubscribed()
-                        .assertValueCount(1)
+                    .assertSubscribed()
+                    .assertValueCount(1)
             }
 
             describe("after 1 second") {
@@ -173,9 +173,9 @@ object MockDeviceBuilderSpec : Spek({
 
                 it("should emit 2 changes") {
                     testObserver
-                            .assertSubscribed()
-                            .assertValueCount(2)
-                            .assertValueSet(listOf(change))
+                        .assertSubscribed()
+                        .assertValueCount(2)
+                        .assertValueSet(listOf(change))
                 }
             }
 
@@ -185,9 +185,9 @@ object MockDeviceBuilderSpec : Spek({
 
                 it("should emit 3 changes") {
                     testObserver
-                            .assertSubscribed()
-                            .assertValueCount(3)
-                            .assertValueSet(listOf(change))
+                        .assertSubscribed()
+                        .assertValueCount(3)
+                        .assertValueSet(listOf(change))
                 }
             }
 
@@ -197,9 +197,9 @@ object MockDeviceBuilderSpec : Spek({
 
                 it("should emit 4 changes") {
                     testObserver
-                            .assertSubscribed()
-                            .assertValueCount(4)
-                            .assertValueSet(listOf(change))
+                        .assertSubscribed()
+                        .assertValueCount(4)
+                        .assertValueSet(listOf(change))
                 }
             }
 
@@ -209,9 +209,9 @@ object MockDeviceBuilderSpec : Spek({
 
                 it("should emit 4 changes") {
                     testObserver
-                            .assertSubscribed()
-                            .assertValueCount(4)
-                            .assertValueSet(listOf(change))
+                        .assertSubscribed()
+                        .assertValueCount(4)
+                        .assertValueSet(listOf(change))
                 }
             }
 
@@ -221,9 +221,9 @@ object MockDeviceBuilderSpec : Spek({
 
                 it("should emit 5 changes") {
                     testObserver
-                            .assertSubscribed()
-                            .assertValueCount(5)
-                            .assertValueSet(listOf(change))
+                        .assertSubscribed()
+                        .assertValueCount(5)
+                        .assertValueSet(listOf(change))
                 }
             }
         }

@@ -136,7 +136,7 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
 afterEvaluate {
     publishing {
         publications {
-            release(MavenPublication) {
+            core(MavenPublication) {
                 from components.release
                 groupId = findProperty("GROUP")
                 artifactId = 'beckon'

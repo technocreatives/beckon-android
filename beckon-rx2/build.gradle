@@ -100,7 +100,7 @@ task ktlintFormat(type: JavaExec, group: "formatting") {
 afterEvaluate {
     publishing {
         publications {
-            debug(MavenPublication) {
+            rx2(MavenPublication) {
                 from components.release
                 groupId = findProperty("GROUP")
                 artifactId = 'beckon-rx2'
