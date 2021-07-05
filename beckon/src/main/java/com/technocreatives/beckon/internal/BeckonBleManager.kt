@@ -5,46 +5,14 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Context
-import arrow.core.Either
-import arrow.core.None
-import arrow.core.Option
+import arrow.core.*
 import arrow.core.computations.either
-import arrow.core.filterOption
-import arrow.core.left
-import arrow.core.right
 import arrow.fx.coroutines.parTraverseEither
-import com.technocreatives.beckon.BeckonError
-import com.technocreatives.beckon.BleAction
-import com.technocreatives.beckon.BleConnectionState
-import com.technocreatives.beckon.BondState
-import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.Characteristic
-import com.technocreatives.beckon.CharacteristicSuccess
-import com.technocreatives.beckon.ConnectionError
-import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.Descriptor
-import com.technocreatives.beckon.DeviceDetail
-import com.technocreatives.beckon.MtuRequestException
-import com.technocreatives.beckon.Property
-import com.technocreatives.beckon.ReadDataException
-import com.technocreatives.beckon.State
-import com.technocreatives.beckon.SubscribeDataException
-import com.technocreatives.beckon.WriteDataException
-import com.technocreatives.beckon.checkNotifyList
-import com.technocreatives.beckon.checkReadList
-import com.technocreatives.beckon.plus
+import com.technocreatives.beckon.*
 import com.technocreatives.beckon.util.toBondState
 import io.reactivex.subjects.SingleSubject
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.scan
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.ConnectRequest
 import no.nordicsemi.android.ble.callback.DataReceivedCallback
@@ -52,7 +20,7 @@ import no.nordicsemi.android.ble.callback.DataSentCallback
 import no.nordicsemi.android.ble.callback.MtuCallback
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
-import java.util.UUID
+import java.util.*
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -123,7 +91,7 @@ internal class BeckonBleManager(
         Timber.d("SingleZ connect")
         val request = connect(device)
             .retry(retryAttempts, retryDelay)
-            .useAutoConnect(true)
+//            .useAutoConnect(true)
         return connect(request)
     }
 
@@ -145,6 +113,7 @@ internal class BeckonBleManager(
         }
     }
 
+    // TODO figure out how to get mtu from device
     suspend fun doRequestMtu(mtu: Int): Either<MtuRequestException, Int> {
         val result = CompletableDeferred<Either<MtuRequestException, Int>>()
         val callback = MtuCallback { device, mtu ->
@@ -230,6 +199,17 @@ internal class BeckonBleManager(
         return emitter.await()
     }
 
+    // MTU specifies the maximum number of bytes that can be sent in a single write operation.
+    // 3 bytes are used for internal purposes, so the maximum size is MTU-3
+    //  todo get for Tyri light only
+    fun getMaximumPacketSize(): Int {
+        return 69 - 3 //mtu - 3
+    }
+
+    override fun getMtu(): Int {
+        return super.getMtu()
+    }
+
     @DelicateCoroutinesApi
     override fun getGattCallback(): BleManagerGattCallback {
         return object : BleManagerGattCallback() {
@@ -276,8 +256,11 @@ internal class BeckonBleManager(
                     )
                 }
             }
+            private val MTU_SIZE_DEFAULT = 23
+            private val MTU_SIZE_MAX = 517
 
             override fun onDeviceDisconnected() {
+                overrideMtu(MTU_SIZE_DEFAULT)
                 Timber.d("onDeviceDisconnected gattCallback")
             }
 
@@ -299,6 +282,7 @@ internal class BeckonBleManager(
             }
 
             private fun allCharacteristics(service: BluetoothGattService): List<CharacteristicSuccess> {
+                Timber.w("All characteristics of ${service.uuid}: ${service.characteristics.map {"${it.uuid}-${it.properties}"}}")
                 return service.characteristics.flatMap {
                     allCharacteristics(service, it)
                 }
@@ -329,9 +313,10 @@ internal class BeckonBleManager(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
             ): Option<CharacteristicSuccess.Notify> {
-                return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
-                    char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
-                ) {
+//                return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
+//                    char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
+//                )
+                return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
                     Option(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
                 } else {
                     None
@@ -353,11 +338,20 @@ internal class BeckonBleManager(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
             ): Option<CharacteristicSuccess.Write> {
-                return if (char.properties and BluetoothGattCharacteristic.PERMISSION_WRITE > 0) {
+                Timber.w("char: ${char.uuid} with properties ${char.properties}")
+                return if (char.properties.isWriteProperty()) {
                     Option(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
                 } else {
                     None
                 }
+            }
+
+            private fun Int.isWriteProperty(): Boolean {
+                val write = this and BluetoothGattCharacteristic.PROPERTY_WRITE != 0
+                val writeNoResponse = this and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
+                val writePermission = this and BluetoothGattCharacteristic.PERMISSION_WRITE != 0
+//                Timber.w("write: $write || writeNoResponse: $writeNoResponse || writePermission: $writePermission")
+                return (write || writeNoResponse || writePermission)
             }
         }
     }
@@ -397,6 +391,29 @@ internal class BeckonBleManager(
         }
     }
 
+   fun sendPdu(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Flow<Either<WriteDataException, PduPackage>> {
+        val subject = MutableSharedFlow<Either<WriteDataException, PduPackage>>()
+           // This callback will be called each time the data were sent.
+           val callback = DataSentCallback { device, data ->
+               Timber.d("sendPdu DataSentCallback uuid: $uuid device: $device data: $data")
+               runBlocking {
+                   subject.emit(PduPackage(uuid, getMaximumPacketSize(), data).right())
+               }
+           }
+
+           // Write the right characteristic.
+           writeCharacteristic(gatt, pdu)
+               .split()
+               .with(callback)
+               .fail { device, status ->
+                   runBlocking {
+                       subject.emit((WriteDataException(device.address, uuid, status).left()))
+                   }
+               }
+               .enqueue()
+       return subject.asSharedFlow()
+   }
+
     suspend fun read(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
@@ -435,7 +452,7 @@ internal class BeckonBleManager(
         return subscribe(notify.id, notify.gatt)
     }
 
-    // todo enqueue doesn't work for some reason.
+    // Only read if readable
     suspend fun subscribe(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
@@ -448,12 +465,12 @@ internal class BeckonBleManager(
                 changeSubject.emit(Change(uuid, data))
             }
         }
-        val readCallback = DataReceivedCallback { device, data ->
-            Timber.d("Read DataReceivedCallback $device $data")
-            runBlocking {
-                changeSubject.emit(Change(uuid, data))
-            }
-        }
+//        val readCallback = DataReceivedCallback { device, data ->
+//            Timber.d("Read DataReceivedCallback $device $data")
+//            runBlocking {
+//                changeSubject.emit(Change(uuid, data))
+//            }
+//        }
         setNotificationCallback(gatt).with(callback)
         enableNotifications(gatt)
             .invalid {
@@ -480,9 +497,9 @@ internal class BeckonBleManager(
                 result.complete(Unit.right())
             }
             .enqueue()
-        readCharacteristic(gatt).with(readCallback)
-            .fail { device, status -> Timber.w("Read request failed: $device $status") }
-            .enqueue()
+//        readCharacteristic(gatt).with(readCallback)
+//            .fail { device, status -> Timber.w("Read request failed: $device $status") }
+//            .enqueue()
         Timber.d("end of setNotification callback $uuid")
         return result.await()
     }

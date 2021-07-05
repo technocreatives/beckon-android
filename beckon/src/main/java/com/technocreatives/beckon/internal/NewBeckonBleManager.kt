@@ -382,7 +382,7 @@ internal class NewBeckonBleManager(
         return subscribe(notify.id, notify.gatt)
     }
 
-    // todo enqueue doesn't work for some reason.
+    // only read if it is readable
     suspend fun subscribe(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
@@ -395,12 +395,12 @@ internal class NewBeckonBleManager(
                 changeSubject.emit(Change(uuid, data))
             }
         }
-        val readCallback = DataReceivedCallback { device, data ->
-            Timber.d("Read DataReceivedCallback $device $data")
-            runBlocking {
-                changeSubject.emit(Change(uuid, data))
-            }
-        }
+//        val readCallback = DataReceivedCallback { device, data ->
+//            Timber.d("Read DataReceivedCallback $device $data")
+//            runBlocking {
+//                changeSubject.emit(Change(uuid, data))
+//            }
+//        }
         setNotificationCallback(gatt).with(callback)
         enableNotifications(gatt)
             .invalid {
@@ -427,9 +427,9 @@ internal class NewBeckonBleManager(
                 result.complete(Unit.right())
             }
             .enqueue()
-        readCharacteristic(gatt).with(readCallback)
-            .fail { device, status -> Timber.w("Read request failed: $device $status") }
-            .enqueue()
+//        readCharacteristic(gatt).with(readCallback)
+//            .fail { device, status -> Timber.w("Read request failed: $device $status") }
+//            .enqueue()
         Timber.d("end of setNotification callback $uuid")
         return result.await()
     }

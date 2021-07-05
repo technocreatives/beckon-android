@@ -31,6 +31,10 @@ data class Metadata(
     fun findReadCharacteristic(characteristic: Characteristic): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
         return characteristics.findReadCharacteristic(characteristic.toRequirement(Property.READ))
     }
+
+    fun findWriteCharacteristic(characteristic: Characteristic): Either<CharacteristicFailed, CharacteristicSuccess.Write> {
+        return characteristics.findWriteCharacteristic(characteristic.toRequirement(Property.WRITE))
+    }
 }
 
 data class DeviceDetail(
@@ -111,6 +115,13 @@ fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Ei
 
 fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
     return this.filterIsInstance(CharacteristicSuccess.Read::class.java)
+        .find { it.toRequirement() == requirement }
+        .toOption()
+        .toEither { requirement.toFailed() }
+}
+
+fun List<CharacteristicSuccess>.findWriteCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Write> {
+    return this.filterIsInstance(CharacteristicSuccess.Write::class.java)
         .find { it.toRequirement() == requirement }
         .toOption()
         .toEither { requirement.toFailed() }

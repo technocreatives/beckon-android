@@ -4,20 +4,12 @@ import android.bluetooth.BluetoothDevice
 import arrow.core.Either
 import arrow.core.left
 import arrow.fx.coroutines.parTraverseEither
-import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.BondState
-import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicSuccess
-import com.technocreatives.beckon.ConnectionError
-import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.Metadata
-import com.technocreatives.beckon.ReadDataException
-import com.technocreatives.beckon.State
-import com.technocreatives.beckon.WriteDataException
+import com.technocreatives.beckon.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ble.data.Data
+import java.util.*
 
 internal class BeckonDeviceImpl(
     private val bluetoothDevice: BluetoothDevice,
@@ -70,6 +62,21 @@ internal class BeckonDeviceImpl(
     ): Either<WriteDataException, Change> {
         return manager.write(data, characteristic.id, characteristic.gatt)
     }
+
+    override fun sendPdu(
+        data: ByteArray,
+        characteristic: CharacteristicSuccess.Write
+    ): Flow<Either<WriteDataException, PduPackage>> {
+        return manager.sendPdu(data, characteristic.id, characteristic.gatt)
+    }
+//
+//    override fun sendPdu(
+//        data: ByteArray,
+//        uuid: UUID
+//    ): Flow<Either<WriteDataException, PduPackage>> {
+//        TODO("Not yet implemented")
+//        metadata.findCharacteristic()
+//    }
 
     override suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit> {
         return manager.subscribe(notify.id, notify.gatt)
