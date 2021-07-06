@@ -109,10 +109,10 @@ interface BeckonClient {
     /*===========================Work with devices==========================*/
     suspend fun write(
         macAddress: MacAddress,
-        characteristic: CharacteristicSuccess.Write,
+        characteristic: FoundCharacteristic.Write,
         data: Data
     ): Either<Throwable, Change>
 
-    suspend fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Either<Throwable, Change>
+    suspend fun read(macAddress: MacAddress, characteristic: FoundCharacteristic.Read): Either<Throwable, Change>
     // todo add subscribe function
 }

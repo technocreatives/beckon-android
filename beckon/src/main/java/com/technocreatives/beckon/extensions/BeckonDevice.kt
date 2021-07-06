@@ -1,10 +1,12 @@
 package com.technocreatives.beckon.extensions
 
-import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.CharacteristicMapper
+import arrow.core.Either
+import arrow.core.computations.either
+import com.technocreatives.beckon.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
+import no.nordicsemi.android.ble.data.Data
 import java.util.*
 
 fun <Change> BeckonDevice.changes(
@@ -13,3 +15,31 @@ fun <Change> BeckonDevice.changes(
 ): Flow<Change> =
     changes().filter { it.uuid == characteristicUUID }
         .map { mapper(it) }
+
+
+suspend fun BeckonDevice.read(char: Characteristic): Either<ReadDataError, Change> =
+    either {
+        val foundCharacteristic = metadata().findReadCharacteristic(char).bind()
+        read(foundCharacteristic).bind()
+    }
+
+suspend fun BeckonDevice.write(data: Data, char: Characteristic): Either<WriteDataError, Change> =
+    either {
+        val foundCharacteristic = metadata().findWriteCharacteristic(char).bind()
+        write(data, foundCharacteristic).bind()
+    }
+
+suspend fun BeckonDevice.subscribe(char: Characteristic): Either<SubscribeDataError, Unit> =
+    either {
+        val foundCharacteristic = metadata().findSubscribeCharacteristic(char).bind()
+        subscribe(foundCharacteristic).bind()
+    }
+
+suspend fun BeckonDevice.writeSplit(
+    data: ByteArray,
+    char: Characteristic
+): Either<WriteDataError, PduPackage> =
+    either {
+        val foundCharacteristic = metadata().findWriteCharacteristic(char).bind()
+        writeSplit(data, foundCharacteristic).bind()
+    }

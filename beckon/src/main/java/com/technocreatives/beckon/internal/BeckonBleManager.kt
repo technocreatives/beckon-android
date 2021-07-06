@@ -108,26 +108,35 @@ internal class BeckonBleManager(
                 read(action.characteristic, detail)
             }
             is BleAction.RequestMTU -> {
-                doRequestMtu(action.mtu).map { }
+                doRequestMtu(action.mtu.value).map { }
             }
         }
     }
 
     // TODO figure out how to get mtu from device
-    suspend fun doRequestMtu(mtu: Int): Either<MtuRequestException, Int> {
-        val result = CompletableDeferred<Either<MtuRequestException, Int>>()
+    suspend fun doRequestMtu(mtu: Int): Either<MtuRequestError, Int> {
+        val result = CompletableDeferred<Either<MtuRequestError, Int>>()
         val callback = MtuCallback { device, mtu ->
             result.complete(mtu.right())
         }
         requestMtu(mtu)
             .with(callback)
             .fail { device, status ->
-                result.complete(MtuRequestException(device.address, status).left())
+                result.complete(MtuRequestError(device.address, status).left())
             }
-            .invalid { result.complete(MtuRequestException(device.address, -1).left()) }
+            .invalid { result.complete(MtuRequestError(device.address, -1).left()) }
             .enqueue()
         return result.await()
     }
+
+    fun doOverrideMtu(mtu: Int) {
+        overrideMtu(mtu)
+    }
+
+    fun mtu(): Int {
+        return mtu
+    }
+
 
     suspend fun subscribe(
         subscribes: List<Characteristic>,
@@ -201,13 +210,8 @@ internal class BeckonBleManager(
 
     // MTU specifies the maximum number of bytes that can be sent in a single write operation.
     // 3 bytes are used for internal purposes, so the maximum size is MTU-3
-    //  todo get for Tyri light only
     fun getMaximumPacketSize(): Int {
-        return 69 - 3 //mtu - 3
-    }
-
-    override fun getMtu(): Int {
-        return super.getMtu()
+        return mtu() - 3
     }
 
     @DelicateCoroutinesApi
@@ -277,11 +281,11 @@ internal class BeckonBleManager(
                 return true
             }
 
-            private fun allCharacteristics(gatt: BluetoothGatt): List<CharacteristicSuccess> {
+            private fun allCharacteristics(gatt: BluetoothGatt): List<FoundCharacteristic> {
                 return gatt.services.flatMap { allCharacteristics(it) }
             }
 
-            private fun allCharacteristics(service: BluetoothGattService): List<CharacteristicSuccess> {
+            private fun allCharacteristics(service: BluetoothGattService): List<FoundCharacteristic> {
                 Timber.w("All characteristics of ${service.uuid}: ${service.characteristics.map {"${it.uuid}-${it.properties}"}}")
                 return service.characteristics.flatMap {
                     allCharacteristics(service, it)
@@ -291,7 +295,7 @@ internal class BeckonBleManager(
             fun allCharacteristics(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
-            ): List<CharacteristicSuccess> {
+            ): List<FoundCharacteristic> {
                 return Property.values().toList()
                     .map { findCharacteristic(service, char, it) }
                     .filterOption()
@@ -301,7 +305,7 @@ internal class BeckonBleManager(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic,
                 type: Property
-            ): Option<CharacteristicSuccess> {
+            ): Option<FoundCharacteristic> {
                 return when (type) {
                     Property.WRITE -> writeCharacteristic(service, char)
                     Property.READ -> readCharacteristic(service, char)
@@ -312,12 +316,12 @@ internal class BeckonBleManager(
             private fun notifyCharacteristic(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
-            ): Option<CharacteristicSuccess.Notify> {
+            ): Option<FoundCharacteristic.Notify> {
 //                return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
 //                    char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
 //                )
                 return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
-                    Option(CharacteristicSuccess.Notify(char.uuid, service.uuid, char))
+                    Option(FoundCharacteristic.Notify(char.uuid, service.uuid, char))
                 } else {
                     None
                 }
@@ -326,9 +330,9 @@ internal class BeckonBleManager(
             private fun readCharacteristic(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
-            ): Option<CharacteristicSuccess.Read> {
+            ): Option<FoundCharacteristic.Read> {
                 return if (char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
-                    Option(CharacteristicSuccess.Read(char.uuid, service.uuid, char))
+                    Option(FoundCharacteristic.Read(char.uuid, service.uuid, char))
                 } else {
                     None
                 }
@@ -337,10 +341,10 @@ internal class BeckonBleManager(
             private fun writeCharacteristic(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
-            ): Option<CharacteristicSuccess.Write> {
+            ): Option<FoundCharacteristic.Write> {
                 Timber.w("char: ${char.uuid} with properties ${char.properties}")
                 return if (char.properties.isWriteProperty()) {
-                    Option(CharacteristicSuccess.Write(char.uuid, service.uuid, char))
+                    Option(FoundCharacteristic.Write(char.uuid, service.uuid, char))
                 } else {
                     None
                 }
@@ -391,13 +395,13 @@ internal class BeckonBleManager(
         }
     }
 
-   fun sendPdu(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Flow<Either<WriteDataException, PduPackage>> {
-        val subject = MutableSharedFlow<Either<WriteDataException, PduPackage>>()
+   suspend fun writeSplit(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Either<WriteDataException, PduPackage> {
+       return suspendCoroutine { cont ->
            // This callback will be called each time the data were sent.
            val callback = DataSentCallback { device, data ->
                Timber.d("sendPdu DataSentCallback uuid: $uuid device: $device data: $data")
                runBlocking {
-                   subject.emit(PduPackage(uuid, getMaximumPacketSize(), data).right())
+                   cont.resume(PduPackage(uuid, getMaximumPacketSize(), data).right())
                }
            }
 
@@ -407,11 +411,11 @@ internal class BeckonBleManager(
                .with(callback)
                .fail { device, status ->
                    runBlocking {
-                       subject.emit((WriteDataException(device.address, uuid, status).left()))
+                       cont.resume((WriteDataException(device.address, uuid, status).left()))
                    }
                }
                .enqueue()
-       return subject.asSharedFlow()
+       }
    }
 
     suspend fun read(
@@ -438,21 +442,21 @@ internal class BeckonBleManager(
         return result.await()
     }
 
-    suspend fun read(list: List<CharacteristicSuccess.Read>): Either<ReadDataException, List<Change>> {
+    suspend fun read(list: List<FoundCharacteristic.Read>): Either<ReadDataException, List<Change>> {
         if (list.isEmpty()) return emptyList<Change>().right()
         return list.parTraverseEither { read(it.id, it.gatt) }
     }
 
-    suspend fun subscribe(list: List<CharacteristicSuccess.Notify>): Either<SubscribeDataException, Unit> {
+    suspend fun subscribe(list: List<FoundCharacteristic.Notify>): Either<SubscribeDataException, Unit> {
         if (list.isEmpty()) return Unit.right()
         return list.parTraverseEither { subscribe(it) }.map { }
     }
 
-    suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<SubscribeDataException, Unit> {
+    suspend fun subscribe(notify: FoundCharacteristic.Notify): Either<SubscribeDataException, Unit> {
         return subscribe(notify.id, notify.gatt)
     }
 
-    // Only read if readable
+    // TODO Only read if readable
     suspend fun subscribe(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
@@ -471,6 +475,7 @@ internal class BeckonBleManager(
 //                changeSubject.emit(Change(uuid, data))
 //            }
 //        }
+
         setNotificationCallback(gatt).with(callback)
         enableNotifications(gatt)
             .invalid {
@@ -504,7 +509,7 @@ internal class BeckonBleManager(
         return result.await()
     }
 
-    suspend fun unsubscribe(notify: CharacteristicSuccess.Notify): Either<SubscribeDataException, Unit> {
+    suspend fun unsubscribe(notify: FoundCharacteristic.Notify): Either<SubscribeDataException, Unit> {
         return suspendCoroutine { emitter ->
             disableNotifications(notify.gatt)
                 .fail { device, status ->

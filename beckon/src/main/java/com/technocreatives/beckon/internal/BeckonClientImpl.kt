@@ -17,7 +17,7 @@ import com.technocreatives.beckon.BeckonDeviceError
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicSuccess
+import com.technocreatives.beckon.FoundCharacteristic
 import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceDetail
@@ -278,7 +278,7 @@ internal class BeckonClientImpl(
 
     override suspend fun write(
         macAddress: MacAddress,
-        characteristic: CharacteristicSuccess.Write,
+        characteristic: FoundCharacteristic.Write,
         data: Data
     ): Either<Throwable, Change> = either {
         val device = findConnectedDevice(macAddress).mapLeft { it.toException() }.bind()
@@ -287,7 +287,7 @@ internal class BeckonClientImpl(
 
     override suspend fun read(
         macAddress: MacAddress,
-        characteristic: CharacteristicSuccess.Read
+        characteristic: FoundCharacteristic.Read
     ): Either<Throwable, Change> = either {
         val device = findConnectedDevice(macAddress).mapLeft { it.toException() }.bind()
         device.read(characteristic).bind()

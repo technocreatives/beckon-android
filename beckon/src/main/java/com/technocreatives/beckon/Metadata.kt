@@ -3,6 +3,7 @@ package com.technocreatives.beckon
 import android.bluetooth.BluetoothGattCharacteristic
 import arrow.core.Either
 import arrow.core.left
+import arrow.core.rightIfNotNull
 import arrow.core.toOption
 import com.squareup.moshi.JsonClass
 import com.technocreatives.beckon.util.parallelValidate
@@ -12,7 +13,7 @@ data class Metadata(
     val macAddress: MacAddress,
     val name: String, // BluetoothDevice name
     val services: List<UUID>,
-    val characteristics: List<CharacteristicSuccess>,
+    val characteristics: List<FoundCharacteristic>,
     val descriptor: Descriptor
 ) {
 
@@ -24,29 +25,63 @@ data class Metadata(
         )
     }
 
-    fun findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
-        return characteristics.findCharacteristic(requirement)
+    fun findReadCharacteristic(characteristic: Characteristic): Either<ReadDataError, FoundCharacteristic.Read> {
+        return if (characteristic.service !in services) {
+            ServiceNotFound(characteristic).left()
+        } else {
+            val foundCharacteristics = characteristics
+                .filter { it.toCharacteristic() == characteristic }
+            if (foundCharacteristics.isEmpty()) {
+                CharacteristicNotFound(characteristic).left()
+            } else {
+                foundCharacteristics.filterIsInstance(FoundCharacteristic.Read::class.java)
+                    .firstOrNull().rightIfNotNull { NotSupportRead(characteristic) }
+            }
+        }
     }
 
-    fun findReadCharacteristic(characteristic: Characteristic): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
-        return characteristics.findReadCharacteristic(characteristic.toRequirement(Property.READ))
+    fun findWriteCharacteristic(characteristic: Characteristic): Either<WriteRequirementFailed, FoundCharacteristic.Write> {
+        return if (characteristic.service !in services) {
+            ServiceNotFound(characteristic).left()
+        } else {
+            val foundCharacteristics = characteristics
+                .filter { it.toCharacteristic() == characteristic }
+            if (foundCharacteristics.isEmpty()) {
+                CharacteristicNotFound(characteristic).left()
+            } else {
+                foundCharacteristics.filterIsInstance(FoundCharacteristic.Write::class.java)
+                    .firstOrNull().rightIfNotNull { NotSupportWrite(characteristic) }
+            }
+        }
     }
 
-    fun findWriteCharacteristic(characteristic: Characteristic): Either<CharacteristicFailed, CharacteristicSuccess.Write> {
-        return characteristics.findWriteCharacteristic(characteristic.toRequirement(Property.WRITE))
+
+    fun findSubscribeCharacteristic(characteristic: Characteristic): Either<SubscribeRequirementFailed, FoundCharacteristic.Notify> {
+        return if (characteristic.service !in services) {
+            ServiceNotFound(characteristic).left()
+        } else {
+            val foundCharacteristics = characteristics
+                .filter { it.toCharacteristic() == characteristic }
+            if (foundCharacteristics.isEmpty()) {
+                CharacteristicNotFound(characteristic).left()
+            } else {
+                foundCharacteristics.filterIsInstance(FoundCharacteristic.Notify::class.java)
+                    .firstOrNull().rightIfNotNull { NotSupportSubscribe(characteristic) }
+            }
+        }
     }
 }
 
 data class DeviceDetail(
     val services: List<UUID>,
-    val characteristics: List<CharacteristicSuccess>
+    val characteristics: List<FoundCharacteristic>
 )
 
 fun checkRequirement(
     requirement: Requirement,
     services: List<UUID>,
-    characteristics: List<CharacteristicSuccess>
-): Either<CharacteristicFailed, CharacteristicSuccess> {
+    characteristics: List<FoundCharacteristic>
+): Either<CharacteristicFailed, FoundCharacteristic> {
     return when {
         requirement.service !in services -> CharacteristicFailed.ServiceNotFound(requirement).left()
         requirement.uuid !in characteristics.map { it.id } -> CharacteristicFailed.CharacteristicNotFound(
@@ -59,8 +94,8 @@ fun checkRequirement(
 fun checkRequirements(
     requirements: List<Requirement>,
     services: List<UUID>,
-    characteristics: List<CharacteristicSuccess>
-): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess>> {
+    characteristics: List<FoundCharacteristic>
+): Either<ConnectionError.RequirementFailed, List<FoundCharacteristic>> {
     return requirements
         .map { checkRequirement(it, services, characteristics).toValidated() }
         .parallelValidate()
@@ -71,63 +106,63 @@ fun checkRequirements(
 fun checkNotify(
     characteristic: Characteristic,
     services: List<UUID>,
-    characteristics: List<CharacteristicSuccess>
-): Either<CharacteristicFailed, CharacteristicSuccess.Notify> {
+    characteristics: List<FoundCharacteristic>
+): Either<CharacteristicFailed, FoundCharacteristic.Notify> {
     return checkRequirement(
         characteristic.toRequirement(Property.NOTIFY),
         services,
         characteristics
     )
-        .map { it as CharacteristicSuccess.Notify }
+        .map { it as FoundCharacteristic.Notify }
 }
 
 fun checkNotifyList(
     characteristics: List<Characteristic>,
     services: List<UUID>,
-    details: List<CharacteristicSuccess>
-): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess.Notify>> {
+    details: List<FoundCharacteristic>
+): Either<ConnectionError.RequirementFailed, List<FoundCharacteristic.Notify>> {
     return checkRequirements(
         characteristics.map { it.toRequirement(Property.NOTIFY) },
         services,
         details
     )
-        .map { it.map { it as CharacteristicSuccess.Notify } }
+        .map { it.map { it as FoundCharacteristic.Notify } }
 }
 
 fun checkReadList(
     characteristics: List<Characteristic>,
     services: List<UUID>,
-    details: List<CharacteristicSuccess>
-): Either<ConnectionError.RequirementFailed, List<CharacteristicSuccess.Read>> {
+    details: List<FoundCharacteristic>
+): Either<ConnectionError.RequirementFailed, List<FoundCharacteristic.Read>> {
     return checkRequirements(
         characteristics.map { it.toRequirement(Property.READ) },
         services,
         details
     )
-        .map { it.map { it as CharacteristicSuccess.Read } }
+        .map { it.map { it as FoundCharacteristic.Read } }
 }
 
-fun List<CharacteristicSuccess>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess> {
+fun List<FoundCharacteristic>.findCharacteristic(requirement: Requirement): Either<CharacteristicFailed, FoundCharacteristic> {
     return find { it.toRequirement() == requirement }
         .toOption()
         .toEither { requirement.toFailed() }
 }
 
-fun List<CharacteristicSuccess>.findReadCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Read> {
-    return this.filterIsInstance(CharacteristicSuccess.Read::class.java)
+fun List<FoundCharacteristic>.findReadCharacteristic(requirement: Requirement): Either<CharacteristicFailed, FoundCharacteristic.Read> {
+    return this.filterIsInstance(FoundCharacteristic.Read::class.java)
         .find { it.toRequirement() == requirement }
         .toOption()
         .toEither { requirement.toFailed() }
 }
 
-fun List<CharacteristicSuccess>.findWriteCharacteristic(requirement: Requirement): Either<CharacteristicFailed, CharacteristicSuccess.Write> {
-    return this.filterIsInstance(CharacteristicSuccess.Write::class.java)
+fun List<FoundCharacteristic>.findWriteCharacteristic(requirement: Requirement): Either<CharacteristicFailed, FoundCharacteristic.Write> {
+    return this.filterIsInstance(FoundCharacteristic.Write::class.java)
         .find { it.toRequirement() == requirement }
         .toOption()
         .toEither { requirement.toFailed() }
 }
 
-sealed class CharacteristicSuccess {
+sealed class FoundCharacteristic {
     abstract val id: UUID
     abstract val service: UUID
 
@@ -135,19 +170,19 @@ sealed class CharacteristicSuccess {
         override val id: UUID,
         override val service: UUID,
         val gatt: BluetoothGattCharacteristic
-    ) : CharacteristicSuccess()
+    ) : FoundCharacteristic()
 
     data class Read(
         override val id: UUID,
         override val service: UUID,
         val gatt: BluetoothGattCharacteristic
-    ) : CharacteristicSuccess()
+    ) : FoundCharacteristic()
 
     data class Write(
         override val id: UUID,
         override val service: UUID,
         val gatt: BluetoothGattCharacteristic
-    ) : CharacteristicSuccess()
+    ) : FoundCharacteristic()
 
     private fun property(): Property {
         return when (this) {
@@ -159,6 +194,10 @@ sealed class CharacteristicSuccess {
 
     fun toRequirement(): Requirement {
         return Requirement(id, service, property())
+    }
+
+    fun toCharacteristic(): Characteristic {
+        return Characteristic(id, service)
     }
 }
 

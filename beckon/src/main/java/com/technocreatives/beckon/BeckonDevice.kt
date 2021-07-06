@@ -3,7 +3,6 @@ package com.technocreatives.beckon
 import arrow.core.Either
 import kotlinx.coroutines.flow.Flow
 import no.nordicsemi.android.ble.data.Data
-import java.util.*
 
 interface BeckonDevice {
 
@@ -20,14 +19,24 @@ interface BeckonDevice {
     suspend fun createBond(): Either<ConnectionError.CreateBondFailed, Unit>
     suspend fun removeBond(): Either<ConnectionError.RemoveBondFailed, Unit>
 
-    suspend fun read(characteristic: CharacteristicSuccess.Read): Either<ReadDataException, Change>
+    suspend fun read(characteristic: FoundCharacteristic.Read): Either<ReadDataException, Change>
 
-    suspend fun write(data: Data, characteristic: CharacteristicSuccess.Write): Either<WriteDataException, Change>
+    suspend fun write(
+        data: Data,
+        characteristic: FoundCharacteristic.Write
+    ): Either<WriteDataException, Change>
 
-    fun sendPdu(data: ByteArray, characteristic: CharacteristicSuccess.Write): Flow<Either<WriteDataException, PduPackage>>
+    suspend fun writeSplit(
+        data: ByteArray,
+        characteristic: FoundCharacteristic.Write
+    ): Either<WriteDataException, PduPackage>
 
-    suspend fun subscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit>
-    suspend fun subscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit>
-    suspend fun unsubscribe(notify: CharacteristicSuccess.Notify): Either<Throwable, Unit>
-    suspend fun unsubscribe(list: List<CharacteristicSuccess.Notify>): Either<Throwable, Unit>
+    suspend fun subscribe(notify: FoundCharacteristic.Notify): Either<SubscribeDataException, Unit>
+    suspend fun subscribe(list: List<FoundCharacteristic.Notify>): Either<Throwable, Unit>
+    suspend fun unsubscribe(notify: FoundCharacteristic.Notify): Either<SubscribeDataException, Unit>
+    suspend fun unsubscribe(list: List<FoundCharacteristic.Notify>): Either<Throwable, Unit>
+
+    suspend fun requestMtu(mtu: Mtu): Either<MtuRequestError, Mtu>
+    fun overrideMtu(mtu: Mtu)
+
 }

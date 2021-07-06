@@ -10,6 +10,9 @@ import java.util.UUID
 
 typealias MacAddress = String
 
+@JvmInline
+value class Mtu(@IntRange(from = 23, to = 517) val value: Int)
+
 data class DeviceFilter(
     val name: String? = null,
     val address: String? = null,
@@ -52,7 +55,7 @@ data class Descriptor(
 )
 
 sealed class BleAction {
-    data class RequestMTU(@IntRange(from = 23, to = 517) val mtu: Int) : BleAction()
+    data class RequestMTU(val mtu: Mtu) : BleAction()
     data class Read(val characteristic: Characteristic) : BleAction()
     data class Subscribe(val characteristic: Characteristic) : BleAction()
 }
@@ -62,7 +65,11 @@ data class NewDescriptor(
     val ActionsOnConnected: List<BleAction> = emptyList()
 )
 
-data class ScanResult(internal val device: BluetoothDevice, val rssi: Int, val scanRecord: ScanRecord?) {
+data class ScanResult(
+    internal val device: BluetoothDevice,
+    val rssi: Int,
+    val scanRecord: ScanRecord?
+) {
     val macAddress: String = device.address
     val name: String? = device.name
 }
