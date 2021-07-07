@@ -14,9 +14,9 @@ sealed interface SubscribeDataError
 data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(), BeckonError, SubscribeDataError
 
 sealed interface RequirementFailed : ReadDataError, WriteDataError, SubscribeDataError
-data class CharacteristicNotFound(val characteristic: Characteristic): RequirementFailed
+data class CharacteristicNotFound(val characteristic: Characteristic) : RequirementFailed
 data class ServiceNotFound(val characteristic: Characteristic) : RequirementFailed
-data class PropertyNotSupport(val characteristic: Characteristic): RequirementFailed
+data class PropertyNotSupport(val characteristic: Characteristic) : RequirementFailed
 
 data class MtuRequestError(val macAddress: String, val status: Int) : BeckonError
 

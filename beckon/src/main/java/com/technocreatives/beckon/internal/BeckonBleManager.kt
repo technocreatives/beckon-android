@@ -137,7 +137,6 @@ internal class BeckonBleManager(
         return mtu
     }
 
-
     suspend fun subscribe(
         subscribes: List<Characteristic>,
         detail: DeviceDetail
@@ -395,28 +394,28 @@ internal class BeckonBleManager(
         }
     }
 
-   suspend fun writeSplit(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Either<WriteDataException, SplitPackage> {
-       return suspendCoroutine { cont ->
-           // This callback will be called each time the data were sent.
-           val callback = DataSentCallback { device, data ->
-               Timber.d("sendPdu DataSentCallback uuid: $uuid device: $device data: $data")
-               runBlocking {
-                   cont.resume(SplitPackage(uuid, getMaximumPacketSize(), data).right())
-               }
-           }
+    suspend fun writeSplit(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Either<WriteDataException, SplitPackage> {
+        return suspendCoroutine { cont ->
+            // This callback will be called each time the data were sent.
+            val callback = DataSentCallback { device, data ->
+                Timber.d("sendPdu DataSentCallback uuid: $uuid device: $device data: $data")
+                runBlocking {
+                    cont.resume(SplitPackage(uuid, getMaximumPacketSize(), data).right())
+                }
+            }
 
-           // Write the right characteristic.
-           writeCharacteristic(gatt, pdu)
-               .split()
-               .with(callback)
-               .fail { device, status ->
-                   runBlocking {
-                       cont.resume((WriteDataException(device.address, uuid, status).left()))
-                   }
-               }
-               .enqueue()
-       }
-   }
+            // Write the right characteristic.
+            writeCharacteristic(gatt, pdu)
+                .split()
+                .with(callback)
+                .fail { device, status ->
+                    runBlocking {
+                        cont.resume((WriteDataException(device.address, uuid, status).left()))
+                    }
+                }
+                .enqueue()
+        }
+    }
 
     suspend fun read(
         uuid: UUID,

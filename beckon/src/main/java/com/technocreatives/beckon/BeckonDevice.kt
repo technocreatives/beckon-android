@@ -39,5 +39,4 @@ interface BeckonDevice {
     suspend fun requestMtu(mtu: Mtu): Either<MtuRequestError, Mtu>
     fun overrideMtu(mtu: Mtu)
     fun mtu(): Mtu
-
 }

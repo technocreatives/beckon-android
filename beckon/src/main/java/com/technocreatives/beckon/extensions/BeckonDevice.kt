@@ -16,7 +16,6 @@ fun <Change> BeckonDevice.changes(
     changes().filter { it.uuid == characteristicUUID }
         .map { mapper(it) }
 
-
 suspend fun BeckonDevice.read(char: Characteristic): Either<ReadDataError, Change> =
     either {
         val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Read>(char).bind()

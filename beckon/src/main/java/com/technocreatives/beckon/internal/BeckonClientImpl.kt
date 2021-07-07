@@ -17,10 +17,10 @@ import com.technocreatives.beckon.BeckonDeviceError
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.FoundCharacteristic
 import com.technocreatives.beckon.ConnectionError
 import com.technocreatives.beckon.Descriptor
 import com.technocreatives.beckon.DeviceDetail
+import com.technocreatives.beckon.FoundCharacteristic
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
