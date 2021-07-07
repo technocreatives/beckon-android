@@ -8,7 +8,8 @@ data class WriteDataException(val macAddress: String, val uuid: UUID, val status
     Throwable(), BeckonError
 
 @Deprecated("Use BleActionError")
-data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(),
+data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) :
+    Throwable(),
     BeckonError
 
 @Deprecated("Use BleActionError")
@@ -30,7 +31,6 @@ sealed interface RequirementFailed : BeckonActionError
 data class CharacteristicNotFound(val characteristic: Characteristic) : RequirementFailed
 data class ServiceNotFound(val characteristic: Characteristic) : RequirementFailed
 data class PropertyNotSupport(val characteristic: Characteristic) : RequirementFailed
-
 
 // todo use BeckonException instead of Throwable
 typealias BeckonResult<T> = Either<Throwable, T>

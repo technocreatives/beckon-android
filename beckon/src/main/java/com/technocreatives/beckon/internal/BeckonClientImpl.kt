@@ -36,7 +36,6 @@ import com.technocreatives.beckon.util.connectedDevices
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.findDevice
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -46,7 +45,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
-import kotlin.coroutines.coroutineContext
 
 internal class BeckonClientImpl(
     private val context: Context,

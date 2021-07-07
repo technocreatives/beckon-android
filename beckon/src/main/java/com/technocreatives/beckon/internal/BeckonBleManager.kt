@@ -111,7 +111,7 @@ internal class BeckonBleManager(
                 doRequestMtu(action.mtu.value).map { }
             }
             is BleAction.Write -> {
-                //TODO fix
+                // TODO fix
                 Unit.right()
             }
         }
@@ -236,8 +236,8 @@ internal class BeckonBleManager(
                             // val delayTime = 0L
                             delay(delayTime)
 //                            if (descriptor.actionsOnConnected.isEmpty()) {
-                                subscribe(descriptor.subscribes, detail).bind()
-                                read(descriptor.reads, detail).bind()
+                            subscribe(descriptor.subscribes, detail).bind()
+                            read(descriptor.reads, detail).bind()
 //                            } else {
 //                                applyActions(descriptor.actionsOnConnected, detail)
 //                            }

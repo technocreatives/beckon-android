@@ -2,16 +2,10 @@ package com.technocreatives.beckon.mesh
 
 import arrow.core.Either
 import arrow.core.computations.either
-import arrow.core.identity
-import arrow.core.zip
-import arrow.fx.coroutines.parZip
 import com.technocreatives.beckon.*
-import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.subscribe
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import timber.log.Timber
-
 
 interface BeckonMesh {
 
@@ -40,10 +34,8 @@ interface BeckonMesh {
             beckonDevice.subscribe(provisioningDataOutCharacteristic).bind()
             coroutineScope {
                 async {
-
                 }
             }
             beckonDevice
         }
-
 }
