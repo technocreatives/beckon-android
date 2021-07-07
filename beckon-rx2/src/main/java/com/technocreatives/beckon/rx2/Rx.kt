@@ -4,22 +4,7 @@ import android.content.Context
 import arrow.core.Either
 import com.lenguyenthanh.rxarrow.fix
 import com.lenguyenthanh.rxarrow.mapZ
-import com.technocreatives.beckon.BeckonClient
-import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.BeckonDeviceError
-import com.technocreatives.beckon.BluetoothState
-import com.technocreatives.beckon.BondState
-import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicSuccess
-import com.technocreatives.beckon.ConnectionError
-import com.technocreatives.beckon.ConnectionState
-import com.technocreatives.beckon.Descriptor
-import com.technocreatives.beckon.MacAddress
-import com.technocreatives.beckon.Metadata
-import com.technocreatives.beckon.SavedMetadata
-import com.technocreatives.beckon.ScanResult
-import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.State
+import com.technocreatives.beckon.*
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -30,8 +15,8 @@ import kotlinx.coroutines.rx2.rxCompletable
 import kotlinx.coroutines.rx2.rxSingle
 import no.nordicsemi.android.ble.data.Data
 
-fun BeckonClient.rx(): com.technocreatives.beckon.rx2.BeckonClientRx {
-    return object : com.technocreatives.beckon.rx2.BeckonClientRx {
+fun BeckonClient.rx(): BeckonClientRx {
+    return object : BeckonClientRx {
         override fun startScan(setting: ScannerSetting): Observable<ScanResult> =
             runBlocking(Dispatchers.IO) {
                 this@rx.startScan(setting).asObservable()
@@ -52,19 +37,19 @@ fun BeckonClient.rx(): com.technocreatives.beckon.rx2.BeckonClientRx {
         override fun search(
             setting: ScannerSetting,
             descriptor: Descriptor
-        ): Observable<Either<ConnectionError, com.technocreatives.beckon.rx2.BeckonDeviceRx>> =
+        ): Observable<Either<ConnectionError, BeckonDeviceRx>> =
             runBlocking(Dispatchers.IO) {
                 this@rx.search(setting, descriptor).asObservable().mapZ { it.rx() }
             }
 
-        override fun connect(result: ScanResult, descriptor: Descriptor): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx> =
+        override fun connect(result: ScanResult, descriptor: Descriptor): Single<BeckonDeviceRx> =
             runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.connect(result, descriptor) }
                     .mapZ { it.rx() }
                     .fix { it.toException() }
             }
 
-        override fun connect(metadata: SavedMetadata): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx> =
+        override fun connect(metadata: SavedMetadata): Single<BeckonDeviceRx> =
             runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.connect(metadata) }
                     .mapZ { it.rx() }
@@ -88,14 +73,14 @@ fun BeckonClient.rx(): com.technocreatives.beckon.rx2.BeckonClientRx {
                     .fix()
             }
 
-        override fun findConnectedDevice(macAddress: MacAddress): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx> =
+        override fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDeviceRx> =
             runBlocking(Dispatchers.IO) {
                 rxSingle { this@rx.findConnectedDevice(macAddress) }
                     .fix { it.toException() }
                     .map { it.rx() }
             }
 
-        override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, com.technocreatives.beckon.rx2.BeckonDeviceRx>> =
+        override fun findConnectedDeviceO(metadata: SavedMetadata): Observable<Either<BeckonDeviceError, BeckonDeviceRx>> =
             this@rx.findConnectedDevice(metadata)
                 .asObservable()
                 .mapZ { it.rx() }
@@ -129,7 +114,7 @@ fun BeckonClient.rx(): com.technocreatives.beckon.rx2.BeckonClientRx {
 
         override fun write(
             macAddress: MacAddress,
-            characteristic: CharacteristicSuccess.Write,
+            characteristic: FoundCharacteristic.Write,
             data: Data
         ): Single<Change> =
             runBlocking(Dispatchers.IO) {
@@ -139,7 +124,7 @@ fun BeckonClient.rx(): com.technocreatives.beckon.rx2.BeckonClientRx {
 
         override fun read(
             macAddress: MacAddress,
-            characteristic: CharacteristicSuccess.Read
+            characteristic: FoundCharacteristic.Read
         ): Single<Change> =
             runBlocking(Dispatchers.IO) {
                 rxSingle {
@@ -149,8 +134,8 @@ fun BeckonClient.rx(): com.technocreatives.beckon.rx2.BeckonClientRx {
     }
 }
 
-fun BeckonDevice.rx(): com.technocreatives.beckon.rx2.BeckonDeviceRx {
-    return object : com.technocreatives.beckon.rx2.BeckonDeviceRx {
+fun BeckonDevice.rx(): BeckonDeviceRx {
+    return object : BeckonDeviceRx {
         override fun connectionStates(): Observable<ConnectionState> {
             return this@rx.connectionStates().asObservable()
         }
@@ -193,7 +178,7 @@ fun BeckonDevice.rx(): com.technocreatives.beckon.rx2.BeckonDeviceRx {
             }
         }
 
-        override fun read(characteristic: CharacteristicSuccess.Read): Single<Change> {
+        override fun read(characteristic: FoundCharacteristic.Read): Single<Change> {
             return rxSingle {
                 this@rx.read(characteristic)
             }.fix()
@@ -201,32 +186,32 @@ fun BeckonDevice.rx(): com.technocreatives.beckon.rx2.BeckonDeviceRx {
 
         override fun write(
             data: Data,
-            characteristic: CharacteristicSuccess.Write
+            characteristic: FoundCharacteristic.Write
         ): Single<Change> {
             return rxSingle {
                 this@rx.write(data, characteristic)
             }.fix()
         }
 
-        override fun subscribe(notify: CharacteristicSuccess.Notify): Completable {
+        override fun subscribe(notify: FoundCharacteristic.Notify): Completable {
             return rxCompletable {
                 this@rx.subscribe(notify)
             }
         }
 
-        override fun subscribe(list: List<CharacteristicSuccess.Notify>): Completable {
+        override fun subscribe(list: List<FoundCharacteristic.Notify>): Completable {
             return rxCompletable {
                 this@rx.subscribe(list)
             }
         }
 
-        override fun unsubscribe(notify: CharacteristicSuccess.Notify): Completable {
+        override fun unsubscribe(notify: FoundCharacteristic.Notify): Completable {
             return rxCompletable {
                 this@rx.unsubscribe(notify)
             }
         }
 
-        override fun unsubscribe(list: List<CharacteristicSuccess.Notify>): Completable {
+        override fun unsubscribe(list: List<FoundCharacteristic.Notify>): Completable {
             return rxCompletable {
                 this@rx.unsubscribe(list)
             }

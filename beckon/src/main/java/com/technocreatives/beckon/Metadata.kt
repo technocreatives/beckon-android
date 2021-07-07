@@ -25,7 +25,7 @@ data class Metadata(
         )
     }
 
-    fun findReadCharacteristic(characteristic: Characteristic): Either<ReadDataError, FoundCharacteristic.Read> {
+    inline fun <reified T : FoundCharacteristic> findCharacteristic(characteristic: Characteristic): Either<RequirementFailed, T> {
         return if (characteristic.service !in services) {
             ServiceNotFound(characteristic).left()
         } else {
@@ -34,39 +34,8 @@ data class Metadata(
             if (foundCharacteristics.isEmpty()) {
                 CharacteristicNotFound(characteristic).left()
             } else {
-                foundCharacteristics.filterIsInstance(FoundCharacteristic.Read::class.java)
-                    .firstOrNull().rightIfNotNull { NotSupportRead(characteristic) }
-            }
-        }
-    }
-
-    fun findWriteCharacteristic(characteristic: Characteristic): Either<WriteRequirementFailed, FoundCharacteristic.Write> {
-        return if (characteristic.service !in services) {
-            ServiceNotFound(characteristic).left()
-        } else {
-            val foundCharacteristics = characteristics
-                .filter { it.toCharacteristic() == characteristic }
-            if (foundCharacteristics.isEmpty()) {
-                CharacteristicNotFound(characteristic).left()
-            } else {
-                foundCharacteristics.filterIsInstance(FoundCharacteristic.Write::class.java)
-                    .firstOrNull().rightIfNotNull { NotSupportWrite(characteristic) }
-            }
-        }
-    }
-
-
-    fun findSubscribeCharacteristic(characteristic: Characteristic): Either<SubscribeRequirementFailed, FoundCharacteristic.Notify> {
-        return if (characteristic.service !in services) {
-            ServiceNotFound(characteristic).left()
-        } else {
-            val foundCharacteristics = characteristics
-                .filter { it.toCharacteristic() == characteristic }
-            if (foundCharacteristics.isEmpty()) {
-                CharacteristicNotFound(characteristic).left()
-            } else {
-                foundCharacteristics.filterIsInstance(FoundCharacteristic.Notify::class.java)
-                    .firstOrNull().rightIfNotNull { NotSupportSubscribe(characteristic) }
+                foundCharacteristics.filterIsInstance(T::class.java)
+                    .firstOrNull().rightIfNotNull { PropertyNotSupport(characteristic) }
             }
         }
     }

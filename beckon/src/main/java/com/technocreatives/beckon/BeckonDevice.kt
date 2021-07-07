@@ -29,7 +29,7 @@ interface BeckonDevice {
     suspend fun writeSplit(
         data: ByteArray,
         characteristic: FoundCharacteristic.Write
-    ): Either<WriteDataException, PduPackage>
+    ): Either<WriteDataException, SplitPackage>
 
     suspend fun subscribe(notify: FoundCharacteristic.Notify): Either<SubscribeDataException, Unit>
     suspend fun subscribe(list: List<FoundCharacteristic.Notify>): Either<Throwable, Unit>
@@ -38,5 +38,6 @@ interface BeckonDevice {
 
     suspend fun requestMtu(mtu: Mtu): Either<MtuRequestError, Mtu>
     fun overrideMtu(mtu: Mtu)
+    fun mtu(): Mtu
 
 }

@@ -395,13 +395,13 @@ internal class BeckonBleManager(
         }
     }
 
-   suspend fun writeSplit(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Either<WriteDataException, PduPackage> {
+   suspend fun writeSplit(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Either<WriteDataException, SplitPackage> {
        return suspendCoroutine { cont ->
            // This callback will be called each time the data were sent.
            val callback = DataSentCallback { device, data ->
                Timber.d("sendPdu DataSentCallback uuid: $uuid device: $device data: $data")
                runBlocking {
-                   cont.resume(PduPackage(uuid, getMaximumPacketSize(), data).right())
+                   cont.resume(SplitPackage(uuid, getMaximumPacketSize(), data).right())
                }
            }
 

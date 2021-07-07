@@ -125,7 +125,7 @@ data class Characteristic(val uuid: UUID, val service: UUID) {
     }
 }
 
-data class PduPackage(val uuid: UUID, val mtu: Int, val data: Data)
+data class SplitPackage(val uuid: UUID, val mtu: Int, val data: Data)
 data class Change(val uuid: UUID, val data: Data)
 typealias State = Map<UUID, Data>
 

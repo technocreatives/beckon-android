@@ -2,18 +2,7 @@ package com.technocreatives.beckon.rx2
 
 import android.content.Context
 import arrow.core.Either
-import com.technocreatives.beckon.BeckonClient
-import com.technocreatives.beckon.BeckonDeviceError
-import com.technocreatives.beckon.BluetoothState
-import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.CharacteristicSuccess
-import com.technocreatives.beckon.ConnectionError
-import com.technocreatives.beckon.Descriptor
-import com.technocreatives.beckon.MacAddress
-import com.technocreatives.beckon.Metadata
-import com.technocreatives.beckon.SavedMetadata
-import com.technocreatives.beckon.ScanResult
-import com.technocreatives.beckon.ScannerSetting
+import com.technocreatives.beckon.*
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -109,10 +98,10 @@ interface BeckonClientRx {
     /*===========================Work with devices==========================*/
     fun write(
         macAddress: MacAddress,
-        characteristic: CharacteristicSuccess.Write,
+        characteristic: FoundCharacteristic.Write,
         data: Data
     ): Single<Change>
 
-    fun read(macAddress: MacAddress, characteristic: CharacteristicSuccess.Read): Single<Change>
+    fun read(macAddress: MacAddress, characteristic: FoundCharacteristic.Read): Single<Change>
     // todo add subscribe function
 }

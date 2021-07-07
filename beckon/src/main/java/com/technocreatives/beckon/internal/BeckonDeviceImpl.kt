@@ -65,7 +65,7 @@ internal class BeckonDeviceImpl(
     override suspend fun writeSplit(
         data: ByteArray,
         characteristic: FoundCharacteristic.Write
-    ): Either<WriteDataException, PduPackage> {
+    ): Either<WriteDataException, SplitPackage> {
         return manager.writeSplit(data, characteristic.id, characteristic.gatt)
     }
 
@@ -75,6 +75,9 @@ internal class BeckonDeviceImpl(
     override fun overrideMtu(mtu: Mtu) {
         manager.doOverrideMtu(mtu.value)
     }
+
+    override fun mtu(): Mtu =
+        Mtu(manager.mtu())
 
     override suspend fun subscribe(notify: FoundCharacteristic.Notify): Either<SubscribeDataException, Unit> {
         return manager.subscribe(notify.id, notify.gatt)

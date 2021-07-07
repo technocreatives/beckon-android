@@ -19,27 +19,27 @@ fun <Change> BeckonDevice.changes(
 
 suspend fun BeckonDevice.read(char: Characteristic): Either<ReadDataError, Change> =
     either {
-        val foundCharacteristic = metadata().findReadCharacteristic(char).bind()
+        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Read>(char).bind()
         read(foundCharacteristic).bind()
     }
 
 suspend fun BeckonDevice.write(data: Data, char: Characteristic): Either<WriteDataError, Change> =
     either {
-        val foundCharacteristic = metadata().findWriteCharacteristic(char).bind()
+        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Write>(char).bind()
         write(data, foundCharacteristic).bind()
     }
 
 suspend fun BeckonDevice.subscribe(char: Characteristic): Either<SubscribeDataError, Unit> =
     either {
-        val foundCharacteristic = metadata().findSubscribeCharacteristic(char).bind()
+        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Notify>(char).bind()
         subscribe(foundCharacteristic).bind()
     }
 
 suspend fun BeckonDevice.writeSplit(
     data: ByteArray,
     char: Characteristic
-): Either<WriteDataError, PduPackage> =
+): Either<WriteDataError, SplitPackage> =
     either {
-        val foundCharacteristic = metadata().findWriteCharacteristic(char).bind()
+        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Write>(char).bind()
         writeSplit(data, foundCharacteristic).bind()
     }
