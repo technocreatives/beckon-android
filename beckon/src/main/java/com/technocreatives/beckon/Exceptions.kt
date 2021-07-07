@@ -3,27 +3,39 @@ package com.technocreatives.beckon
 import arrow.core.Either
 import java.util.UUID
 
-sealed interface WriteDataError
-data class WriteDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(), BeckonError, WriteDataError
-data class BleActionError(val macAddress: String, val uuid: UUID, val status: Int, val property: Property) : Throwable(), BeckonError, WriteDataError
+@Deprecated("Use BleActionError")
+data class WriteDataException(val macAddress: String, val uuid: UUID, val status: Int) :
+    Throwable(), BeckonError
 
-sealed interface ReadDataError
-data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(), BeckonError, ReadDataError
+@Deprecated("Use BleActionError")
+data class ReadDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(),
+    BeckonError
 
-sealed interface SubscribeDataError
-data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) : Throwable(), BeckonError, SubscribeDataError
+@Deprecated("Use BleActionError")
+data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) :
+    Throwable(), BeckonError
 
-sealed interface RequirementFailed : ReadDataError, WriteDataError, SubscribeDataError
+sealed interface BeckonActionError
+
+data class BleActionError(
+    val macAddress: String,
+    val uuid: UUID,
+    val status: Int,
+    val property: Property
+) : BeckonActionError
+
+data class MtuRequestError(val macAddress: String, val status: Int) : BeckonActionError, BeckonError
+
+sealed interface RequirementFailed : BeckonActionError
 data class CharacteristicNotFound(val characteristic: Characteristic) : RequirementFailed
 data class ServiceNotFound(val characteristic: Characteristic) : RequirementFailed
 data class PropertyNotSupport(val characteristic: Characteristic) : RequirementFailed
 
-data class MtuRequestError(val macAddress: String, val status: Int) : BeckonError
 
 // todo use BeckonException instead of Throwable
 typealias BeckonResult<T> = Either<Throwable, T>
 
-interface BeckonError {
+sealed interface BeckonError {
     fun toException(): BeckonException {
         return BeckonException(this)
     }
@@ -45,7 +57,8 @@ sealed class ConnectionError : BeckonError {
     data class ConnectedDeviceNotFound(val macAddress: MacAddress) : ConnectionError()
     data class DisconnectDeviceFailed(val macAddress: String, val status: Int) : ConnectionError()
 
-    data class GeneralError(val macAddress: MacAddress, val throwable: Throwable) : ConnectionError()
+    data class GeneralError(val macAddress: MacAddress, val throwable: Throwable) :
+        ConnectionError()
 }
 
 sealed class BeckonDeviceError : BeckonError {

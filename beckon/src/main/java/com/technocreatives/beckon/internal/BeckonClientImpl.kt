@@ -60,9 +60,9 @@ internal class BeckonClientImpl(
 //    private val bag = CompositeDisposable()
 
     override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
-        coroutineContext[Job]?.invokeOnCompletion {
+//        coroutineContext[Job]?.invokeOnCompletion {
 //            stopScan()
-        }
+//        }
         val originalScanStream = scanner.startScan(setting)
         return if (setting.useFilter) {
             val connected =

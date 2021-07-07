@@ -110,6 +110,10 @@ internal class BeckonBleManager(
             is BleAction.RequestMTU -> {
                 doRequestMtu(action.mtu.value).map { }
             }
+            is BleAction.Write -> {
+                //TODO fix
+                Unit.right()
+            }
         }
     }
 
@@ -231,12 +235,12 @@ internal class BeckonBleManager(
                             val delayTime = 1600L
                             // val delayTime = 0L
                             delay(delayTime)
-                            if (descriptor.actionsOnConnected.isEmpty()) {
+//                            if (descriptor.actionsOnConnected.isEmpty()) {
                                 subscribe(descriptor.subscribes, detail).bind()
                                 read(descriptor.reads, detail).bind()
-                            } else {
-                                applyActions(descriptor.actionsOnConnected, detail)
-                            }
+//                            } else {
+//                                applyActions(descriptor.actionsOnConnected, detail)
+//                            }
                         }.fold(
                             {
                                 Timber.w("Initialize failed: $detail")

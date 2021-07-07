@@ -57,13 +57,9 @@ data class Descriptor(
 sealed class BleAction {
     data class RequestMTU(val mtu: Mtu) : BleAction()
     data class Read(val characteristic: Characteristic) : BleAction()
+    data class Write(val data: Data, val characteristic: Characteristic) : BleAction()
     data class Subscribe(val characteristic: Characteristic) : BleAction()
 }
-
-data class NewDescriptor(
-    val requirements: List<Requirement> = emptyList(),
-    val ActionsOnConnected: List<BleAction> = emptyList()
-)
 
 data class ScanResult(
     internal val device: BluetoothDevice,

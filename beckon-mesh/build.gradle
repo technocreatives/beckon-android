@@ -85,6 +85,8 @@ dependencies {
     implementation("io.arrow-kt:arrow-core")
     implementation("io.arrow-kt:arrow-fx-coroutines")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+
     // spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"

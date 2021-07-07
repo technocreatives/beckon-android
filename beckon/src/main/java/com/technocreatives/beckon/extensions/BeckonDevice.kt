@@ -16,29 +16,44 @@ fun <Change> BeckonDevice.changes(
     changes().filter { it.uuid == characteristicUUID }
         .map { mapper(it) }
 
-suspend fun BeckonDevice.read(char: Characteristic): Either<ReadDataError, Change> =
+suspend fun BeckonDevice.read(char: Characteristic): Either<BeckonActionError, Change> =
     either {
-        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Read>(char).bind()
-        read(foundCharacteristic).bind()
+        val foundCharacteristic =
+            metadata().findCharacteristic<FoundCharacteristic.Read>(char).bind()
+        read(foundCharacteristic)
+            .mapLeft { BleActionError(it.macAddress, it.uuid, it.status, Property.READ) }
+            .bind()
     }
 
-suspend fun BeckonDevice.write(data: Data, char: Characteristic): Either<WriteDataError, Change> =
+suspend fun BeckonDevice.write(
+    data: Data,
+    char: Characteristic
+): Either<BeckonActionError, Change> =
     either {
-        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Write>(char).bind()
-        write(data, foundCharacteristic).bind()
+        val foundCharacteristic =
+            metadata().findCharacteristic<FoundCharacteristic.Write>(char).bind()
+        write(data, foundCharacteristic)
+            .mapLeft { BleActionError(it.macAddress, it.uuid, it.status, Property.WRITE) }
+            .bind()
     }
 
-suspend fun BeckonDevice.subscribe(char: Characteristic): Either<SubscribeDataError, Unit> =
+suspend fun BeckonDevice.subscribe(char: Characteristic): Either<BeckonActionError, Unit> =
     either {
-        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Notify>(char).bind()
-        subscribe(foundCharacteristic).bind()
+        val foundCharacteristic =
+            metadata().findCharacteristic<FoundCharacteristic.Notify>(char).bind()
+        subscribe(foundCharacteristic)
+            .mapLeft { BleActionError(it.macAddress, it.uuid, it.status, Property.NOTIFY) }
+            .bind()
     }
 
 suspend fun BeckonDevice.writeSplit(
     data: ByteArray,
     char: Characteristic
-): Either<WriteDataError, SplitPackage> =
+): Either<BeckonActionError, SplitPackage> =
     either {
-        val foundCharacteristic = metadata().findCharacteristic<FoundCharacteristic.Write>(char).bind()
-        writeSplit(data, foundCharacteristic).bind()
+        val foundCharacteristic =
+            metadata().findCharacteristic<FoundCharacteristic.Write>(char).bind()
+        writeSplit(data, foundCharacteristic)
+            .mapLeft { BleActionError(it.macAddress, it.uuid, it.status, Property.WRITE) }
+            .bind()
     }
