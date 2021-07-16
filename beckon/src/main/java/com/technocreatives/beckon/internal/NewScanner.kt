@@ -5,87 +5,88 @@ import arrow.core.Either
 import arrow.core.computations.either
 import arrow.core.left
 import arrow.core.right
-import arrow.fx.coroutines.*
+import arrow.fx.coroutines.Resource
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
 import no.nordicsemi.android.support.v18.scanner.ScanFilter
 import timber.log.Timber
 import java.util.*
-import no.nordicsemi.android.support.v18.scanner.ScanResult as BleScanResult
 
-interface Scanner {
-    suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>>
+interface ExScanner {
+    suspend fun startScan(setting: ScannerSetting): Either<ScanError, Unit>
     suspend fun stopScan()
+    suspend fun results(): Flow<ScanResult>
+
+    companion object {
+        fun instance(): ExScanner = TODO()
+    }
 }
 
-class DatabaseConnection {
-    suspend fun open(): Unit = println("Database connection opened")
-    suspend fun close(): Unit = println("Database connection closed")
-    suspend fun query(id: String): String =
-        id.uppercase(Locale.CANADA)
+class ExScannerImpl {
+
+    suspend fun scan(setting: ScannerSetting): Either<ScanError, Flow<ScanResult>> = either {
+        val scanner = ExScanner.instance()
+        scanner.startScan(setting).bind()
+        val resource = Resource({ scanner }, ExScanner::stopScan)
+        resource.use {
+            it.results()
+        }
+    }
 }
 
-val setting: ScannerSetting = TODO()
-val conn: Resource<ExScanner> =
-    Resource(
-        { ExScanner.instance().apply { startScan(setting) } },
-        ExScanner::stopScan
-    )
+internal class NewScannerImpl : ExScanner {
 
-
-
-internal class ScannerImpl : Scanner {
     private val scanner by lazy { BluetoothLeScannerCompat.getScanner() }
 
     private var callback: ScanCallback? = null
-    private var scanSubject: MutableSharedFlow<Either<ScanError, ScanResult>>? = null
-    override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
-        stopScan()
+    private val scanSubject by lazy { MutableSharedFlow<ScanResult>() }
+
+    override suspend fun startScan(setting: ScannerSetting): Either<ScanError, Unit> {
         Timber.d("Scanner start scanning with setting $setting")
-        scanSubject = MutableSharedFlow()
+
+        val result = CompletableDeferred<Either<ScanError, Unit>>()
+
         callback = object : ScanCallback() {
             override fun onScanFailed(errorCode: Int) {
                 Timber.w("onScanFailed $errorCode")
-                // scanSubject?.onNext(ScanError.ScanFailed(errorCode).left())
-                runBlocking {
-                    scanSubject?.emit(ScanError.ScanFailed(errorCode).left())
-                }
+                result.complete(ScanError.ScanFailed(errorCode).left())
             }
 
-            override fun onScanResult(callbackType: Int, result: BleScanResult) {
+            override fun onScanResult(
+                callbackType: Int,
+                result: no.nordicsemi.android.support.v18.scanner.ScanResult
+            ) {
                 Timber.d("onScanResult $callbackType $result")
                 runBlocking {
-                    scanSubject?.emit(
+                    scanSubject.emit(
                         ScanResult(
                             result.device,
                             result.rssi,
                             result.scanRecord
-                        ).right()
+                        )
                     )
                 }
             }
 
-            override fun onBatchScanResults(results: MutableList<BleScanResult>) {
+            override fun onBatchScanResults(results: MutableList<no.nordicsemi.android.support.v18.scanner.ScanResult>) {
                 Timber.d("onBatchScanResults $results")
                 results.forEach { result ->
                     runBlocking {
-                        scanSubject?.let {
-                            it.emit(
+                            scanSubject.emit(
                                 ScanResult(
                                     result.device,
                                     result.rssi,
                                     result.scanRecord
-                                ).right()
+                                )
                             )
-                        }
                     }
                 }
             }
@@ -93,29 +94,25 @@ internal class ScannerImpl : Scanner {
 
         val scanFilters = setting.filters.map { it.toScanFilter() }
         scanner.startScan(scanFilters, setting.settings, callback!!)
-
-        return scanSubject!!.asSharedFlow()
+        coroutineScope {
+            launch {
+                delay(100)
+                result.complete(Unit.right())
+            }
+        }
+        return result.await()
     }
 
     override suspend fun stopScan() {
-        scanSubject?.let {
-            scanSubject = null
-        }
         callback?.let {
             Timber.d("Scanner stop scanning")
             scanner.stopScan(it)
             callback = null
         }
     }
+
+    override suspend fun results(): Flow<ScanResult> {
+        TODO("Not yet implemented")
+    }
 }
 
-fun DeviceFilter.toScanFilter(): ScanFilter {
-    val serviceUuid = serviceUuid?.toUuid()?.let { ParcelUuid(it) }
-    return ScanFilter.Builder()
-        .setDeviceName(name)
-        .setDeviceAddress(address)
-        .setServiceUuid(serviceUuid)
-        .build()
-}
-
-fun String.toUuid(): UUID = UUID.fromString(this)

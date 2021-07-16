@@ -7,35 +7,34 @@ import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
 import com.technocreatives.beckon.util.scanZ
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 
 /**
  * startScan
- * Stop scan when error happen
+ * Stop scan when error happen or when job is completed
  */
 suspend fun BeckonClient.scan(
     setting: ScannerSetting,
     builder: suspend (accumulator: List<ScanResult>, value: ScanResult) -> List<ScanResult>
 ): Flow<Either<ScanError, List<ScanResult>>> {
-    return Resource({ startScan(setting) }, { f, e -> this.stopScan() })
-        .use {
-            it.scanZ(emptyList(), builder)
-                .onEach {
-                    if (it.isLeft()) {
-                        stopScan()
-                    }
-                }
+    coroutineContext[Job]?.invokeOnCompletion {
+        runBlocking {
+            stopScan()
         }
-//    return startScan(setting)
-//        .scanZ(emptyList(), builder)
-//        .onEach {
-//            if (it.isLeft()) {
-//                stopScan()
-//            }
-//        }
+    }
+    return startScan(setting)
+        .scanZ(emptyList(), builder)
+        .onEach {
+            if (it.isLeft()) {
+                stopScan()
+            }
+        }
 }
 
 suspend fun BeckonClient.scan(setting: ScannerSetting): Flow<Either<ScanError, List<ScanResult>>> {
@@ -43,9 +42,8 @@ suspend fun BeckonClient.scan(setting: ScannerSetting): Flow<Either<ScanError, L
 }
 
 fun buildScanResult(list: List<ScanResult>, result: ScanResult): List<ScanResult> {
-    return list.filter { it.macAddress == result.macAddress } + result
+    return list.filter { it.macAddress != result.macAddress } + result
 }
-
 suspend fun CoroutineContext.scan(
     client: BeckonClient,
     setting: ScannerSetting,

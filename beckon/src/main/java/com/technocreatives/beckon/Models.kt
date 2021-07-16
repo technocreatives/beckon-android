@@ -11,7 +11,9 @@ import java.util.UUID
 typealias MacAddress = String
 
 @JvmInline
-value class Mtu(@IntRange(from = 23, to = 517) val value: Int)
+value class Mtu(@IntRange(from = 23, to = 517) val value: Int) {
+    fun maximumPacketSize(): Int = value - 3
+}
 
 data class DeviceFilter(
     val name: String? = null,

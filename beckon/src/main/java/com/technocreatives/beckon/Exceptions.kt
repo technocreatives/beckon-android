@@ -16,7 +16,7 @@ data class ReadDataException(val macAddress: String, val uuid: UUID, val status:
 data class SubscribeDataException(val macAddress: String, val uuid: UUID, val status: Int) :
     Throwable(), BeckonError
 
-sealed interface BeckonActionError
+sealed interface BeckonActionError: BeckonError
 
 data class BleActionError(
     val macAddress: String,
