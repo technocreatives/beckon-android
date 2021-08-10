@@ -44,6 +44,7 @@ suspend fun BeckonClient.scan(setting: ScannerSetting): Flow<Either<ScanError, L
 fun buildScanResult(list: List<ScanResult>, result: ScanResult): List<ScanResult> {
     return list.filter { it.macAddress != result.macAddress } + result
 }
+
 suspend fun CoroutineContext.scan(
     client: BeckonClient,
     setting: ScannerSetting,

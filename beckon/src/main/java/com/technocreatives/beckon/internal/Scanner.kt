@@ -26,22 +26,6 @@ interface Scanner {
     suspend fun stopScan()
 }
 
-class DatabaseConnection {
-    suspend fun open(): Unit = println("Database connection opened")
-    suspend fun close(): Unit = println("Database connection closed")
-    suspend fun query(id: String): String =
-        id.uppercase(Locale.CANADA)
-}
-
-val setting: ScannerSetting = TODO()
-val conn: Resource<ExScanner> =
-    Resource(
-        { ExScanner.instance().apply { startScan(setting) } },
-        ExScanner::stopScan
-    )
-
-
-
 internal class ScannerImpl : Scanner {
     private val scanner by lazy { BluetoothLeScannerCompat.getScanner() }
 

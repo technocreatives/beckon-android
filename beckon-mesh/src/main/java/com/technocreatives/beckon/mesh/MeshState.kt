@@ -1,26 +1,13 @@
 package com.technocreatives.beckon.mesh
 
-import com.technocreatives.beckon.Characteristic
+import arrow.core.Either
+import arrow.core.right
+import com.technocreatives.beckon.BeckonClient
 import no.nordicsemi.android.mesh.MeshNetwork
+import java.lang.Exception
 
-sealed class MeshState {
-    object Unloaded : MeshState()
-    data class Loaded(val mesh: MeshNetwork) : MeshState()
-}
+sealed interface MeshError
 
-enum class ConnectionPhase {
-    Proxy,
-    Provisioning;
+data class IllegalMeshStateError(val state: MState) : MeshError, Exception()
 
-    fun dataOutCharacteristic(): Characteristic =
-        when (this) {
-            Provisioning -> MeshConstants.provisioningDataOutCharacteristic
-            Proxy -> MeshConstants.proxyDataOutCharacteristic
-        }
-
-    fun dataInCharacteristic(): Characteristic =
-        when(this) {
-            Provisioning -> MeshConstants.provisioningDataInCharacteristic
-            Proxy -> MeshConstants.proxyDataInCharacteristic
-        }
-}
+data class MeshLoadFailedError(val error: String) : MeshError
