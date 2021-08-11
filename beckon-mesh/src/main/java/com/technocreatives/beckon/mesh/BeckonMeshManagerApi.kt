@@ -22,10 +22,6 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.onEach
 import no.nordicsemi.android.mesh.MeshManagerApi
 import no.nordicsemi.android.mesh.MeshNetwork
-import no.nordicsemi.android.mesh.NetworkKey
-import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
-import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
-import no.nordicsemi.android.mesh.transport.*
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
@@ -81,6 +77,7 @@ class BeckonMeshManagerApi(
                 Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
                 currentBeckonDevice()?.let {
                     runBlocking {
+                        // todo sending success or error signal
                         it.sendPdu(pdu, MeshConstants.proxyDataInCharacteristic).fold(
                             { Timber.w("SendPdu error: $it") },
                             { Timber.d("sendPdu success") }
@@ -91,7 +88,7 @@ class BeckonMeshManagerApi(
         )
     }
 
-    // todo handle
+    // todo handle in a better way
     internal var beckonDevice: BeckonDevice? = null
     private fun currentBeckonDevice(): BeckonDevice? = beckonDevice
 
@@ -141,53 +138,17 @@ class BeckonMeshManagerApi(
             messageCallbacks.status()
                 .filterIsInstance<MessageStatus.MeshMessageReceived>()
                 .collect {
-                    val meshNetwork = meshNetwork
-                    val node = meshNetwork?.getNode(it.src)!!
-                    if (it.meshMessage.opCode == ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()) {
-                        Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
-                        GlobalScope.launch {
-                            delay(500)
 
-                            val configDefaultTtlGet = ConfigDefaultTtlGet()
-                            createMeshPdu(
-                                2, //TODO node.getUnicastAddress(),
-                                configDefaultTtlGet
-                            )
-                        }
-                    } else if (it.meshMessage.opCode == ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS) {
-                        val status = it.meshMessage as ConfigDefaultTtlStatus
-                        Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
-                        GlobalScope.launch {
-                            delay(1500)
-                            val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
-                            createMeshPdu(
-                                2, //TODO node.getUnicastAddress(),
-                                networkTransmitSet
-                            )
-                        }
-                    } else if (it.meshMessage.opCode == ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS) {
-                        Timber.d("onMessageReceived CONFIG_NETWORK_TRANSMIT_STATUS")
-                        GlobalScope.launch {
-                            delay(1500)
-                            val appKey = meshNetwork.getAppKey(0)!!
-                            val index: Int = node.addedNetKeys!!.get(0)!!.index
-                            val networkKey: NetworkKey = meshNetwork.netKeys[index]
-                            val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
-                            createMeshPdu(
-                                node.unicastAddress,
-                                configAppKeyAdd
-                            )
-                        }
-                    } else if (it.meshMessage.opCode == ConfigMessageOpCodes.CONFIG_APPKEY_STATUS) {
-                        val status = it.meshMessage as ConfigAppKeyStatus
-                        Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: $status")
-                        val currentState = state.get()
-                        if(currentState is MState.Provisioning) {
-                            currentState.phase.completeExchangeKeys(node)
-                        }
-                    } else if (it.meshMessage.opCode == ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS) {
-
+                   val currentState = state.get()
+                   if(currentState is MState.Provisioning) {
+                       currentState.phase.handleMessageReceived(it)
+                   }
+                    when(currentState) {
+                        // TODO we need to check src is in provisioning phase
+                        is MState.Provisioning -> currentState.phase.handleMessageReceived(it)
+                        else -> Timber.d("Another phase $currentState")
                     }
+
                 }
         }
 
@@ -227,6 +188,7 @@ class BeckonMeshManagerApi(
 
     suspend fun startProvisioning(): Either<MeshLoadFailedError, ProvisioningPhase> {
         // todo disconnect mesh if connected state
+        // todo check the state of the mesh
         val provisioningPhase = ProvisioningPhase(this)
         setProvisioningStatusCallbacks(provisioningPhase.provisioningStatusCallbacks)
         state.update { MState.Provisioning(provisioningPhase) }
@@ -245,28 +207,6 @@ class BeckonMeshManagerApi(
     suspend fun connectForProxy(scanResult: ScanResult): Either<BeckonError, BeckonDevice> =
         meshConnect(scanResult, ConnectionPhase.Proxy)
 
-    private fun sendProvisioningPdu(
-        beckonDevice: BeckonDevice,
-        meshNode: UnprovisionedMeshNode?,
-        pdu: ByteArray?
-    ) {
-
-        Timber.d("sendPdu ${pdu?.size} ")
-
-        launch {
-            beckonDevice.writeSplit(pdu!!, MeshConstants.provisioningDataInCharacteristic).fold(
-                { Timber.w("SendPdu error: $it") },
-                {
-                    Timber.d("onDataSend: ${it.data.value?.size}")
-                    handleWriteCallbacks(
-                        it.mtu,
-                        it.data.value!!
-                    )
-                }
-            )
-        }
-
-    }
 
     suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<ScanResult>>> {
         return beckonClient.scan(scannerSetting)

@@ -8,45 +8,53 @@ import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.ScanResult
+import com.technocreatives.beckon.mesh.callbacks.MessageStatus
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.*
+import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
-import no.nordicsemi.android.mesh.transport.ConfigCompositionDataGet
-import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
+import no.nordicsemi.android.mesh.transport.*
 import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import timber.log.Timber
 import java.util.*
 
-
+// todo provide appkey -- and networkkey
 class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
 
     private val inviteEmitter =
-        CompletableDeferred<Either<ProvisioningFailed, UnprovisionedMeshNode>>()
+        CompletableDeferred<Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode>>()
 
     private val provisioningEmitter =
-        CompletableDeferred<Either<ProvisioningFailed, ProvisionedMeshNode>>()
+        CompletableDeferred<Either<ProvisioningError, ProvisionedMeshNode>>()
 
     private val exchangeKeysEmitter =
         CompletableDeferred<Either<Unit, ProvisionedMeshNode>>()
 
-    suspend fun completeExchangeKeys(node: ProvisionedMeshNode) {
-        exchangeKeysEmitter.complete(node.right())
-    }
+    private var unicast: Int? = null
+    fun getUnicast(): Int? = unicast
 
+    // todo typesafe scan result
     suspend fun completeProvisioning(scanResult: ScanResult): Either<Any, BeckonDevice> = either {
         val beckonDevice = connect(scanResult).bind()
         val unprovisionedMeshNode = identify(scanResult).bind()
-        val provisionedMeshNode = provisionDevice(unprovisionedMeshNode).bind()
+        val provisionedMeshNode = startProvisioning(unprovisionedMeshNode).bind()
         val proxyDevice = scanAndConnect(beckonDevice, provisionedMeshNode).bind()
         exchangeKeys(beckonDevice, provisionedMeshNode).bind()
         proxyDevice
     }
+
+    // disconnect device
+    // change state of MeshManagerApi
+    suspend fun cancel(): Unit = TODO()
 
     suspend fun connect(scanResult: ScanResult): Either<BeckonError, BeckonDevice> {
         return meshApi.connectForProvisioning(scanResult)
@@ -55,7 +63,7 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
             }
     }
 
-    suspend fun identify(scanResult: ScanResult): Either<ProvisioningFailed, UnprovisionedMeshNode> {
+    suspend fun identify(scanResult: ScanResult): Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode> {
 
         val scanRecord: ScanRecord = scanResult.scanRecord!!
 
@@ -80,24 +88,27 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
         return inviteEmitter.await()
     }
 
-    suspend fun provisionDevice(unprovisionedMeshNode: UnprovisionedMeshNode): Either<ProvisioningFailed, ProvisionedMeshNode> {
+    suspend fun startProvisioning(unprovisionedMeshNode: UnprovisionedMeshNode): Either<ProvisioningError, ProvisionedMeshNode> {
         Timber.d("PROVISION ME ${unprovisionedMeshNode.deviceUuid}")
 
-        meshApi.meshNetwork?.let {
+        meshApi.meshNetwork!!.let {
             try {
                 val elementCount: Int =
                     unprovisionedMeshNode.provisioningCapabilities.numberOfElements.toInt()
                 val provisioner: Provisioner = it.selectedProvisioner
-                val unicast: Int = it.nextAvailableUnicastAddress(elementCount, provisioner)
-                it.assignUnicastAddress(unicast)
+                val availableUnicast: Int = it.nextAvailableUnicastAddress(elementCount, provisioner)
+                if (availableUnicast == -1) {
+                    provisioningEmitter.complete(ProvisioningError.NoAvailableUnicastAddress.left())
+                } else {
+                    unicast = availableUnicast
+                    it.assignUnicastAddress(availableUnicast)
+                }
             } catch (ex: IllegalArgumentException) {
-                Timber.e(ex, "provisionDevice")
+                provisioningEmitter.complete(ProvisioningError.NoAllocatedUnicastRange.left())
             }
         }
 
         meshApi.startProvisioning(unprovisionedMeshNode)
-
-
         return provisioningEmitter.await()
     }
 
@@ -149,8 +160,6 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
         scanRecord: ScanRecord,
         meshNode: ProvisionedMeshNode
     ): Boolean {
-
-        Timber.d("findProxyDeviceAndStopScan $scanRecord")
         val serviceData = getServiceData(scanRecord, MeshManagerApi.MESH_PROXY_UUID)
         Timber.d("findProxyDeviceAndStopScan, serviceData: ${serviceData?.size} ${serviceData?.toList()}")
         if (serviceData != null) {
@@ -200,7 +209,7 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
             state: ProvisioningState.States?,
             data: ByteArray?
         ) {
-            val failed = ProvisioningFailed(meshNode, state, data).left()
+            val failed = ProvisioningError.ProvisioningFailed(meshNode, state, data).left()
             if (accumulatedStates.isInviting()) {
                 inviteEmitter.complete(failed)
             } else {
@@ -225,10 +234,71 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
         return this.size <= 1
     }
 
+    fun handleMessageReceived(messsage: MessageStatus.MeshMessageReceived) {
+        val meshNetwork = meshApi.meshNetwork
+        val node = meshNetwork?.getNode(messsage.src)!!
+        when (messsage.meshMessage.opCode) {
+            ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt() -> {
+                Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
+                GlobalScope.launch {
+                    // TODO delay
+                    delay(500)
+
+                    val configDefaultTtlGet = ConfigDefaultTtlGet()
+                    meshApi.createMeshPdu(
+                        2, //TODO node.getUnicastAddress(),
+                        configDefaultTtlGet
+                    )
+                }
+            }
+            ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
+                val status = messsage.meshMessage as ConfigDefaultTtlStatus
+                Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
+                GlobalScope.launch {
+                    // TODO delay
+                    delay(1500)
+                    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+                    meshApi.createMeshPdu(
+                        2, // TODO node.getUnicastAddress(),
+                        networkTransmitSet
+                    )
+                }
+            }
+            ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS -> {
+                Timber.d("onMessageReceived CONFIG_NETWORK_TRANSMIT_STATUS")
+                GlobalScope.launch {
+                    // TODO delay
+                    delay(1500)
+                    val appKey = meshNetwork.getAppKey(0)!!
+                    val index: Int = node.addedNetKeys!!.get(0)!!.index
+                    val networkKey: NetworkKey = meshNetwork.netKeys[index]
+                    val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
+                    meshApi.createMeshPdu(
+                        node.unicastAddress,
+                        configAppKeyAdd
+                    )
+                }
+            }
+            ConfigMessageOpCodes.CONFIG_APPKEY_STATUS -> {
+                val status = messsage.meshMessage as ConfigAppKeyStatus
+                Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: $status")
+                exchangeKeysEmitter.complete(node.right())
+            }
+            else -> {
+                Timber.d("onMessageReceived other message when provisioning $messsage")
+            }
+        }
+    }
 }
 
-data class ProvisioningFailed(
-    val node: UnprovisionedMeshNode?,
-    val state: ProvisioningState.States?,
-    val data: ByteArray?
-) : MeshError
+sealed class ProvisioningError : MeshError {
+
+    data class ProvisioningFailed(
+        val node: UnprovisionedMeshNode?,
+        val state: ProvisioningState.States?,
+        val data: ByteArray?
+    ) : ProvisioningError()
+
+    object NoAvailableUnicastAddress : ProvisioningError()
+    object NoAllocatedUnicastRange : ProvisioningError()
+}

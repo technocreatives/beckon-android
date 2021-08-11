@@ -1,24 +1,19 @@
 package com.technocreatives.beckon.internal
 
-import android.os.ParcelUuid
 import arrow.core.Either
 import arrow.core.computations.either
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.Resource
-import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
-import no.nordicsemi.android.support.v18.scanner.ScanFilter
 import timber.log.Timber
-import java.util.*
 
 interface ExScanner {
     suspend fun startScan(setting: ScannerSetting): Either<ScanError, Unit>
