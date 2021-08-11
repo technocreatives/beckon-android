@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh
 
+import android.annotation.SuppressLint
 import android.os.ParcelUuid
 import arrow.core.Either
 import arrow.core.computations.either
@@ -234,6 +235,7 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
         return this.size <= 1
     }
 
+    @SuppressLint("RestrictedApi")
     fun handleMessageReceived(messsage: MessageStatus.MeshMessageReceived) {
         val meshNetwork = meshApi.meshNetwork
         val node = meshNetwork?.getNode(messsage.src)!!
