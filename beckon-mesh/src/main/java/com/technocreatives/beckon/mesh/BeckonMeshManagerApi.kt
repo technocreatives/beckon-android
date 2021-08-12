@@ -64,7 +64,7 @@ class BeckonMeshManagerApi(
                 // sendProvisioningPdu
                 Timber.d("sendPdu - sendProvisioningPdu - ${pdu.size}")
                 currentBeckonDevice()?.let {
-                    runBlocking {
+                    launch {
                         it.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic).fold(
                             { Timber.w("SendPdu error: $it") },
                             { Timber.d("sendPdu success") }
@@ -76,7 +76,7 @@ class BeckonMeshManagerApi(
                 // onMeshPduCreated
                 Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
                 currentBeckonDevice()?.let {
-                    runBlocking {
+                    launch {
                         // todo sending success or error signal
                         it.sendPdu(pdu, MeshConstants.proxyDataInCharacteristic).fold(
                             { Timber.w("SendPdu error: $it") },
@@ -189,7 +189,9 @@ class BeckonMeshManagerApi(
     suspend fun startProvisioning(): Either<MeshLoadFailedError, ProvisioningPhase> {
         // todo disconnect mesh if connected state
         // todo check the state of the mesh
-        val provisioningPhase = ProvisioningPhase(this)
+        // todo verify appkey
+        val appKey = meshNetwork!!.getAppKey(0)!!
+        val provisioningPhase = ProvisioningPhase(this, appKey)
         setProvisioningStatusCallbacks(provisioningPhase.provisioningStatusCallbacks)
         state.update { MState.Provisioning(provisioningPhase) }
         return provisioningPhase.right()
@@ -245,8 +247,10 @@ class BeckonMeshManagerApi(
             val beckonDevice = beckonClient.connect(scanResult, descriptor).bind()
             val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
             beckonDevice.subscribe(method.dataOutCharacteristic()).bind()
-            launch { // todo is this the right way?
-                beckonDevice.handleNotifications(method.dataOutCharacteristic())
+            coroutineScope {
+                launch { // todo is this the right way?
+                    beckonDevice.handleNotifications(method.dataOutCharacteristic())
+                }
             }
             beckonDevice
         }

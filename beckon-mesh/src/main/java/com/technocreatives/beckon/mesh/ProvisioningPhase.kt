@@ -28,8 +28,10 @@ import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import timber.log.Timber
 import java.util.*
 
-// todo provide appkey -- and networkkey
-class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
+class ProvisioningPhase(
+    private val meshApi: BeckonMeshManagerApi,
+    private val appKey: ApplicationKey
+) {
 
     private val inviteEmitter =
         CompletableDeferred<Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode>>()
@@ -40,8 +42,7 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
     private val exchangeKeysEmitter =
         CompletableDeferred<Either<Unit, ProvisionedMeshNode>>()
 
-    private var unicast: Int? = null
-    fun getUnicast(): Int? = unicast
+    private var unicast = -1
 
     // todo typesafe scan result
     suspend fun completeProvisioning(scanResult: ScanResult): Either<Any, BeckonDevice> = either {
@@ -53,7 +54,7 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
         proxyDevice
     }
 
-    // disconnect device
+    // disconnect device if needed
     // change state of MeshManagerApi
     suspend fun cancel(): Unit = TODO()
 
@@ -97,7 +98,8 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
                 val elementCount: Int =
                     unprovisionedMeshNode.provisioningCapabilities.numberOfElements.toInt()
                 val provisioner: Provisioner = it.selectedProvisioner
-                val availableUnicast: Int = it.nextAvailableUnicastAddress(elementCount, provisioner)
+                val availableUnicast: Int =
+                    it.nextAvailableUnicastAddress(elementCount, provisioner)
                 if (availableUnicast == -1) {
                     provisioningEmitter.complete(ProvisioningError.NoAvailableUnicastAddress.left())
                 } else {
@@ -164,13 +166,14 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
         val serviceData = getServiceData(scanRecord, MeshManagerApi.MESH_PROXY_UUID)
         Timber.d("findProxyDeviceAndStopScan, serviceData: ${serviceData?.size} ${serviceData?.toList()}")
         if (serviceData != null) {
-            val b = meshApi.isAdvertisedWithNodeIdentity(serviceData)
-            Timber.d("isAdvertisedWithNodeIdentity: $b")
-            if (b) {
+            val isAdvertisedWithNodeIdentity = meshApi.isAdvertisedWithNodeIdentity(serviceData)
+            Timber.d("isAdvertisedWithNodeIdentity: $isAdvertisedWithNodeIdentity")
+            if (isAdvertisedWithNodeIdentity) {
                 val node: ProvisionedMeshNode = meshNode
-                val c = meshApi.nodeIdentityMatches(node, serviceData)
-                Timber.d("nodeIdentityMatches: $b")
-                if (c) {
+                val nodeIdentityMatches = meshApi.nodeIdentityMatches(node, serviceData)
+                Timber.d("nodeIdentityMatches: $isAdvertisedWithNodeIdentity")
+                if (nodeIdentityMatches) {
+                    // todo better way to stop scan
                     meshApi.stopScan()
                     return true
                 }
@@ -216,7 +219,6 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
             } else {
                 provisioningEmitter.complete(failed)
             }
-
         }
 
         override fun onProvisioningCompleted(
@@ -236,10 +238,14 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
     }
 
     @SuppressLint("RestrictedApi")
-    fun handleMessageReceived(messsage: MessageStatus.MeshMessageReceived) {
-        val meshNetwork = meshApi.meshNetwork
-        val node = meshNetwork?.getNode(messsage.src)!!
-        when (messsage.meshMessage.opCode) {
+    fun handleMessageReceived(message: MessageStatus.MeshMessageReceived) {
+        if (message.src != unicast) {
+            Timber.w("the received message src is not our current provisioning device")
+            return
+        }
+        val meshNetwork = meshApi.meshNetwork!!
+        val node = meshNetwork.getNode(message.src)!!
+        when (message.meshMessage.opCode) {
             ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt() -> {
                 Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
                 GlobalScope.launch {
@@ -248,20 +254,20 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
 
                     val configDefaultTtlGet = ConfigDefaultTtlGet()
                     meshApi.createMeshPdu(
-                        2, //TODO node.getUnicastAddress(),
+                        node.unicastAddress,
                         configDefaultTtlGet
                     )
                 }
             }
             ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
-                val status = messsage.meshMessage as ConfigDefaultTtlStatus
+                val status = message.meshMessage as ConfigDefaultTtlStatus
                 Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
                 GlobalScope.launch {
                     // TODO delay
                     delay(1500)
                     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
                     meshApi.createMeshPdu(
-                        2, // TODO node.getUnicastAddress(),
+                        node.unicastAddress,
                         networkTransmitSet
                     )
                 }
@@ -271,7 +277,6 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
                 GlobalScope.launch {
                     // TODO delay
                     delay(1500)
-                    val appKey = meshNetwork.getAppKey(0)!!
                     val index: Int = node.addedNetKeys!!.get(0)!!.index
                     val networkKey: NetworkKey = meshNetwork.netKeys[index]
                     val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
@@ -282,12 +287,13 @@ class ProvisioningPhase(private val meshApi: BeckonMeshManagerApi) {
                 }
             }
             ConfigMessageOpCodes.CONFIG_APPKEY_STATUS -> {
-                val status = messsage.meshMessage as ConfigAppKeyStatus
-                Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: $status")
+                val status = message.meshMessage as ConfigAppKeyStatus
+                Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: ${status.isSuccessful}")
                 exchangeKeysEmitter.complete(node.right())
             }
             else -> {
-                Timber.d("onMessageReceived other message when provisioning $messsage")
+                exchangeKeysEmitter.complete(Unit.left())
+                Timber.d("onMessageReceived other message when provisioning $message")
             }
         }
     }
