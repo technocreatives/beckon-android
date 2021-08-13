@@ -41,52 +41,52 @@ class BeckonMeshManagerApi(
     private fun queryMtu(): Mtu =
         currentBeckonDevice()?.mtu() ?: Mtu(69)
 
-    private val networkCallbacks by lazy {
-        MeshNetworkCallbacks({ queryMtu() },
-            { mn ->
-                if (mn != null)
-                    runBlocking {
-                        state.update {
-                            MState.Loaded(mn)
-                        }
-                    }
-                networkLoadingEmitter.complete(Unit.right())
-            },
-            { error ->
-                runBlocking {
-                    state.update {
-                        MState.LoadFailed(error)
-                    }
-                }
-                networkLoadingEmitter.complete(MeshLoadFailedError(error).left())
-            },
-            { unprovisionedMeshNode, pdu ->
-                // sendProvisioningPdu
-                Timber.d("sendPdu - sendProvisioningPdu - ${pdu.size}")
-                currentBeckonDevice()?.let {
-                    launch {
-                        it.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic).fold(
-                            { Timber.w("SendPdu error: $it") },
-                            { Timber.d("sendPdu success") }
-                        )
-                    }
-                }
-            },
-            { pdu ->
-                // onMeshPduCreated
-                Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
-                currentBeckonDevice()?.let {
-                    launch {
-                        // todo sending success or error signal
-                        it.sendPdu(pdu, MeshConstants.proxyDataInCharacteristic).fold(
-                            { Timber.w("SendPdu error: $it") },
-                            { Timber.d("sendPdu success") }
-                        )
-                    }
-                }
-            }
-        )
-    }
+//    private val networkCallbacks by lazy {
+//        MeshNetworkCallbacks({ queryMtu() },
+//            { mn ->
+//                if (mn != null) {
+//
+//                    runBlocking {
+//                        state.update {
+//                            val loaded = MState.Loaded(mn)
+//                            networkLoadingEmitter.complete(Unit.right())
+//                            loaded
+//                        }
+//                    }
+//                } else {
+//                    networkLoadingEmitter.complete(MeshLoadFailedError("MeshNetwork is empty").left())
+//                }
+//            },
+//            { error ->
+//                networkLoadingEmitter.complete(MeshLoadFailedError(error).left())
+//            },
+//            { unprovisionedMeshNode, pdu ->
+//                // sendProvisioningPdu
+//                Timber.d("sendPdu - sendProvisioningPdu - ${pdu.size}")
+//                currentBeckonDevice()?.let {
+//                    launch {
+//                        it.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic).fold(
+//                            { Timber.w("SendPdu error: $it") },
+//                            { Timber.d("sendPdu success") }
+//                        )
+//                    }
+//                }
+//            },
+//            { pdu ->
+//                // onMeshPduCreated
+//                Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
+//                currentBeckonDevice()?.let {
+//                    launch {
+//                        // todo sending success or error signal
+//                        it.sendPdu(pdu, MeshConstants.proxyDataInCharacteristic).fold(
+//                            { Timber.w("SendPdu error: $it") },
+//                            { Timber.d("sendPdu success") }
+//                        )
+//                    }
+//                }
+//            }
+//        )
+//    }
 
     // todo handle in a better way
     internal var beckonDevice: BeckonDevice? = null
@@ -99,9 +99,9 @@ class BeckonMeshManagerApi(
     private lateinit var state: Atomic<MState>
 
     init {
-        setMeshManagerCallbacks(networkCallbacks)
-        setProvisioningStatusCallbacks(provisioningCallbacks)
-        setMeshStatusCallbacks(messageCallbacks)
+//        setMeshManagerCallbacks(networkCallbacks)
+//        setProvisioningStatusCallbacks(provisioningCallbacks)
+//        setMeshStatusCallbacks(messageCallbacks)
     }
 
     private suspend fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
@@ -123,38 +123,7 @@ class BeckonMeshManagerApi(
         }
     }
 
-
-    @SuppressLint("RestrictedApi")
-    suspend fun register() {
-        state = Atomic(MState.Unloaded)
-
-        // todo fix
-        launch {
-            networkCallbacks.status().collect {
-                Timber.d("Mesh Manager api $it")
-                onMeshStatusChange(it)
-            }
-
-            messageCallbacks.status()
-                .filterIsInstance<MessageStatus.MeshMessageReceived>()
-                .collect {
-
-                   val currentState = state.get()
-                   if(currentState is MState.Provisioning) {
-                       currentState.phase.handleMessageReceived(it)
-                   }
-                    when(currentState) {
-                        // TODO we need to check src is in provisioning phase
-                        is MState.Provisioning -> currentState.phase.handleMessageReceived(it)
-                        else -> Timber.d("Another phase $currentState")
-                    }
-
-                }
-        }
-
-    }
-
-    private suspend fun BeckonDevice.sendPdu(
+    suspend fun BeckonDevice.sendPdu(
         pdu: ByteArray,
         characteristic: Characteristic
     ): Either<BeckonActionError, Unit> = either {
@@ -163,99 +132,9 @@ class BeckonMeshManagerApi(
         handleWriteCallbacks(splitPackage.mtu, splitPackage.data.value!!)
     }
 
-    private suspend fun onMeshStatusChange(status: MeshStatus) {
-        state.update {
-            when (status) {
-                is MeshStatus.ImportFailed -> TODO()
-                is MeshStatus.Imported -> TODO() // todo move to callback
-                MeshStatus.ImportedEmpty -> TODO() // todo move to callback
-                is MeshStatus.Updated -> TODO()
-                MeshStatus.UpdatedEmpty -> TODO()
-            }
-        }
-    }
-
-    suspend fun loadNetwork(): Either<MeshLoadFailedError, Unit> {
-        val currentState = state.get()
-
-        if (currentState is MState.Unloaded) {
-            loadMeshNetwork()
-        } else {
-            throw IllegalMeshStateError(currentState)
-        }
-        return networkLoadingEmitter.await()
-    }
-
-    suspend fun startProvisioning(): Either<MeshLoadFailedError, ProvisioningPhase> {
-        // todo disconnect mesh if connected state
-        // todo check the state of the mesh
-        // todo verify appkey
-        val appKey = meshNetwork!!.getAppKey(0)!!
-        val provisioningPhase = ProvisioningPhase(this, appKey)
-        setProvisioningStatusCallbacks(provisioningPhase.provisioningStatusCallbacks)
-        state.update { MState.Provisioning(provisioningPhase) }
-        return provisioningPhase.right()
-    }
-
-    internal suspend fun connectForProvisioning(scanResult: ScanResult): Either<BeckonError, BeckonDevice> {
-        val currentState = state.get()
-        if (currentState is MState.Loaded) { // todo correct state
-            return meshConnect(scanResult, ConnectionPhase.Provisioning)
-        } else {
-            throw IllegalMeshStateError(currentState)
-        }
-    }
-
-    suspend fun connectForProxy(scanResult: ScanResult): Either<BeckonError, BeckonDevice> =
-        meshConnect(scanResult, ConnectionPhase.Proxy)
 
 
-    suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<ScanResult>>> {
-        return beckonClient.scan(scannerSetting)
-            .mapZ { it.sortedBy { it.macAddress } }
-    }
-
-    suspend fun stopScan() {
-        beckonClient.stopScan()
-    }
-
-    internal suspend fun scanForProvisioning(): Flow<Either<ScanError, List<ScanResult>>> {
-        val settings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-            .setReportDelay(0)
-            .setUseHardwareFilteringIfSupported(false)
-            .build()
-
-        val scannerSettings = ScannerSetting(
-            settings,
-            filters = listOf(
-                DeviceFilter(
-                    serviceUuid = MeshConstants.MESH_PROXY_UUID.toString()
-                )
-            ),
-            useFilter = false
-        )
-        return scan(scannerSettings)
-    }
-
-    private suspend fun meshConnect(
-        scanResult: ScanResult,
-        method: ConnectionPhase
-    ): Either<BeckonError, BeckonDevice> =
-        either {
-            val descriptor = Descriptor()
-            val beckonDevice = beckonClient.connect(scanResult, descriptor).bind()
-            val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
-            beckonDevice.subscribe(method.dataOutCharacteristic()).bind()
-            coroutineScope {
-                launch { // todo is this the right way?
-                    beckonDevice.handleNotifications(method.dataOutCharacteristic())
-                }
-            }
-            beckonDevice
-        }
-
-    private suspend fun BeckonDevice.handleNotifications(characteristic: Characteristic) {
+    suspend fun BeckonDevice.handleNotifications(characteristic: Characteristic) {
         changes(characteristic.uuid, ::identity)
             .onEach {
                 Timber.w("Device changes $it")

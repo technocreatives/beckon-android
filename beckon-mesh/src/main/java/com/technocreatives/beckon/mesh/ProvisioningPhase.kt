@@ -49,8 +49,9 @@ class ProvisioningPhase(
         val beckonDevice = connect(scanResult).bind()
         val unprovisionedMeshNode = identify(scanResult).bind()
         val provisionedMeshNode = startProvisioning(unprovisionedMeshNode).bind()
-        val proxyDevice = scanAndConnect(beckonDevice, provisionedMeshNode).bind()
-        exchangeKeys(beckonDevice, provisionedMeshNode).bind()
+        beckonDevice.disconnect().bind()
+        val proxyDevice = scanAndConnect(provisionedMeshNode).bind()
+        exchangeKeys(proxyDevice, provisionedMeshNode).bind()
         proxyDevice
     }
 
@@ -91,7 +92,7 @@ class ProvisioningPhase(
     }
 
     suspend fun startProvisioning(unprovisionedMeshNode: UnprovisionedMeshNode): Either<ProvisioningError, ProvisionedMeshNode> {
-        Timber.d("PROVISION ME ${unprovisionedMeshNode.deviceUuid}")
+        Timber.d("startProvisioning ${unprovisionedMeshNode.deviceUuid}")
 
         meshApi.meshNetwork!!.let {
             try {
@@ -116,10 +117,8 @@ class ProvisioningPhase(
     }
 
     suspend fun scanAndConnect(
-        beckonDevice: BeckonDevice,
         meshNode: ProvisionedMeshNode
     ): Either<BeckonError, BeckonDevice> {
-        beckonDevice.disconnect()
         return meshApi.scanForProvisioning()
             .mapZ {
                 it.firstOrNull {
@@ -275,7 +274,7 @@ class ProvisioningPhase(
             ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS -> {
                 Timber.d("onMessageReceived CONFIG_NETWORK_TRANSMIT_STATUS")
                 GlobalScope.launch {
-                    // TODO delay
+                    // TODO delay global
                     delay(1500)
                     val index: Int = node.addedNetKeys!!.get(0)!!.index
                     val networkKey: NetworkKey = meshNetwork.netKeys[index]

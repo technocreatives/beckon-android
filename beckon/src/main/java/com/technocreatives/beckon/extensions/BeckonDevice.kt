@@ -57,3 +57,6 @@ suspend fun BeckonDevice.writeSplit(
             .mapLeft { BleActionError(it.macAddress, it.uuid, it.status, Property.WRITE) }
             .bind()
     }
+
+fun BeckonDevice.getMaximumPacketSize(): Int =
+    mtu().value - 3
