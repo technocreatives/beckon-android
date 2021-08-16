@@ -11,13 +11,9 @@ import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.mesh.callbacks.MessageStatus
 import com.technocreatives.beckon.mesh.utils.tap
-import com.technocreatives.beckon.util.filterZ
-import com.technocreatives.beckon.util.mapEither
-import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.*
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
@@ -77,7 +73,7 @@ class ProvisioningPhase(
             Timber.d("identify with uuid from beaconData: ${beacon.uuid}")
         } else {
             val serviceData: ByteArray? =
-                getServiceData(scanResult, MeshConstants.MESH_SERVICE_PROVISIONING_UUID)
+                getServiceData(scanResult, MeshConstants.MESH_PROVISIONING_SERVICE_UUID)
             if (serviceData != null) {
                 val uuid: UUID = meshApi.getDeviceUuid(serviceData)
                 Timber.d("identify with uuid from service: $uuid")

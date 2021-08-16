@@ -184,7 +184,10 @@ class Provisioning(
 
     // disconnect device if needed
     // change state of MeshManagerApi
-    suspend fun cancel(): Unit = TODO()
+    suspend fun cancel(): Either<Throwable, Unit> = either {
+        beckonDevice?.disconnect()?.bind()
+        beckonMesh.updateState(Loaded(beckonMesh, meshApi))
+    }
 
     suspend fun connect(scanResult: ScanResult): Either<BeckonError, BeckonDevice> {
         return beckonMesh.connectForProvisioning(scanResult)
@@ -204,7 +207,7 @@ class Provisioning(
             Timber.d("identify with uuid from beaconData: ${beacon.uuid}")
         } else {
             val serviceData: ByteArray? =
-                getServiceData(scanResult, MeshConstants.MESH_SERVICE_PROVISIONING_UUID)
+                getServiceData(scanResult, MeshConstants.MESH_PROVISIONING_SERVICE_UUID)
             if (serviceData != null) {
                 val uuid: UUID = meshApi.getDeviceUuid(serviceData)
                 Timber.d("identify with uuid from service: $uuid")
@@ -246,7 +249,7 @@ class Provisioning(
     suspend fun scanAndConnect(
         meshNode: ProvisionedMeshNode
     ): Either<BeckonError, BeckonDevice> {
-        return beckonMesh.scanForProvisioning()
+        return beckonMesh.scanForProxy()
             .mapZ {
                 it.firstOrNull {
                     findProxyDeviceAndStopScan(it.scanRecord!!, meshNode)
@@ -267,7 +270,7 @@ class Provisioning(
         meshApi.createMeshPdu(node.unicastAddress, compositionDataGet)
         return exchangeKeysEmitter.await().tap {
             // todo finished provisioning
-            meshApi.setConnected(beckonDevice)
+            beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
         }
     }
 

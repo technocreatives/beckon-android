@@ -81,7 +81,7 @@ class BeckonMesh(
             settings,
             filters = listOf(
                 DeviceFilter(
-                    serviceUuid = MeshConstants.MESH_PROXY_UUID.toString()
+                    serviceUuid = MeshConstants.MESH_PROVISIONING_SERVICE_UUID.toString()
                 )
             ),
             useFilter = false
@@ -100,7 +100,7 @@ class BeckonMesh(
             settings,
             filters = listOf(
                 DeviceFilter(
-                    serviceUuid = MeshConstants.MESH_PROXY_UUID.toString()
+                    serviceUuid = MeshConstants.MESH_PROXY_SERVICE_UUID.toString()
                 )
             ),
             useFilter = false
@@ -136,8 +136,8 @@ class BeckonMesh(
 
 class BeckonMeshClient(val context: Context, val beckonClient: BeckonClient) {
     private val meshApi = BeckonMeshManagerApi(context, beckonClient)
-    suspend fun register() {
-    }
+//    suspend fun register() {
+//    }
 
     suspend fun load(meshUuid: String): Either<Any, BeckonMesh> = either {
         // todo check the mesh ID here
