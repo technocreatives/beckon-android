@@ -59,12 +59,12 @@ class ProvisioningPhase(
     // change state of MeshManagerApi
     suspend fun cancel(): Unit = TODO()
 
-    suspend fun connect(scanResult: ScanResult): Either<BeckonError, BeckonDevice> {
-        return meshApi.connectForProvisioning(scanResult)
-            .tap {
-                meshApi.beckonDevice = it
-            }
-    }
+    suspend fun connect(scanResult: ScanResult): Either<BeckonError, BeckonDevice> = TODO()
+//        return meshApi.connectForProvisioning(scanResult)
+//            .tap {
+//                meshApi.beckonDevice = it
+//            }
+//    }
 
     suspend fun identify(scanResult: ScanResult): Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode> {
 
@@ -118,19 +118,19 @@ class ProvisioningPhase(
 
     suspend fun scanAndConnect(
         meshNode: ProvisionedMeshNode
-    ): Either<BeckonError, BeckonDevice> {
-        return meshApi.scanForProvisioning()
-            .mapZ {
-                it.firstOrNull {
-                    findProxyDeviceAndStopScan(it.scanRecord!!, meshNode)
-                }
-            }.filterZ { it != null }
-            .mapEither { meshApi.connectForProxy(it!!) }
-            .single()
-            .tap {
-                meshApi.beckonDevice = it
-            }
-    }
+    ): Either<BeckonError, BeckonDevice> = TODO()
+//        return meshApi.scanForProvisioning()
+//            .mapZ {
+//                it.firstOrNull {
+//                    findProxyDeviceAndStopScan(it.scanRecord!!, meshNode)
+//                }
+//            }.filterZ { it != null }
+//            .mapEither { meshApi.connectForProxy(it!!) }
+//            .single()
+//            .tap {
+//                meshApi.beckonDevice = it
+//            }
+//    }
 
 
     // todo determine when it failed
@@ -173,7 +173,7 @@ class ProvisioningPhase(
                 Timber.d("nodeIdentityMatches: $isAdvertisedWithNodeIdentity")
                 if (nodeIdentityMatches) {
                     // todo better way to stop scan
-                    meshApi.stopScan()
+//                    meshApi.stopScan()
                     return true
                 }
             }

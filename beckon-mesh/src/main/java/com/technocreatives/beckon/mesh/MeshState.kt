@@ -97,7 +97,7 @@ class Provisioning(
                     inviteEmitter.complete(meshNode.right())
                 }
                 else -> {
-
+                    Timber.d("Unprocess state: $state")
                 }
             }
         }
