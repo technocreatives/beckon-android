@@ -12,18 +12,17 @@ import arrow.fx.coroutines.Atomic
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
-import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.util.mapZ
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.parcelize.Parcelize
 import no.nordicsemi.android.mesh.MeshBeacon
 import no.nordicsemi.android.mesh.UnprovisionedBeacon
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
-import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import java.util.*
@@ -36,6 +35,16 @@ class BeckonMesh(
 
     val stateSubject = MutableSharedFlow<MeshState>()
     private lateinit var currentState: Atomic<MeshState>
+
+    private suspend fun initState() {
+        currentState = Atomic.invoke(Loaded(this, meshApi))
+    }
+
+    init {
+        runBlocking {
+            initState()
+        }
+    }
 
     suspend fun updateState(state: MeshState) {
         currentState.update { state }
@@ -130,17 +139,14 @@ class BeckonMesh(
             val beckonDevice = beckonClient.connect(macAddress, descriptor).bind()
             val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
             beckonDevice.subscribe(characteristic).bind()
-            coroutineScope {
-                launch { // todo is this the right way?
-                    with(meshApi) {
-                        beckonDevice.handleNotifications(characteristic)
-                    }
+            GlobalScope.launch {
+                // todo is this the right way?
+                with(meshApi) {
+                    beckonDevice.handleNotifications(characteristic)
                 }
             }
             beckonDevice
         }
-
-
 
 
     private fun ScanResult.toUnprovisionedScanResult(): UnprovisionedScanResult? {
@@ -174,7 +180,12 @@ class BeckonMesh(
 }
 
 @Parcelize
-data class UnprovisionedScanResult(val macAddress: MacAddress, val name: String?, val rssi: Int, val uuid: UUID): Parcelable
+data class UnprovisionedScanResult(
+    val macAddress: MacAddress,
+    val name: String?,
+    val rssi: Int,
+    val uuid: UUID
+) : Parcelable
 
 
 class ProvisioningViewModel(val client: BeckonMeshClient, val meshUuid: UUID) {

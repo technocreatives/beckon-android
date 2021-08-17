@@ -20,6 +20,7 @@ import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.*
@@ -157,6 +158,9 @@ class Provisioning(
                 }
             }
 
+            override fun onNetworkUpdated(meshNetwork: MeshNetwork?) {
+            }
+
             override fun sendProvisioningPdu(meshNode: UnprovisionedMeshNode, pdu: ByteArray) {
                 Timber.d("sendPdu - sendProvisioningPdu - ${pdu.size}")
                 beckonDevice?.let { bd ->
@@ -244,7 +248,7 @@ class Provisioning(
                 }
             }.filterZ { it != null }
             .mapEither { beckonMesh.connectForProxy(it!!) }
-            .single()
+            .first()
             .tap {
                 beckonDevice = it
             }
@@ -375,7 +379,7 @@ class Connected(
     init {
 
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {})
-        meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks() {})
+        meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {})
     }
 
     suspend fun disconnect(): Either<Any, Loaded> = either {
