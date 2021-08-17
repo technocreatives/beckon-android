@@ -12,9 +12,8 @@ import arrow.fx.coroutines.Atomic
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
-import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
+import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.util.mapZ
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,7 +21,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import no.nordicsemi.android.mesh.MeshBeacon
-import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.UnprovisionedBeacon
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
@@ -118,24 +116,24 @@ class BeckonMesh(
     }
 
     internal suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
-        meshConnect(scanResult.macAddress, ConnectionPhase.Provisioning)
+        meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic)
 
     suspend fun connectForProxy(scanResult: ScanResult): Either<BeckonError, BeckonDevice> =
-        meshConnect(scanResult.macAddress, ConnectionPhase.Proxy)
+        meshConnect(scanResult.macAddress, MeshConstants.proxyDataOutCharacteristic)
 
     private suspend fun meshConnect(
         macAddress: MacAddress,
-        method: ConnectionPhase
+        characteristic: Characteristic
     ): Either<BeckonError, BeckonDevice> =
         either {
             val descriptor = Descriptor()
             val beckonDevice = beckonClient.connect(macAddress, descriptor).bind()
             val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
-            beckonDevice.subscribe(method.dataOutCharacteristic()).bind()
+            beckonDevice.subscribe(characteristic).bind()
             coroutineScope {
                 launch { // todo is this the right way?
                     with(meshApi) {
-                        beckonDevice.handleNotifications(method.dataOutCharacteristic())
+                        beckonDevice.handleNotifications(characteristic)
                     }
                 }
             }
@@ -143,24 +141,7 @@ class BeckonMesh(
         }
 
 
-    fun nodes(): Flow<List<ProvisionedMeshNode>> {
-        return TODO()
-    }
 
-    private fun loadNodes(): List<ProvisionedMeshNode> {
-        val nodes: MutableList<ProvisionedMeshNode> = ArrayList()
-        val meshNetwork = meshApi.meshNetwork!!
-        for (node in meshApi.meshNetwork!!.nodes) {
-////            if (!node.uuid.equals(
-////                    meshNetwork.selectedProvisioner?.provisionerUuid,
-////                    ignoreCase = true
-////                )
-////            ) {
-            nodes.add(node)
-//            }
-        }
-        return nodes.toList()
-    }
 
     private fun ScanResult.toUnprovisionedScanResult(): UnprovisionedScanResult? {
         return scanRecord?.unprovisionedDeviceUuid()?.let {
@@ -195,32 +176,6 @@ class BeckonMesh(
 @Parcelize
 data class UnprovisionedScanResult(val macAddress: MacAddress, val name: String?, val rssi: Int, val uuid: UUID): Parcelable
 
-
-class BeckonMeshClient(val context: Context, val beckonClient: BeckonClient) {
-    private val meshApi = BeckonMeshManagerApi(context, beckonClient)
-//    suspend fun register() {
-//    }
-
-    suspend fun load(meshUuid: UUID): Either<Any, BeckonMesh> = either {
-        // todo check the mesh ID here
-        val networkLoadingEmitter =
-            CompletableDeferred<Either<MeshLoadFailedError, Unit>>()
-
-        meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
-            override fun onNetworkLoadFailed(error: String?) {
-                networkLoadingEmitter.complete(MeshLoadFailedError("MeshNetwork is empty").left())
-            }
-
-            override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
-                networkLoadingEmitter.complete(Unit.right())
-            }
-        })
-
-        meshApi.loadMeshNetwork()
-        networkLoadingEmitter.await().bind()
-        BeckonMesh(context, beckonClient, meshApi)
-    }
-}
 
 class ProvisioningViewModel(val client: BeckonMeshClient, val meshUuid: UUID) {
 

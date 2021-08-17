@@ -34,10 +34,21 @@ import java.util.*
 
 sealed interface MeshError
 
-data class IllegalMStateError(val state: MState) : MeshError, Exception()
 data class IllegalMeshStateError(val state: MeshState) : MeshError, Exception()
 
 data class MeshLoadFailedError(val error: String) : MeshError
+
+sealed class ProvisioningError : MeshError {
+
+    data class ProvisioningFailed(
+        val node: UnprovisionedMeshNode?,
+        val state: ProvisioningState.States?,
+        val data: ByteArray?
+    ) : ProvisioningError()
+
+    object NoAvailableUnicastAddress : ProvisioningError()
+    object NoAllocatedUnicastRange : ProvisioningError()
+}
 
 sealed class MeshState(val beckonMesh: BeckonMesh, val meshApi: BeckonMeshManagerApi) {
 
@@ -121,9 +132,12 @@ class Provisioning(
         ) {
             Timber.d("onProvisioningCompleted: ${meshNode.nodeName} $state");
             provisioningEmitter.complete(meshNode.right())
+            GlobalScope.launch {
+                meshApi.updateNodes()
+            }
         }
-
     }
+
     private var beckonDevice: BeckonDevice? = null
 
     init {
@@ -161,8 +175,10 @@ class Provisioning(
                 return beckonDevice?.getMaximumPacketSize() ?: 66
             }
         })
-        meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks() {
+
+        meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {
             override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
+                super.onMeshMessageReceived(src, meshMessage)
                 handleMessageReceived(src, meshMessage)
             }
         })
