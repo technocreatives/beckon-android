@@ -205,11 +205,11 @@ class BeckonMeshClient(val context: Context, val beckonClient: BeckonClient) {
 
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
             override fun onNetworkLoadFailed(error: String?) {
-                networkLoadingEmitter.complete(Unit.right())
+                networkLoadingEmitter.complete(MeshLoadFailedError("MeshNetwork is empty").left())
             }
 
             override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
-                networkLoadingEmitter.complete(MeshLoadFailedError("MeshNetwork is empty").left())
+                networkLoadingEmitter.complete(Unit.right())
             }
         })
 
