@@ -1,6 +1,5 @@
 package com.technocreatives.beckon.mesh
 
-import android.annotation.SuppressLint
 import android.content.Context
 import arrow.core.Either
 import arrow.core.computations.either

@@ -70,7 +70,7 @@ class BeckonMesh(
             .mapZ { it.sortedBy { it.macAddress } }
     }
 
-    internal suspend fun scanForProvisioning(): Flow<Either<ScanError, List<ScanResult>>> {
+    suspend fun scanForProvisioning(): Flow<Either<ScanError, List<ScanResult>>> {
         val settings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setReportDelay(0)
