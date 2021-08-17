@@ -28,7 +28,7 @@ fun BluetoothManager.connectedDevices(): List<BluetoothDevice> {
     return getConnectedDevices(BluetoothProfile.GATT)
 }
 
-private fun BluetoothManager.safeGetRemoteDevice(address: String): BluetoothDevice? {
+fun BluetoothManager.safeGetRemoteDevice(address: String): BluetoothDevice? {
     return try {
         adapter.getRemoteDevice(address)
     } catch (ex: IllegalArgumentException) {

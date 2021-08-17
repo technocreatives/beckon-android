@@ -55,6 +55,7 @@ sealed class ConnectionError : BeckonError {
 
     data class RequirementFailed(val fails: List<CharacteristicFailed>) : ConnectionError()
     data class ConnectedDeviceNotFound(val macAddress: MacAddress) : ConnectionError()
+    data class BluetoothDeviceNotFound(val macAddress: MacAddress) : ConnectionError()
     data class DisconnectDeviceFailed(val macAddress: String, val status: Int) : ConnectionError()
 
     data class GeneralError(val macAddress: MacAddress, val throwable: Throwable) :

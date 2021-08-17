@@ -2,14 +2,8 @@ package com.technocreatives.beckon.internal
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
-import arrow.core.Either
-import arrow.core.None
-import arrow.core.Some
+import arrow.core.*
 import arrow.core.computations.either
-import arrow.core.identity
-import arrow.core.left
-import arrow.core.right
-import arrow.core.rightIfNotNull
 import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.BeckonDevice
@@ -31,10 +25,7 @@ import com.technocreatives.beckon.checkRequirements
 import com.technocreatives.beckon.data.DeviceRepository
 import com.technocreatives.beckon.redux.BeckonAction
 import com.technocreatives.beckon.redux.BeckonStore
-import com.technocreatives.beckon.util.bluetoothManager
-import com.technocreatives.beckon.util.connectedDevices
-import com.technocreatives.beckon.util.filterZ
-import com.technocreatives.beckon.util.findDevice
+import com.technocreatives.beckon.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
@@ -135,6 +126,15 @@ internal class BeckonClientImpl(
     ): Either<ConnectionError, BeckonDevice> {
         Timber.d("Connecting to: $result")
         return connectAndValidateRequirements(result.device, descriptor)
+    }
+
+    override suspend fun connect(
+        macAddress: MacAddress,
+        descriptor: Descriptor
+    ): Either<ConnectionError, BeckonDevice> {
+        Timber.d("Connecting to: $macAddress")
+        val bluetoothDevice = context.bluetoothManager().safeGetRemoteDevice(macAddress)!!
+        return connectAndValidateRequirements(bluetoothDevice, descriptor)
     }
 
     override suspend fun connect(metadata: SavedMetadata): Either<BeckonError, BeckonDevice> {

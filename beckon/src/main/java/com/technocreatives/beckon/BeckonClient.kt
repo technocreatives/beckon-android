@@ -58,6 +58,15 @@ interface BeckonClient {
     ): Either<ConnectionError, BeckonDevice>
 
     /*
+   * Connect to a scanned device and then verify if all characteristics work
+   * Return @BeckonDevice or ConnectFailedException when it fails
+   * */
+    suspend fun connect(
+        macAddress: MacAddress,
+        descriptor: Descriptor
+    ): Either<ConnectionError, BeckonDevice>
+
+    /*
     * Connect to a saved device and then verify if all characteristics work
     * This function only works with bonded device
     * Return @BeckonDevice or ConnectFailedException when it fails
@@ -113,6 +122,9 @@ interface BeckonClient {
         data: Data
     ): Either<Throwable, Change>
 
-    suspend fun read(macAddress: MacAddress, characteristic: FoundCharacteristic.Read): Either<Throwable, Change>
+    suspend fun read(
+        macAddress: MacAddress,
+        characteristic: FoundCharacteristic.Read
+    ): Either<Throwable, Change>
     // todo add subscribe function
 }

@@ -66,8 +66,7 @@ class Provisioning(
     beckonMesh: BeckonMesh,
     meshApi: BeckonMeshManagerApi,
     private val appKey: ApplicationKey
-) :
-    MeshState(beckonMesh, meshApi) {
+) : MeshState(beckonMesh, meshApi) {
 
     private val inviteEmitter =
         CompletableDeferred<Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode>>()
@@ -128,7 +127,6 @@ class Provisioning(
     private var beckonDevice: BeckonDevice? = null
 
     init {
-
         meshApi.setProvisioningStatusCallbacks(provisioningStatusCallbacks)
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
             override fun onMeshPduCreated(pdu: ByteArray) {
@@ -170,18 +168,6 @@ class Provisioning(
         })
     }
 
-    // todo typesafe scan result
-    suspend fun completeProvisioning(scanResult: ScanResult): Either<Any, BeckonDevice> = either {
-        val beckonDevice = connect(scanResult).bind()
-        val unprovisionedMeshNode = identify(scanResult).bind()
-        val provisionedMeshNode = startProvisioning(unprovisionedMeshNode).bind()
-        beckonDevice.disconnect().bind()
-
-        val proxyDevice = scanAndConnect(provisionedMeshNode).bind()
-        exchangeKeys(proxyDevice, provisionedMeshNode).bind()
-        proxyDevice
-    }
-
     // disconnect device if needed
     // change state of MeshManagerApi
     suspend fun cancel(): Either<Throwable, Unit> = either {
@@ -189,34 +175,20 @@ class Provisioning(
         beckonMesh.updateState(Loaded(beckonMesh, meshApi))
     }
 
-    suspend fun connect(scanResult: ScanResult): Either<BeckonError, BeckonDevice> {
+    suspend fun connect(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> {
         return beckonMesh.connectForProvisioning(scanResult)
             .tap {
                 beckonDevice = it
             }
     }
 
-    suspend fun identify(scanResult: ScanResult): Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode> {
+    suspend fun identify(scanResult: UnprovisionedScanResult): Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode> {
 
-        val scanRecord: ScanRecord = scanResult.scanRecord!!
 
-        val beacon = getMeshBeacon(scanRecord.bytes!!) as? UnprovisionedBeacon
-
-        if (beacon != null) {
-            meshApi.identifyNode(beacon.uuid, 5)
-            Timber.d("identify with uuid from beaconData: ${beacon.uuid}")
-        } else {
-            val serviceData: ByteArray? =
-                getServiceData(scanResult, MeshConstants.MESH_PROVISIONING_SERVICE_UUID)
-            if (serviceData != null) {
-                val uuid: UUID = meshApi.getDeviceUuid(serviceData)
-                Timber.d("identify with uuid from service: $uuid")
-                meshApi.identifyNode(
-                    uuid,
-                    5
-                )
-            }
-        }
+        meshApi.identifyNode(
+            scanResult.uuid,
+            5
+        )
 
         return inviteEmitter.await()
     }
@@ -291,7 +263,7 @@ class Provisioning(
         scanRecord: ScanRecord,
         meshNode: ProvisionedMeshNode
     ): Boolean {
-        val serviceData = getServiceData(scanRecord, MeshManagerApi.MESH_PROXY_UUID)
+        val serviceData = scanRecord.getServiceData(MeshManagerApi.MESH_PROXY_UUID)
         Timber.d("findProxyDeviceAndStopScan, serviceData: ${serviceData?.size} ${serviceData?.toList()}")
         if (serviceData != null) {
             val isAdvertisedWithNodeIdentity = meshApi.isAdvertisedWithNodeIdentity(serviceData)
@@ -308,10 +280,6 @@ class Provisioning(
             }
         }
         return false
-    }
-
-    private fun getServiceData(result: ScanRecord, serviceUuid: UUID): ByteArray? {
-        return result.getServiceData(ParcelUuid(serviceUuid))
     }
 
 
