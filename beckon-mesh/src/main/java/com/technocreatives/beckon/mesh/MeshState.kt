@@ -263,7 +263,7 @@ class Provisioning(
         scanRecord: ScanRecord,
         meshNode: ProvisionedMeshNode
     ): Boolean {
-        val serviceData = scanRecord.getServiceData(MeshManagerApi.MESH_PROXY_UUID)
+        val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
         Timber.d("findProxyDeviceAndStopScan, serviceData: ${serviceData?.size} ${serviceData?.toList()}")
         if (serviceData != null) {
             val isAdvertisedWithNodeIdentity = meshApi.isAdvertisedWithNodeIdentity(serviceData)
