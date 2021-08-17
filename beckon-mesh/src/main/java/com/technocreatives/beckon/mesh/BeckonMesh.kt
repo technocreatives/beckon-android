@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh
 
 import android.content.Context
 import android.os.ParcelUuid
+import android.os.Parcelable
 import arrow.core.Either
 import arrow.core.Option
 import arrow.core.computations.either
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import no.nordicsemi.android.mesh.MeshBeacon
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.UnprovisionedBeacon
@@ -162,7 +164,7 @@ class BeckonMesh(
 
     private fun ScanResult.toUnprovisionedScanResult(): UnprovisionedScanResult? {
         return scanRecord?.unprovisionedDeviceUuid()?.let {
-            UnprovisionedScanResult(macAddress, it)
+            UnprovisionedScanResult(macAddress, name, rssi, it)
         }
     }
 
@@ -190,7 +192,8 @@ class BeckonMesh(
     }
 }
 
-data class UnprovisionedScanResult(val macAddress: MacAddress, val uuid: UUID)
+@Parcelize
+data class UnprovisionedScanResult(val macAddress: MacAddress, val name: String?, val rssi: Int, val uuid: UUID): Parcelable
 
 
 class BeckonMeshClient(val context: Context, val beckonClient: BeckonClient) {
