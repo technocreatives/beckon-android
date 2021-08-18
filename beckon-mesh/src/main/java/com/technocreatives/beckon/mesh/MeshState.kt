@@ -13,6 +13,8 @@ import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
+import com.technocreatives.beckon.mesh.extensions.findProxyDeviceAndStopScan
+import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.util.filterZ
@@ -188,6 +190,7 @@ class Provisioning(
         })
     }
 
+    // todo think about it?
     // disconnect device if needed
     // change state of MeshManagerApi
     suspend fun cancel(): Either<Throwable, Unit> = either {
@@ -202,38 +205,21 @@ class Provisioning(
             }
     }
 
-    suspend fun identify(scanResult: UnprovisionedScanResult): Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode> {
-
-
-        meshApi.identifyNode(
-            scanResult.uuid,
-            5
-        )
-
+    suspend fun identify(
+        scanResult: UnprovisionedScanResult,
+        attentionTimer: Int
+    ): Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode> {
+        meshApi.identifyNode(scanResult.uuid, attentionTimer)
         return inviteEmitter.await()
     }
 
     suspend fun startProvisioning(unprovisionedMeshNode: UnprovisionedMeshNode): Either<ProvisioningError, ProvisionedMeshNode> {
         Timber.d("startProvisioning ${unprovisionedMeshNode.deviceUuid}")
-
-        meshApi.meshNetwork!!.let {
-            try {
-                val elementCount: Int =
-                    unprovisionedMeshNode.provisioningCapabilities.numberOfElements.toInt()
-                val provisioner: Provisioner = it.selectedProvisioner
-                val availableUnicast: Int =
-                    it.nextAvailableUnicastAddress(elementCount, provisioner)
-                if (availableUnicast == -1) {
-                    provisioningEmitter.complete(ProvisioningError.NoAvailableUnicastAddress.left())
-                } else {
-                    unicast = availableUnicast
-                    it.assignUnicastAddress(availableUnicast)
-                }
-            } catch (ex: IllegalArgumentException) {
-                provisioningEmitter.complete(ProvisioningError.NoAllocatedUnicastRange.left())
-            }
-        }
-
+        meshApi.nextAvailableUnicastAddress(unprovisionedMeshNode).fold({
+            provisioningEmitter.complete(
+                it.left()
+            )
+        }, { unicast = it })
         meshApi.startProvisioning(unprovisionedMeshNode)
         return provisioningEmitter.await()
     }
@@ -244,7 +230,7 @@ class Provisioning(
         return beckonMesh.scanForProxy()
             .mapZ {
                 it.firstOrNull {
-                    findProxyDeviceAndStopScan(it.scanRecord!!, meshNode)
+                    meshApi.findProxyDeviceAndStopScan(it.scanRecord!!, meshNode)
                 }
             }.filterZ { it != null }
             .mapEither { beckonMesh.connectForProxy(it!!) }
@@ -265,43 +251,6 @@ class Provisioning(
             beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
         }
     }
-
-    private fun getServiceData(result: ScanResult, serviceUuid: UUID): ByteArray? {
-        val scanRecord: ScanRecord? = result.scanRecord
-        return scanRecord?.getServiceData(ParcelUuid(serviceUuid))
-    }
-
-    private fun getMeshBeacon(bytes: ByteArray): MeshBeacon? {
-        val beaconData: ByteArray? = meshApi.getMeshBeaconData(bytes)
-        return beaconData?.let {
-            meshApi.getMeshBeacon(beaconData)
-        }
-    }
-
-    // todo timeout
-    private suspend fun findProxyDeviceAndStopScan(
-        scanRecord: ScanRecord,
-        meshNode: ProvisionedMeshNode
-    ): Boolean {
-        val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
-        Timber.d("findProxyDeviceAndStopScan, serviceData: ${serviceData?.size} ${serviceData?.toList()}")
-        if (serviceData != null) {
-            val isAdvertisedWithNodeIdentity = meshApi.isAdvertisedWithNodeIdentity(serviceData)
-            Timber.d("isAdvertisedWithNodeIdentity: $isAdvertisedWithNodeIdentity")
-            if (isAdvertisedWithNodeIdentity) {
-                val node: ProvisionedMeshNode = meshNode
-                val nodeIdentityMatches = meshApi.nodeIdentityMatches(node, serviceData)
-                Timber.d("nodeIdentityMatches: $isAdvertisedWithNodeIdentity")
-                if (nodeIdentityMatches) {
-                    // todo better way to stop scan
-                    beckonMesh.stopScan()
-                    return true
-                }
-            }
-        }
-        return false
-    }
-
 
     fun List<ProvisioningState.States>.isInviting(): Boolean {
         // todo correct this formula
