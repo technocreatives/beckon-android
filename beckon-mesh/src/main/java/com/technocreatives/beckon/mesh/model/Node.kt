@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.model
 
+import com.technocreatives.beckon.internal.toUuid
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 
 class Node(private val node: ProvisionedMeshNode) {
@@ -7,4 +8,10 @@ class Node(private val node: ProvisionedMeshNode) {
         get() = node.unicastAddress
 
     val elements get() = node.elements
+
+    val uuid get() = node.uuid.toUuid()
+
+    val name = node.nodeName
+
+    val versionIdentifier get() = node.versionIdentifier
 }
