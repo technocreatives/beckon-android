@@ -1,5 +1,4 @@
-package com.technocreatives.beckon.mesh
-
+package com.technocreatives.beckon.mesh.state
 
 import android.annotation.SuppressLint
 import arrow.core.Either
@@ -8,16 +7,16 @@ import arrow.core.left
 import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
-import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
+import com.technocreatives.beckon.mesh.BeckonMesh
+import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
+import com.technocreatives.beckon.mesh.MeshConstants
+import com.technocreatives.beckon.mesh.ProvisioningError
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.findProxyDevice
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
-import com.technocreatives.beckon.mesh.model.AppKey
-import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
-import com.technocreatives.beckon.mesh.model.VendorModel
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
@@ -36,46 +35,6 @@ import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
 import no.nordicsemi.android.mesh.transport.*
 import timber.log.Timber
-
-sealed interface MeshError
-
-data class IllegalMeshStateError(val state: MeshState) : MeshError, Exception()
-
-data class MeshLoadFailedError(val error: String) : MeshError
-
-sealed class ProvisioningError : MeshError {
-
-    data class ProvisioningFailed(
-        val node: UnprovisionedMeshNode?,
-        val state: ProvisioningState.States?,
-        val data: ByteArray?
-    ) : ProvisioningError()
-
-    object NoAvailableUnicastAddress : ProvisioningError()
-    object NoAllocatedUnicastRange : ProvisioningError()
-}
-
-sealed class MeshState(val beckonMesh: BeckonMesh, val meshApi: BeckonMeshManagerApi) {
-
-    fun isValid(): Boolean = TODO()
-}
-
-class Loaded(beckonMesh: BeckonMesh, meshApi: BeckonMeshManagerApi) :
-    MeshState(beckonMesh, meshApi) {
-    suspend fun startProvisioning(): Provisioning {
-        val appKey = meshApi.meshNetwork!!.getAppKey(0)!!
-        val provisioning = Provisioning(beckonMesh, meshApi, appKey)
-        beckonMesh.updateState(provisioning)
-        return provisioning
-    }
-
-    suspend fun connect(scanResult: ScanResult): Either<Any, Connected> = either {
-        val beckonDevice = beckonMesh.connectForProxy(scanResult).bind()
-        val connected = Connected(beckonMesh, meshApi, beckonDevice)
-        beckonMesh.updateState(connected)
-        connected
-    }
-}
 
 // provisioning phase
 class Provisioning(
@@ -187,19 +146,20 @@ class Provisioning(
         meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {
             override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
                 super.onMeshMessageReceived(src, meshMessage)
+                Timber.w("onMeshMessageReceived - src: $src, meshMessage: $meshMessage")
                 handleMessageReceived(src, meshMessage)
             }
 
             override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
-                Timber.w("onMeshMessageProcessed(): We do not really do anything about: $meshMessage, should we?")
+                Timber.w("onMeshMessageProcessed - src: $dst, meshMessage: $meshMessage")
             }
 
             override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementProcessed(): We do not really do anything about: $message, should we?")
+                Timber.w("onBlockAcknowledgementProcessed - dst: $dst, message: $message")
             }
 
             override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementReceived(): We do not really do anything about: $message, should we?")
+                Timber.w("onBlockAcknowledgementReceived - src: $src, message: $message")
             }
         })
     }
@@ -262,7 +222,6 @@ class Provisioning(
         val compositionDataGet = ConfigCompositionDataGet()
         meshApi.createMeshPdu(node.unicastAddress, compositionDataGet)
         return exchangeKeysEmitter.await().tap {
-            // todo finished provisioning
             beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
         }
     }
@@ -332,53 +291,4 @@ class Provisioning(
             }
         }
     }
-}
-
-class Connected(
-    beckonMesh: BeckonMesh,
-    meshApi: BeckonMeshManagerApi,
-    private val beckonDevice: BeckonDevice
-) : MeshState(beckonMesh, meshApi) {
-
-    init {
-
-        meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {})
-        meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {})
-    }
-
-    suspend fun disconnect(): Either<Any, Loaded> = either {
-        beckonDevice.disconnect().bind()
-        val loaded = Loaded(beckonMesh, meshApi)
-        beckonMesh.updateState(loaded)
-        loaded
-    }
-
-    suspend fun bindAppKeyToVendorModel(): Either<Any, Unit> {
-
-        TODO()
-    }
-
-    suspend fun sendVendorModelMessageAck(
-        node: Node,
-        appKey: AppKey,
-        vendorModel: VendorModel,
-        opCode: Int,
-        parameters: ByteArray
-    ): Either<Any, Unit> {
-        val message = VendorModelMessageAcked(
-            appKey.applicationKey,
-            vendorModel.modelId,
-            vendorModel.companyIdentifier,
-            opCode,
-            parameters
-        )
-        meshApi.createMeshPdu(node.unicastAddress, message)
-        return Unit.right()
-    }
-
-    // all other features
-    init {
-        beckonDevice.connectionStates()
-    }
-
 }

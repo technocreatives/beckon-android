@@ -8,6 +8,7 @@ import no.nordicsemi.android.mesh.MeshManagerApi
 import no.nordicsemi.android.mesh.UnprovisionedBeacon
 import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import java.util.*
+
 fun ScanRecord.unprovisionedDeviceUuid(meshApi: MeshManagerApi): UUID? =
     (meshApi.meshBeacon(bytes!!) as? UnprovisionedBeacon)?.uuid ?: run {
         val serviceData: ByteArray? =

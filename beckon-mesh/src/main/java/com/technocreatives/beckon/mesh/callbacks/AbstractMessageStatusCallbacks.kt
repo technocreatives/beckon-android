@@ -7,7 +7,7 @@ import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NODE_RESET
 import no.nordicsemi.android.mesh.transport.ControlMessage
 import no.nordicsemi.android.mesh.transport.MeshMessage
 
-abstract class AbstractMessageStatusCallbacks(val meshApi: BeckonMeshManagerApi) : MeshStatusCallbacks{
+abstract class AbstractMessageStatusCallbacks(private val meshApi: BeckonMeshManagerApi) : MeshStatusCallbacks{
     override fun onTransactionFailed(dst: Int, hasIncompleteTimerExpired: Boolean) {
         TODO("Not yet implemented")
     }

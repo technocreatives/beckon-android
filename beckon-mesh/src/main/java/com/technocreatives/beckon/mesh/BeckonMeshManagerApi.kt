@@ -15,6 +15,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import no.nordicsemi.android.mesh.MeshManagerApi
 import no.nordicsemi.android.mesh.MeshNetwork
+import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
@@ -29,7 +30,7 @@ class BeckonMeshManagerApi(
     fun nodes(): Flow<List<Node>> = nodesSubject.asSharedFlow()
 
     fun loadNodes(): List<Node> {
-        // todo background thread
+        // todo background thread maybe?
         return meshNetwork().nodes.map { Node(it) }
     }
 
@@ -39,11 +40,18 @@ class BeckonMeshManagerApi(
 
     private fun meshNetwork(): MeshNetwork = meshNetwork!!
 
+
+    override fun createMeshPdu(dst: Int, meshMessage: MeshMessage) {
+        Timber.w("createMeshPdu dst: $dst, meshMessage: $meshMessage")
+        super.createMeshPdu(dst, meshMessage)
+    }
+
     suspend fun BeckonDevice.sendPdu(
         pdu: ByteArray,
         characteristic: Characteristic
     ): Either<BeckonActionError, Unit> =
         either {
+            Timber.w("sendPdu pdu size: ${pdu.size}")
             val splitPackage = writeSplit(pdu, characteristic).bind()
             Timber.d("onDataSend: ${splitPackage.data.value?.size}")
             handleWriteCallbacks(splitPackage)
