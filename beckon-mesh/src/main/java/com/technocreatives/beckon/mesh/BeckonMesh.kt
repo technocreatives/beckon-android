@@ -85,7 +85,7 @@ class BeckonMesh(
     }
 
     suspend fun scanForProvisioning(): Flow<Either<ScanError, List<UnprovisionedScanResult>>> {
-        return scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+        return scan(scanSetting(MeshConstants.MESH_PROVISIONING_SERVICE_UUID))
             .mapZ { it.mapNotNull { it.toUnprovisionedScanResult(meshApi) } }
     }
 
