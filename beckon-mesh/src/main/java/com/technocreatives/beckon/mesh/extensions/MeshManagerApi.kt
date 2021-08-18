@@ -42,7 +42,7 @@ suspend fun MeshManagerApi.nextAvailableUnicastAddress(unprovisionedMeshNode: Un
     return provisioningEmitter.await()
 }
 
-suspend fun MeshManagerApi.findProxyDeviceAndStopScan(
+suspend fun MeshManagerApi.findProxyDevice(
     scanRecord: ScanRecord,
     meshNode: ProvisionedMeshNode,
     onFound: suspend () -> Unit

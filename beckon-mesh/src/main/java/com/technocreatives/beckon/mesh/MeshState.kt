@@ -9,11 +9,10 @@ import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.ScanResult
-import com.technocreatives.beckon.extensions.decodeHex
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
-import com.technocreatives.beckon.mesh.extensions.findProxyDeviceAndStopScan
+import com.technocreatives.beckon.mesh.extensions.findProxyDevice
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.model.AppKey
 import com.technocreatives.beckon.mesh.model.Node
@@ -233,7 +232,7 @@ class Provisioning(
         return beckonMesh.scanForProxy()
             .mapZ {
                 it.firstOrNull {
-                    meshApi.findProxyDeviceAndStopScan(it.scanRecord!!, meshNode)
+                    meshApi.findProxyDevice(it.scanRecord!!, meshNode) { beckonMesh.stopScan() }
                 }
             }.filterZ { it != null }
             .mapEither { beckonMesh.connectForProxy(it!!) }
