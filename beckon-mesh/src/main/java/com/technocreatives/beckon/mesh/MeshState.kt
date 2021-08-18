@@ -2,7 +2,6 @@ package com.technocreatives.beckon.mesh
 
 
 import android.annotation.SuppressLint
-import android.os.ParcelUuid
 import arrow.core.Either
 import arrow.core.computations.either
 import arrow.core.left
@@ -10,12 +9,16 @@ import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.ScanResult
+import com.technocreatives.beckon.extensions.decodeHex
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.findProxyDeviceAndStopScan
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
+import com.technocreatives.beckon.mesh.model.AppKey
+import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
+import com.technocreatives.beckon.mesh.model.VendorModel
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
@@ -25,15 +28,15 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import no.nordicsemi.android.mesh.*
-import no.nordicsemi.android.mesh.models.VendorModel
+import no.nordicsemi.android.mesh.ApplicationKey
+import no.nordicsemi.android.mesh.MeshNetwork
+import no.nordicsemi.android.mesh.MeshProvisioningStatusCallbacks
+import no.nordicsemi.android.mesh.NetworkKey
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
 import no.nordicsemi.android.mesh.transport.*
-import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import timber.log.Timber
-import java.util.*
 
 sealed interface MeshError
 
@@ -338,13 +341,28 @@ class Connected(
         loaded
     }
 
-    suspend fun bindAppKeyToVendorModel(): Either<Any, Unit> = TODO()
+    suspend fun bindAppKeyToVendorModel(): Either<Any, Unit> {
 
-    suspend fun sendVendorModelMessage(
-        appKey: ApplicationKey,
+        TODO()
+    }
+
+    suspend fun sendVendorModelMessageAck(
+        node: Node,
+        appKey: AppKey,
         vendorModel: VendorModel,
-        opCode: ByteArray
-    ): Either<Any, Unit> = TODO()
+        opCode: Int,
+        parameters: ByteArray
+    ): Either<Any, Unit> {
+        val message = VendorModelMessageAcked(
+            appKey.applicationKey,
+            vendorModel.modelId,
+            vendorModel.companyIdentifier,
+            opCode,
+            parameters
+        )
+        meshApi.createMeshPdu(node.unicastAddress, message)
+        return Unit.right()
+    }
 
     // all other features
     init {
