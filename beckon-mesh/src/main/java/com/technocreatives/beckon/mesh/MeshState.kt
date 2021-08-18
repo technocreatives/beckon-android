@@ -229,6 +229,7 @@ class Provisioning(
     suspend fun scanAndConnect(
         meshNode: ProvisionedMeshNode
     ): Either<BeckonError, BeckonDevice> {
+        // TODO Won't stop if we don't find device?
         return beckonMesh.scanForProxy()
             .mapZ {
                 it.firstOrNull {
