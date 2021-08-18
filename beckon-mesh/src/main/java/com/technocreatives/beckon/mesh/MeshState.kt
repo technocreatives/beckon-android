@@ -189,6 +189,18 @@ class Provisioning(
                 super.onMeshMessageReceived(src, meshMessage)
                 handleMessageReceived(src, meshMessage)
             }
+
+            override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
+                Timber.w("onMeshMessageProcessed(): We do not really do anything about: $meshMessage, should we?")
+            }
+
+            override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
+                Timber.w("onBlockAcknowledgementProcessed(): We do not really do anything about: $message, should we?")
+            }
+
+            override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
+                Timber.w("onBlockAcknowledgementReceived(): We do not really do anything about: $message, should we?")
+            }
         })
     }
 
