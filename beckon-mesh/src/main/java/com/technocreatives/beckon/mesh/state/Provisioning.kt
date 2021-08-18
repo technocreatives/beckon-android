@@ -71,7 +71,7 @@ class Provisioning(
                     inviteEmitter.complete(meshNode.right())
                 }
                 else -> {
-                    Timber.d("Unprocess state: $state")
+                    Timber.d("Unprocessed state: $state")
                 }
             }
         }
@@ -95,8 +95,9 @@ class Provisioning(
             data: ByteArray?
         ) {
             Timber.d("onProvisioningCompleted: ${meshNode.nodeName} $state");
+            Timber.d("onProvisioningCompleted: ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}");
             provisioningEmitter.complete(meshNode.right())
-            GlobalScope.launch {
+            beckonMesh.run {
                 meshApi.updateNodes()
             }
         }
@@ -110,7 +111,7 @@ class Provisioning(
             override fun onMeshPduCreated(pdu: ByteArray) {
                 Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
                 beckonDevice?.let { bd ->
-                    GlobalScope.launch {
+                    beckonMesh.run {
                         with(meshApi) {
                             bd.sendPdu(pdu, MeshConstants.proxyDataInCharacteristic).fold(
                                 { Timber.w("SendPdu error: $it") },
@@ -127,7 +128,7 @@ class Provisioning(
             override fun sendProvisioningPdu(meshNode: UnprovisionedMeshNode, pdu: ByteArray) {
                 Timber.d("sendPdu - sendProvisioningPdu - ${pdu.size}")
                 beckonDevice?.let { bd ->
-                    GlobalScope.launch {
+                    beckonMesh.run {
                         with(meshApi) {
                             bd.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic).fold(
                                 { Timber.w("SendPdu error: $it") },
@@ -242,7 +243,7 @@ class Provisioning(
         when (meshMessage.opCode) {
             ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt() -> {
                 Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
-                GlobalScope.launch {
+                beckonMesh.run {
                     // TODO delay
                     delay(500)
 
@@ -256,7 +257,7 @@ class Provisioning(
             ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
                 val status = meshMessage as ConfigDefaultTtlStatus
                 Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
-                GlobalScope.launch {
+                beckonMesh.run {
                     // TODO delay
                     delay(1500)
                     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
@@ -268,7 +269,7 @@ class Provisioning(
             }
             ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS -> {
                 Timber.d("onMessageReceived CONFIG_NETWORK_TRANSMIT_STATUS")
-                GlobalScope.launch {
+                beckonMesh.run {
                     // TODO delay global
                     delay(1500)
                     val index: Int = node.addedNetKeys!!.get(0)!!.index
@@ -286,8 +287,8 @@ class Provisioning(
                 exchangeKeysEmitter.complete(node.right())
             }
             else -> {
-                exchangeKeysEmitter.complete(Unit.left())
                 Timber.d("onMessageReceived other message when provisioning $src, $meshMessage")
+                exchangeKeysEmitter.complete(Unit.left())
             }
         }
     }

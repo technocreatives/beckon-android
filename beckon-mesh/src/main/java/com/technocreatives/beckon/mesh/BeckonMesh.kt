@@ -91,6 +91,9 @@ class BeckonMesh(
         meshApi.close()
     }
 
+    fun run(f: suspend () -> Unit) =
+        launch { f() }
+
     suspend fun scanForProvisioning(): Flow<Either<ScanError, List<UnprovisionedScanResult>>> {
         return scan(scanSetting(MeshConstants.MESH_PROVISIONING_SERVICE_UUID))
             .mapZ { it.mapNotNull { it.toUnprovisionedScanResult(meshApi) } }
@@ -111,8 +114,7 @@ class BeckonMesh(
         characteristic: Characteristic
     ): Either<BeckonError, BeckonDevice> =
         either {
-            val descriptor = Descriptor()
-            val beckonDevice = beckonClient.connect(macAddress, descriptor).bind()
+            val beckonDevice = beckonClient.connect(macAddress).bind()
             val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
             beckonDevice.subscribe(characteristic).bind()
             with(meshApi) {

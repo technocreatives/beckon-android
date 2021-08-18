@@ -63,7 +63,7 @@ interface BeckonClient {
    * */
     suspend fun connect(
         macAddress: MacAddress,
-        descriptor: Descriptor
+        descriptor: Descriptor = Descriptor()
     ): Either<ConnectionError, BeckonDevice>
 
     /*

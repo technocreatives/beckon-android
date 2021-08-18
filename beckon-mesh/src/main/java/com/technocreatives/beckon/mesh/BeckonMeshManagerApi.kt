@@ -42,7 +42,7 @@ class BeckonMeshManagerApi(
 
 
     override fun createMeshPdu(dst: Int, meshMessage: MeshMessage) {
-        Timber.w("createMeshPdu dst: $dst, meshMessage: $meshMessage")
+        Timber.w("createMeshPdu dst: $dst, meshMessage: ${meshMessage.javaClass}: ${meshMessage.message}")
         super.createMeshPdu(dst, meshMessage)
     }
 
