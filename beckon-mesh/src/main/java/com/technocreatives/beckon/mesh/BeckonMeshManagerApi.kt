@@ -26,8 +26,8 @@ class BeckonMeshManagerApi(
     private val job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
-    private val nodesSubject = MutableSharedFlow<List<Node>>()
-    fun nodes(): Flow<List<Node>> = nodesSubject.asSharedFlow()
+    private val nodesSubject = MutableStateFlow<List<Node>>(emptyList())
+    fun nodes(): Flow<List<Node>> = nodesSubject.asStateFlow()
 
     fun loadNodes(): List<Node> {
         // todo background thread maybe?
