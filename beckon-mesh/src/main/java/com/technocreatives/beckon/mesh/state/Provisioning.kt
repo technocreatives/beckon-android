@@ -207,7 +207,7 @@ class Provisioning(
                     meshApi.findProxyDevice(it.scanRecord!!, meshNode) { beckonMesh.stopScan() }
                 }
             }.filterZ { it != null }
-            .mapEither { beckonMesh.connectForProxy(it!!) }
+            .mapEither { beckonMesh.connectForProxy(it!!.macAddress) }
             .first()
             .tap {
                 beckonDevice = it

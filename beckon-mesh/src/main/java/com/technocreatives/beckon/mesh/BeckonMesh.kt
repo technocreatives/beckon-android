@@ -109,15 +109,15 @@ class BeckonMesh(
             .mapZ { it.mapNotNull { it.toUnprovisionedScanResult(meshApi) } }
     }
 
-    internal suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> {
+    suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> {
         return scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
     }
 
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
         meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic)
 
-    suspend fun connectForProxy(scanResult: ScanResult): Either<BeckonError, BeckonDevice> =
-        meshConnect(scanResult.macAddress, MeshConstants.proxyDataOutCharacteristic)
+    suspend fun connectForProxy(macAddress: MacAddress): Either<BeckonError, BeckonDevice> =
+        meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic)
 
     private suspend fun meshConnect(
         macAddress: MacAddress,
