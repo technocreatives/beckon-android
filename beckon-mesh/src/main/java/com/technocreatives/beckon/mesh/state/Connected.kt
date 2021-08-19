@@ -9,8 +9,10 @@ import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.model.AppKey
+import com.technocreatives.beckon.mesh.model.Element
 import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.VendorModel
+import no.nordicsemi.android.mesh.transport.ConfigModelAppBind
 import no.nordicsemi.android.mesh.transport.VendorModelMessageAcked
 
 class Connected(
@@ -32,8 +34,14 @@ class Connected(
         loaded
     }
 
-    suspend fun bindAppKeyToVendorModel(): Either<Any, Unit> {
-
+    suspend fun bindAppKeyToVendorModel(
+        node: Node,
+        appKey: AppKey,
+        element: Element,
+        vendorModel: VendorModel,
+    ): Either<Any, Unit> {
+        val message = ConfigModelAppBind(element.address, vendorModel.modelId, 0)
+        meshApi.createMeshPdu(node.unicastAddress, message)
         TODO()
     }
 

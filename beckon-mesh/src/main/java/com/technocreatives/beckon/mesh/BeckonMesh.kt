@@ -11,8 +11,7 @@ import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
-import com.technocreatives.beckon.mesh.model.Node
-import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
+import com.technocreatives.beckon.mesh.model.*
 import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.state.Loaded
 import com.technocreatives.beckon.mesh.state.MeshState
@@ -46,6 +45,16 @@ class BeckonMesh(
     }
 
     fun nodes(): Flow<List<Node>> = meshApi.nodes()
+
+    fun appKeys(): List<AppKey> =
+        meshApi.meshNetwork().appKeys.map { AppKey(it) }
+
+    fun networkKeys(): List<NetworkKey> =
+        meshApi.meshNetwork().netKeys.map { NetworkKey(it) }
+
+    fun groups(): List<Group> =
+        meshApi.meshNetwork().groups.map { Group(it) }
+
 
     suspend fun updateState(state: MeshState) {
         currentState.update { state }

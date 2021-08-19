@@ -11,6 +11,8 @@ import com.technocreatives.beckon.SplitPackage
 import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.writeSplit
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
+import com.technocreatives.beckon.mesh.model.AppKey
+import com.technocreatives.beckon.mesh.model.Group
 import com.technocreatives.beckon.mesh.model.Node
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -19,6 +21,7 @@ import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
+import com.technocreatives.beckon.mesh.model.NetworkKey as BeckonNetworkKey
 
 class BeckonMeshManagerApi(
     context: Context,
@@ -35,12 +38,20 @@ class BeckonMeshManagerApi(
         return meshNetwork().nodes.map { Node(it) }
     }
 
+    fun appKeys(): List<AppKey> =
+        meshNetwork().appKeys.map { AppKey(it) }
+
+    fun networkKeys(): List<BeckonNetworkKey> =
+        meshNetwork().netKeys.map { BeckonNetworkKey(it) }
+
+    fun groups(): List<Group> =
+        meshNetwork().groups.map { Group(it) }
+
     suspend fun updateNodes() {
         nodesSubject.emit(loadNodes())
     }
 
-    private fun meshNetwork(): MeshNetwork = meshNetwork!!
-
+    internal fun meshNetwork(): MeshNetwork = meshNetwork!!
 
     override fun createMeshPdu(dst: Int, meshMessage: MeshMessage) {
         Timber.w("createMeshPdu dst: $dst, sequenceNumber: ${meshMessage.sequenceNumber()}")

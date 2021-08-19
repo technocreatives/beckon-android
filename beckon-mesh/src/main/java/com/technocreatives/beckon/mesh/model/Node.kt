@@ -14,4 +14,7 @@ class Node(private val node: ProvisionedMeshNode) {
     val name = node.nodeName
 
     val versionIdentifier get() = node.versionIdentifier
+
+    val appKeys get() = node.addedAppKeys.map { NodeAppKey(it) }
+    val netKeys get() = node.addedNetKeys.map { NodeNetworkKey(it) }
 }

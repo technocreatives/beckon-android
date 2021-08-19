@@ -2,5 +2,6 @@ package com.technocreatives.beckon.mesh.model
 
 import no.nordicsemi.android.mesh.transport.MeshModel as NrfMeshModel
 
-class MeshModel(val modele: NrfMeshModel) {
+// TODO sealed meshModel
+class MeshModel(val model: NrfMeshModel) {
 }
