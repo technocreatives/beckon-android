@@ -18,9 +18,7 @@ import com.technocreatives.beckon.mesh.state.MeshState
 import com.technocreatives.beckon.mesh.state.Provisioning
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 import no.nordicsemi.android.mesh.MeshNetwork
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
@@ -34,12 +32,14 @@ class BeckonMesh(
     private val job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
-    private val stateSubject = MutableSharedFlow<MeshState>()
-
+    // TODO Do we really need currentState? We can use stateSubject.value? Do we want Atomic?
+    private lateinit var stateSubject: MutableStateFlow<MeshState>
     private lateinit var currentState: Atomic<MeshState>
 
     private suspend fun initState() {
-        currentState = Atomic.invoke(Loaded(this, meshApi))
+        val initialState = Loaded(this, meshApi)
+        currentState = Atomic.invoke(initialState)
+        stateSubject = MutableStateFlow(initialState)
     }
 
     init {
@@ -65,11 +65,12 @@ class BeckonMesh(
     }
 
     suspend fun updateState(state: MeshState) {
+        Timber.d("updateState $state")
         currentState.update { state }
         stateSubject.emit(state)
     }
 
-    fun states(): Flow<MeshState> = stateSubject.asSharedFlow()
+    fun states(): Flow<MeshState> = stateSubject.asStateFlow()
     suspend fun currentState(): MeshState = currentState.get()
 
     suspend fun startProvisioning(): Either<IllegalMeshStateError, Provisioning> {
