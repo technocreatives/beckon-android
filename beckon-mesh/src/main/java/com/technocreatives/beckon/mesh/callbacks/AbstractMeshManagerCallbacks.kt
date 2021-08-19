@@ -1,6 +1,5 @@
 package com.technocreatives.beckon.mesh.callbacks
 
-import com.technocreatives.beckon.BeckonDevice
 import no.nordicsemi.android.mesh.MeshManagerCallbacks
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
@@ -23,7 +22,7 @@ abstract class AbstractMeshManagerCallbacks : MeshManagerCallbacks {
         TODO("Not yet implemented")
     }
 
-    override fun onNetworkUpdated(meshNetwork: MeshNetwork?) {
+    override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
         TODO("Not yet implemented")
     }
 
@@ -38,8 +37,4 @@ abstract class AbstractMeshManagerCallbacks : MeshManagerCallbacks {
     override fun getMtu(): Int {
         TODO("Not yet implemented")
     }
-}
-
-class ConnectedCallbacks(val beckonDevice: BeckonDevice): AbstractMeshManagerCallbacks() {
-
 }

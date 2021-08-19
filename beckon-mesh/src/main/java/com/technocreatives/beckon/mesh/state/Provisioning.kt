@@ -20,10 +20,8 @@ import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.MeshProvisioningStatusCallbacks
@@ -95,7 +93,7 @@ class Provisioning(
             Timber.d("onProvisioningCompleted: ${meshNode.nodeName} $state");
             Timber.d("onProvisioningCompleted: ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}");
             provisioningEmitter.complete(meshNode.right())
-            beckonMesh.run {
+            beckonMesh.execute {
                 meshApi.updateNodes()
             }
         }
@@ -109,7 +107,7 @@ class Provisioning(
             override fun onMeshPduCreated(pdu: ByteArray) {
                 Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
                 beckonDevice?.let { bd ->
-                    beckonMesh.run {
+                    beckonMesh.execute {
                         with(meshApi) {
                             bd.sendPdu(pdu, MeshConstants.proxyDataInCharacteristic).fold(
                                 { Timber.w("SendPdu error: $it") },
@@ -120,13 +118,15 @@ class Provisioning(
                 }
             }
 
-            override fun onNetworkUpdated(meshNetwork: MeshNetwork?) {
+            override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
+                Timber.d("onNetworkUpdated")
+                meshApi.loadNodes()
             }
 
             override fun sendProvisioningPdu(meshNode: UnprovisionedMeshNode, pdu: ByteArray) {
                 Timber.d("sendPdu - sendProvisioningPdu - ${pdu.size}")
                 beckonDevice?.let { bd ->
-                    beckonMesh.run {
+                    beckonMesh.execute {
                         with(meshApi) {
                             bd.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic).fold(
                                 { Timber.w("SendPdu error: $it") },
@@ -241,7 +241,7 @@ class Provisioning(
         when (meshMessage.opCode) {
             ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt() -> {
                 Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
-                beckonMesh.run {
+                beckonMesh.execute {
                     // TODO delay
                     delay(500)
 
@@ -255,7 +255,7 @@ class Provisioning(
             ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
                 val status = meshMessage as ConfigDefaultTtlStatus
                 Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
-                beckonMesh.run {
+                beckonMesh.execute {
                     // TODO delay
                     delay(1500)
                     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
@@ -267,7 +267,7 @@ class Provisioning(
             }
             ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS -> {
                 Timber.d("onMessageReceived CONFIG_NETWORK_TRANSMIT_STATUS")
-                beckonMesh.run {
+                beckonMesh.execute {
                     // TODO delay global
                     delay(1500)
                     val index: Int = node.addedNetKeys!!.get(0)!!.index

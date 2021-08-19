@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
 class BeckonMesh(
@@ -100,7 +101,7 @@ class BeckonMesh(
         meshApi.close()
     }
 
-    fun run(f: suspend () -> Unit) =
+    fun <T> execute(f: suspend () -> T) =
         launch { f() }
 
     suspend fun scanForProvisioning(): Flow<Either<ScanError, List<UnprovisionedScanResult>>> {
@@ -132,5 +133,10 @@ class BeckonMesh(
             beckonDevice
         }
 
-}
+    internal fun BeckonDevice.sendPdu(
+        pdu: ByteArray,
+        characteristic: Characteristic
+    ): Either<BeckonActionError, Unit> =
+        sendPdu(pdu, characteristic)
 
+}
