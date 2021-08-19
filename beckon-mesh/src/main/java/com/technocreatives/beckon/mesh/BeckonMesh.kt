@@ -21,6 +21,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import no.nordicsemi.android.mesh.MeshNetwork
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
@@ -34,7 +35,9 @@ class BeckonMesh(
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
     private val stateSubject = MutableSharedFlow<MeshState>()
+
     private lateinit var currentState: Atomic<MeshState>
+
     private suspend fun initState() {
         currentState = Atomic.invoke(Loaded(this, meshApi))
     }
@@ -56,6 +59,10 @@ class BeckonMesh(
     fun groups(): List<Group> =
         meshApi.meshNetwork().groups.map { Group(it) }
 
+    fun createGroup(name: String, address: Int): Group? {
+        val network = meshApi.meshNetwork()
+        return network.createGroup(network.selectedProvisioner, address, name)?.let { Group(it) }
+    }
 
     suspend fun updateState(state: MeshState) {
         currentState.update { state }

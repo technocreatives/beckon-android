@@ -34,4 +34,5 @@ class BeckonMeshClient(val context: Context, val beckonClient: BeckonClient) {
         meshApi.updateNodes()
         BeckonMesh(context, beckonClient, meshApi)
     }
+
 }

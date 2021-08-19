@@ -8,15 +8,11 @@ import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.model.AppKey
+import com.technocreatives.beckon.mesh.model.*
 import com.technocreatives.beckon.mesh.model.Element
-import com.technocreatives.beckon.mesh.model.Node
-import com.technocreatives.beckon.mesh.model.VendorModel
+import com.technocreatives.beckon.mesh.model.MeshModel
 import no.nordicsemi.android.mesh.MeshNetwork
-import no.nordicsemi.android.mesh.transport.ConfigModelAppBind
-import no.nordicsemi.android.mesh.transport.ControlMessage
-import no.nordicsemi.android.mesh.transport.MeshMessage
-import no.nordicsemi.android.mesh.transport.VendorModelMessageAcked
+import no.nordicsemi.android.mesh.transport.*
 import timber.log.Timber
 
 class Connected(
@@ -76,6 +72,31 @@ class Connected(
         return meshApi.createPdu(node.unicastAddress, message)
     }
 
+    // Todo group vs virtual address
+    fun subscribe(
+        group: Group,
+        node: Node,
+        element: Element,
+        model: VendorModel,
+    ): Either<CreateMeshPduError, Unit> {
+        val addressLabel = group.addressLabel
+        return if (addressLabel == null) {
+            meshApi.createPdu(
+                node.unicastAddress,
+                ConfigModelSubscriptionAdd(element.address, group.address, model.modelId)
+            )
+        } else {
+            meshApi.createPdu(
+                node.unicastAddress,
+                ConfigModelSubscriptionVirtualAddressAdd(
+                    element.address,
+                    addressLabel,
+                    model.modelId
+                )
+            )
+        }
+    }
+
     // all other features
     init {
 //        beckonDevice.connectionStates()
@@ -112,11 +133,13 @@ class ConnectedMeshManagerCallbacks(
     }
 }
 
+
 class ConnectedMessageStatusCallbacks(
     private val beckonDevice: BeckonDevice,
     private val beckonMesh: BeckonMesh,
     meshApi: BeckonMeshManagerApi,
 ) : AbstractMessageStatusCallbacks(meshApi) {
+    // verify message onMeshMessageReceived
     override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
         super.onMeshMessageReceived(src, meshMessage)
         Timber.w("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}")
