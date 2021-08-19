@@ -10,6 +10,7 @@ import com.technocreatives.beckon.Characteristic
 import com.technocreatives.beckon.SplitPackage
 import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.writeSplit
+import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.Node
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -42,7 +43,7 @@ class BeckonMeshManagerApi(
 
 
     override fun createMeshPdu(dst: Int, meshMessage: MeshMessage) {
-        Timber.w("createMeshPdu dst: $dst, meshMessage: ${meshMessage.javaClass}: ${meshMessage.message}")
+        Timber.w("createMeshPdu dst: $dst, sequenceNumber: ${meshMessage.sequenceNumber()}")
         super.createMeshPdu(dst, meshMessage)
     }
 

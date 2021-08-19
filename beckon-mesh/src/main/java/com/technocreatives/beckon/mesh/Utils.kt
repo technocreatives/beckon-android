@@ -55,3 +55,11 @@ fun scanSetting(serviceUUID: UUID): ScannerSetting {
         useFilter = false
     )
 }
+
+fun ByteArray.littleEndianConversion(): Int {
+    var result = 0
+    for (i in indices) {
+        result = result or (this[i].toInt() shl 8 * i)
+    }
+    return result
+}

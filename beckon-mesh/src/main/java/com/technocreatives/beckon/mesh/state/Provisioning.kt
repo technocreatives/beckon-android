@@ -8,14 +8,12 @@ import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
-import com.technocreatives.beckon.mesh.BeckonMesh
-import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
-import com.technocreatives.beckon.mesh.MeshConstants
-import com.technocreatives.beckon.mesh.ProvisioningError
+import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.findProxyDevice
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
+import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.util.filterZ
@@ -147,20 +145,20 @@ class Provisioning(
         meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {
             override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
                 super.onMeshMessageReceived(src, meshMessage)
-                Timber.w("onMeshMessageReceived - src: $src, meshMessage: $meshMessage")
+                Timber.w("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}")
                 handleMessageReceived(src, meshMessage)
             }
 
             override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
-                Timber.w("onMeshMessageProcessed - src: $dst, meshMessage: $meshMessage")
+                Timber.w("onMeshMessageProcessed - src: $dst, dst: ${meshMessage.dst},  sequenceNumber: ${meshMessage.sequenceNumber()}")
             }
 
             override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementProcessed - dst: $dst, message: $message")
+                Timber.w("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.littleEndianConversion()}")
             }
 
             override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementReceived - src: $src, message: $message")
+                Timber.w("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.littleEndianConversion()}")
             }
         })
     }
