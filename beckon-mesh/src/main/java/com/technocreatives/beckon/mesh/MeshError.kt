@@ -21,3 +21,9 @@ sealed class ProvisioningError : MeshError {
     object NoAvailableUnicastAddress : ProvisioningError()
     object NoAllocatedUnicastRange : ProvisioningError()
 }
+
+sealed class CreateMeshPduError: MeshError {
+    data class InvalidAddress(val dst: Int): CreateMeshPduError()
+    object LabelUuidUnavailable : CreateMeshPduError()
+    object ProvisionerAddressNotSet : CreateMeshPduError()
+}

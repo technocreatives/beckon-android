@@ -4,6 +4,8 @@ import android.content.Context
 import arrow.core.Either
 import arrow.core.computations.either
 import arrow.core.identity
+import arrow.core.left
+import arrow.core.right
 import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.Characteristic
@@ -18,8 +20,12 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import no.nordicsemi.android.mesh.MeshManagerApi
 import no.nordicsemi.android.mesh.MeshNetwork
+import no.nordicsemi.android.mesh.Provisioner
 import no.nordicsemi.android.mesh.transport.MeshMessage
+import no.nordicsemi.android.mesh.utils.MeshAddress
 import timber.log.Timber
+import java.lang.IllegalArgumentException
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 import com.technocreatives.beckon.mesh.model.NetworkKey as BeckonNetworkKey
 
@@ -53,9 +59,13 @@ class BeckonMeshManagerApi(
 
     internal fun meshNetwork(): MeshNetwork = meshNetwork!!
 
-    override fun createMeshPdu(dst: Int, meshMessage: MeshMessage) {
+    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<CreateMeshPduError, Unit> {
         Timber.w("createMeshPdu dst: $dst, sequenceNumber: ${meshMessage.sequenceNumber()}")
-        super.createMeshPdu(dst, meshMessage)
+        return try {
+            createMeshPdu(dst, meshMessage).right()
+        } catch (ex: IllegalArgumentException) {
+            ex.createMeshPduError(dst).left()
+        }
     }
 
     suspend fun BeckonDevice.sendPdu(
@@ -95,3 +105,12 @@ class BeckonMeshManagerApi(
         job.cancel()
     }
 }
+
+private fun IllegalArgumentException.createMeshPduError(dst: Int) =
+    when (message) {
+        "Invalid address, destination address must be a valid 16-bit value." -> CreateMeshPduError.InvalidAddress(
+            dst
+        )
+        "Label UUID unavailable for the virtual address provided" -> CreateMeshPduError.LabelUuidUnavailable
+        else -> CreateMeshPduError.ProvisionerAddressNotSet
+    }

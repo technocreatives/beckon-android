@@ -2,10 +2,10 @@ package com.technocreatives.beckon.mesh.state
 
 import arrow.core.Either
 import arrow.core.computations.either
-import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
+import com.technocreatives.beckon.mesh.CreateMeshPduError
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.model.AppKey
@@ -22,7 +22,6 @@ class Connected(
 ) : MeshState(beckonMesh, meshApi) {
 
     init {
-
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {})
         meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {})
     }
@@ -34,24 +33,23 @@ class Connected(
         loaded
     }
 
-    suspend fun bindAppKeyToVendorModel(
+    fun bindAppKeyToVendorModel(
         node: Node,
         appKey: AppKey,
         element: Element,
         vendorModel: VendorModel,
-    ): Either<Any, Unit> {
-        val message = ConfigModelAppBind(element.address, vendorModel.modelId, 0)
-        meshApi.createMeshPdu(node.unicastAddress, message)
-        TODO()
+    ): Either<CreateMeshPduError, Unit> {
+        val message = ConfigModelAppBind(element.address, vendorModel.modelId, appKey.keyIndex)
+        return meshApi.createPdu(node.unicastAddress, message)
     }
 
-    suspend fun sendVendorModelMessageAck(
+    fun sendVendorModelMessageAck(
         node: Node,
         appKey: AppKey,
         vendorModel: VendorModel,
         opCode: Int,
         parameters: ByteArray
-    ): Either<Any, Unit> {
+    ): Either<CreateMeshPduError, Unit> {
         val message = VendorModelMessageAcked(
             appKey.applicationKey,
             vendorModel.modelId,
@@ -59,13 +57,11 @@ class Connected(
             opCode,
             parameters
         )
-        meshApi.createMeshPdu(node.unicastAddress, message)
-        return Unit.right()
+        return meshApi.createPdu(node.unicastAddress, message)
     }
 
     // all other features
     init {
-        beckonDevice.connectionStates()
+//        beckonDevice.connectionStates()
     }
-
 }
