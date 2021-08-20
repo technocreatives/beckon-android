@@ -189,14 +189,14 @@ class Provisioning(
         return inviteEmitter.await()
     }
 
-    suspend fun startProvisioning(unprovisionedMeshNode: UnprovisionedNode): Either<ProvisioningError, Node> {
-        Timber.d("startProvisioning ${unprovisionedMeshNode.node.deviceUuid}")
-        meshApi.nextAvailableUnicastAddress(unprovisionedMeshNode.node).fold({
+    suspend fun startProvisioning(unprovisionedNode: UnprovisionedNode): Either<ProvisioningError, Node> {
+        Timber.d("startProvisioning ${unprovisionedNode.node.deviceUuid}")
+        meshApi.nextAvailableUnicastAddress(unprovisionedNode.node).fold({
             provisioningEmitter.complete(
                 it.left()
             )
         }, { unicast = it })
-        meshApi.startProvisioning(unprovisionedMeshNode.node)
+        meshApi.startProvisioning(unprovisionedNode.node)
         return provisioningEmitter.await()
     }
 
