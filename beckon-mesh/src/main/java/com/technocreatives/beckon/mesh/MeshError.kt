@@ -27,3 +27,7 @@ sealed class CreateMeshPduError: MeshError {
     object LabelUuidUnavailable : CreateMeshPduError()
     object ProvisionerAddressNotSet : CreateMeshPduError()
 }
+
+sealed class SendMeshMessageError: MeshError {
+
+}

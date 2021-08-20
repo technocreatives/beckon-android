@@ -10,7 +10,6 @@ import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.*
 import com.technocreatives.beckon.mesh.model.Element
-import com.technocreatives.beckon.mesh.model.MeshModel
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.*
 import timber.log.Timber
@@ -150,11 +149,11 @@ class ConnectedMessageStatusCallbacks(
     }
 
     override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-        Timber.w("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.littleEndianConversion()}")
+        Timber.w("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.toInt()}")
     }
 
     override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-        Timber.w("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.littleEndianConversion()}")
+        Timber.w("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
     }
 
     override fun onTransactionFailed(dst: Int, hasIncompleteTimerExpired: Boolean) {

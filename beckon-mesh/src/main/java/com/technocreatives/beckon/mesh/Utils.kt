@@ -9,6 +9,7 @@ import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
 import no.nordicsemi.android.mesh.transport.ControlMessage
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
+import no.nordicsemi.android.mesh.utils.MeshParserUtils
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import java.util.*
 
@@ -56,10 +57,10 @@ fun scanSetting(serviceUUID: UUID): ScannerSetting {
     )
 }
 
-fun ByteArray.littleEndianConversion(): Int {
-    var result = 0
-    for (i in indices) {
-        result = result or (this[i].toInt() shl 8 * i)
-    }
-    return result
+fun ByteArray.toInt(): Int {
+    return MeshParserUtils.convert24BitsToInt(this)
+}
+
+fun ByteArray.info(): String {
+    return map { it.toString() }.foldRight("") {a, b -> "$a $b"}
 }

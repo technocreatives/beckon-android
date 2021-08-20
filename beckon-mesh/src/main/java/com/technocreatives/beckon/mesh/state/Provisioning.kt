@@ -14,6 +14,8 @@ import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.findProxyDevice
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
+import com.technocreatives.beckon.mesh.model.Node
+import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.util.filterZ
@@ -33,6 +35,7 @@ import no.nordicsemi.android.mesh.transport.*
 import timber.log.Timber
 
 // provisioning phase
+// TODO remove failed provisioning device to avoid conflict unicast address
 class Provisioning(
     beckonMesh: BeckonMesh,
     meshApi: BeckonMeshManagerApi,
@@ -40,13 +43,13 @@ class Provisioning(
 ) : MeshState(beckonMesh, meshApi) {
 
     private val inviteEmitter =
-        CompletableDeferred<Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode>>()
+        CompletableDeferred<Either<ProvisioningError.ProvisioningFailed, UnprovisionedNode>>()
 
     private val provisioningEmitter =
-        CompletableDeferred<Either<ProvisioningError, ProvisionedMeshNode>>()
+        CompletableDeferred<Either<ProvisioningError, Node>>()
 
     private val exchangeKeysEmitter =
-        CompletableDeferred<Either<Unit, ProvisionedMeshNode>>()
+        CompletableDeferred<Either<Unit, Node>>()
 
     private var unicast = -1
 
@@ -64,7 +67,7 @@ class Provisioning(
             accumulatedStates = accumulatedStates + state
             when (state) {
                 ProvisioningState.States.PROVISIONING_CAPABILITIES -> {
-                    inviteEmitter.complete(meshNode.right())
+                    inviteEmitter.complete(UnprovisionedNode(meshNode).right())
                 }
                 else -> {
                     Timber.d("Unprocessed state: $state")
@@ -90,9 +93,9 @@ class Provisioning(
             state: ProvisioningState.States,
             data: ByteArray?
         ) {
-            Timber.d("onProvisioningCompleted: ${meshNode.nodeName} $state");
-            Timber.d("onProvisioningCompleted: ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}");
-            provisioningEmitter.complete(meshNode.right())
+            Timber.d("onProvisioningCompleted: ${meshNode.nodeName} $state")
+            Timber.d("onProvisioningCompleted: ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}")
+            provisioningEmitter.complete(Node(meshNode).right())
             beckonMesh.execute {
                 meshApi.updateNodes()
             }
@@ -105,7 +108,7 @@ class Provisioning(
         meshApi.setProvisioningStatusCallbacks(provisioningStatusCallbacks)
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
             override fun onMeshPduCreated(pdu: ByteArray) {
-                Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
+                Timber.d("sendPdu - onMeshPduCreated - ${pdu.info()}")
                 beckonDevice?.let { bd ->
                     beckonMesh.execute {
                         with(meshApi) {
@@ -145,20 +148,20 @@ class Provisioning(
         meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {
             override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
                 super.onMeshMessageReceived(src, meshMessage)
-                Timber.w("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}")
+                Timber.w("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}, instance: ${meshMessage.javaClass}")
                 handleMessageReceived(src, meshMessage)
             }
 
             override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
-                Timber.w("onMeshMessageProcessed - src: $dst, dst: ${meshMessage.dst},  sequenceNumber: ${meshMessage.sequenceNumber()}")
+                Timber.w("onMeshMessageProcessed - src: ${meshMessage.src}, dst: $dst,  sequenceNumber: ${meshMessage.sequenceNumber()}")
             }
 
             override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.littleEndianConversion()}")
+                Timber.w("onBlockAcknowledgementProcessed - src: ${message.src}, dst: $dst, sequenceNumber: ${message.sequenceNumber.toInt()}")
             }
 
             override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.littleEndianConversion()}")
+                Timber.w("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
             }
         })
     }
@@ -181,30 +184,28 @@ class Provisioning(
     suspend fun identify(
         scanResult: UnprovisionedScanResult,
         attentionTimer: Int
-    ): Either<ProvisioningError.ProvisioningFailed, UnprovisionedMeshNode> {
+    ): Either<ProvisioningError.ProvisioningFailed, UnprovisionedNode> {
         meshApi.identifyNode(scanResult.uuid, attentionTimer)
         return inviteEmitter.await()
     }
 
-    suspend fun startProvisioning(unprovisionedMeshNode: UnprovisionedMeshNode): Either<ProvisioningError, ProvisionedMeshNode> {
-        Timber.d("startProvisioning ${unprovisionedMeshNode.deviceUuid}")
-        meshApi.nextAvailableUnicastAddress(unprovisionedMeshNode).fold({
+    suspend fun startProvisioning(unprovisionedMeshNode: UnprovisionedNode): Either<ProvisioningError, Node> {
+        Timber.d("startProvisioning ${unprovisionedMeshNode.node.deviceUuid}")
+        meshApi.nextAvailableUnicastAddress(unprovisionedMeshNode.node).fold({
             provisioningEmitter.complete(
                 it.left()
             )
         }, { unicast = it })
-        meshApi.startProvisioning(unprovisionedMeshNode)
+        meshApi.startProvisioning(unprovisionedMeshNode.node)
         return provisioningEmitter.await()
     }
 
-    suspend fun scanAndConnect(
-        meshNode: ProvisionedMeshNode
-    ): Either<BeckonError, BeckonDevice> {
+    suspend fun scanAndConnect(node: Node): Either<BeckonError, BeckonDevice> {
         // TODO Won't stop if we don't find device?
         return beckonMesh.scanForProxy()
             .mapZ {
                 it.firstOrNull {
-                    meshApi.findProxyDevice(it.scanRecord!!, meshNode) { beckonMesh.stopScan() }
+                    meshApi.findProxyDevice(it.scanRecord!!, node.node) { beckonMesh.stopScan() }
                 }
             }.filterZ { it != null }
             .mapEither { beckonMesh.connectForProxy(it!!.macAddress) }
@@ -216,9 +217,10 @@ class Provisioning(
 
     suspend fun exchangeKeys(
         beckonDevice: BeckonDevice,
-        node: ProvisionedMeshNode
-    ): Either<Unit, ProvisionedMeshNode> {
+        node: Node
+    ): Either<Unit, Node> {
         val compositionDataGet = ConfigCompositionDataGet()
+        Timber.d("createMeshPdu ConfigCompositionDataGet ${node.sequenceNumber}")
         meshApi.createMeshPdu(node.unicastAddress, compositionDataGet)
         return exchangeKeysEmitter.await().tap {
             beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
@@ -233,7 +235,7 @@ class Provisioning(
     @SuppressLint("RestrictedApi")
     fun handleMessageReceived(src: Int, meshMessage: MeshMessage) {
         if (src != unicast) {
-            Timber.w("the received message src is not our current provisioning device")
+            Timber.w("onMessageReceived src is not our current provisioning device")
             return
         }
         val meshNetwork = meshApi.meshNetwork!!
@@ -246,6 +248,7 @@ class Provisioning(
                     delay(500)
 
                     val configDefaultTtlGet = ConfigDefaultTtlGet()
+                    Timber.d("createMeshPdu ConfigDefaultTtlGet ${node.sequenceNumber}")
                     meshApi.createMeshPdu(
                         node.unicastAddress,
                         configDefaultTtlGet
@@ -259,6 +262,7 @@ class Provisioning(
                     // TODO delay
                     delay(1500)
                     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+                    Timber.d("createMeshPdu ConfigNetworkTransmitSet ${node.sequenceNumber}")
                     meshApi.createMeshPdu(
                         node.unicastAddress,
                         networkTransmitSet
@@ -273,6 +277,7 @@ class Provisioning(
                     val index: Int = node.addedNetKeys!!.get(0)!!.index
                     val networkKey: NetworkKey = meshNetwork.netKeys[index]
                     val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
+                    Timber.d("createMeshPdu ConfigAppKeyAdd ${node.sequenceNumber}")
                     meshApi.createMeshPdu(
                         node.unicastAddress,
                         configAppKeyAdd
@@ -282,7 +287,7 @@ class Provisioning(
             ConfigMessageOpCodes.CONFIG_APPKEY_STATUS -> {
                 val status = meshMessage as ConfigAppKeyStatus
                 Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: ${status.isSuccessful}")
-                exchangeKeysEmitter.complete(node.right())
+                exchangeKeysEmitter.complete(Node(node).right())
             }
             else -> {
                 Timber.d("onMessageReceived other message when provisioning $src, $meshMessage")
