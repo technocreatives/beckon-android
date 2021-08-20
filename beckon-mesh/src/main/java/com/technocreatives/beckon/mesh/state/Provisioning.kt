@@ -11,9 +11,9 @@ import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
-import com.technocreatives.beckon.mesh.extensions.findProxyDevice
+import com.technocreatives.beckon.mesh.extensions.isProxyDevice
+import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
-import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
@@ -63,7 +63,6 @@ class Provisioning(
             data: ByteArray?
         ) {
             Timber.d("onProvisioningStateChanged: ${meshNode.nodeName} $state, data: ${data?.size}")
-            // todo check provisioning failed state
             accumulatedStates = accumulatedStates + state
             when (state) {
                 ProvisioningState.States.PROVISIONING_CAPABILITIES -> {
@@ -93,8 +92,7 @@ class Provisioning(
             state: ProvisioningState.States,
             data: ByteArray?
         ) {
-            Timber.d("onProvisioningCompleted: ${meshNode.nodeName} $state")
-            Timber.d("onProvisioningCompleted: ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}")
+            Timber.d("onProvisioningCompleted: ${meshNode.nodeName} - $state - ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}")
             provisioningEmitter.complete(Node(meshNode).right())
             beckonMesh.execute {
                 meshApi.updateNodes()
@@ -127,13 +125,13 @@ class Provisioning(
             }
 
             override fun sendProvisioningPdu(meshNode: UnprovisionedMeshNode, pdu: ByteArray) {
-                Timber.d("sendPdu - sendProvisioningPdu - ${pdu.size}")
+                Timber.d("sendPdu - provisioningProcess - ${pdu.size}")
                 beckonDevice?.let { bd ->
                     beckonMesh.execute {
                         with(meshApi) {
                             bd.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic).fold(
-                                { Timber.w("SendPdu error: $it") },
-                                { Timber.d("sendPdu success") }
+                                { Timber.w("SendPdu provisioningProcess error: $it") },
+                                { Timber.d("sendPdu provisioningProcess success") }
                             )
                         }
                     }
@@ -146,22 +144,22 @@ class Provisioning(
         })
 
         meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {
-            override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
-                super.onMeshMessageReceived(src, meshMessage)
-                Timber.w("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}, instance: ${meshMessage.javaClass}")
-                handleMessageReceived(src, meshMessage)
+            override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
+                super.onMeshMessageReceived(src, message)
+                Timber.w("onMeshMessageReceived ${message.info()}")
+                handleMessageReceived(src, message)
             }
 
-            override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
-                Timber.w("onMeshMessageProcessed - src: ${meshMessage.src}, dst: $dst,  sequenceNumber: ${meshMessage.sequenceNumber()}")
+            override fun onMeshMessageProcessed(dst: Int, message: MeshMessage) {
+                Timber.w("onMeshMessageProcessed ${message.info()}")
             }
 
             override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementProcessed - src: ${message.src}, dst: $dst, sequenceNumber: ${message.sequenceNumber.toInt()}")
+                Timber.w("onBlockAcknowledgementProcessed ${message.info()}")
             }
 
             override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-                Timber.w("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
+                Timber.w("onBlockAcknowledgementReceived ${message.info()}")
             }
         })
     }
@@ -205,7 +203,7 @@ class Provisioning(
         return beckonMesh.scanForProxy()
             .mapZ {
                 it.firstOrNull {
-                    meshApi.findProxyDevice(it.scanRecord!!, node.node) { beckonMesh.stopScan() }
+                    meshApi.isProxyDevice(it.scanRecord!!, node.node) { beckonMesh.stopScan() }
                 }
             }.filterZ { it != null }
             .mapEither { beckonMesh.connectForProxy(it!!.macAddress) }
@@ -220,7 +218,7 @@ class Provisioning(
         node: Node
     ): Either<Unit, Node> {
         val compositionDataGet = ConfigCompositionDataGet()
-        Timber.d("createMeshPdu ConfigCompositionDataGet ${node.sequenceNumber}")
+        Timber.d("createMeshPdu ${compositionDataGet.opCode} ${compositionDataGet.info()}")
         meshApi.createMeshPdu(node.unicastAddress, compositionDataGet)
         return exchangeKeysEmitter.await().tap {
             beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
@@ -233,14 +231,14 @@ class Provisioning(
     }
 
     @SuppressLint("RestrictedApi")
-    fun handleMessageReceived(src: Int, meshMessage: MeshMessage) {
+    fun handleMessageReceived(src: Int, message: MeshMessage) {
         if (src != unicast) {
             Timber.w("onMessageReceived src is not our current provisioning device")
             return
         }
         val meshNetwork = meshApi.meshNetwork!!
         val node = meshNetwork.getNode(src)!!
-        when (meshMessage.opCode) {
+        when (message.opCode) {
             ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt() -> {
                 Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
                 beckonMesh.execute {
@@ -248,7 +246,7 @@ class Provisioning(
                     delay(500)
 
                     val configDefaultTtlGet = ConfigDefaultTtlGet()
-                    Timber.d("createMeshPdu ConfigDefaultTtlGet ${node.sequenceNumber}")
+                    Timber.d("createMeshPdu ConfigDefaultTtlGet ${configDefaultTtlGet.info()}")
                     meshApi.createMeshPdu(
                         node.unicastAddress,
                         configDefaultTtlGet
@@ -256,13 +254,13 @@ class Provisioning(
                 }
             }
             ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
-                val status = meshMessage as ConfigDefaultTtlStatus
+                val status = message as ConfigDefaultTtlStatus
                 Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
                 beckonMesh.execute {
                     // TODO delay
                     delay(1500)
                     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
-                    Timber.d("createMeshPdu ConfigNetworkTransmitSet ${node.sequenceNumber}")
+                    Timber.d("createMeshPdu ConfigNetworkTransmitSet ${networkTransmitSet.info()}")
                     meshApi.createMeshPdu(
                         node.unicastAddress,
                         networkTransmitSet
@@ -277,7 +275,7 @@ class Provisioning(
                     val index: Int = node.addedNetKeys!!.get(0)!!.index
                     val networkKey: NetworkKey = meshNetwork.netKeys[index]
                     val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
-                    Timber.d("createMeshPdu ConfigAppKeyAdd ${node.sequenceNumber}")
+                    Timber.d("createMeshPdu ConfigAppKeyAdd ${configAppKeyAdd.info()}")
                     meshApi.createMeshPdu(
                         node.unicastAddress,
                         configAppKeyAdd
@@ -285,12 +283,12 @@ class Provisioning(
                 }
             }
             ConfigMessageOpCodes.CONFIG_APPKEY_STATUS -> {
-                val status = meshMessage as ConfigAppKeyStatus
+                val status = message as ConfigAppKeyStatus
                 Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: ${status.isSuccessful}")
                 exchangeKeysEmitter.complete(Node(node).right())
             }
             else -> {
-                Timber.d("onMessageReceived other message when provisioning $src, $meshMessage")
+                Timber.d("onMessageReceived other message when provisioning $src, $message")
                 exchangeKeysEmitter.complete(Unit.left())
             }
         }

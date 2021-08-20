@@ -24,13 +24,13 @@ abstract class AbstractMessageStatusCallbacks(private val meshApi: BeckonMeshMan
         TODO("Not yet implemented")
     }
 
-    override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
+    override fun onMeshMessageProcessed(dst: Int, message: MeshMessage) {
         TODO("Not yet implemented")
     }
 
     @CallSuper
-    override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
-        if(meshMessage.opCode == CONFIG_NODE_RESET_STATUS) {
+    override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
+        if(message.opCode == CONFIG_NODE_RESET_STATUS) {
             meshApi.loadNodes()
         }
     }

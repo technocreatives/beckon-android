@@ -10,16 +10,18 @@ import arrow.fx.coroutines.Atomic
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
+import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
+import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.*
 import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.state.Loaded
 import com.technocreatives.beckon.mesh.state.MeshState
 import com.technocreatives.beckon.mesh.state.Provisioning
+import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import no.nordicsemi.android.mesh.MeshNetwork
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
@@ -119,6 +121,7 @@ class BeckonMesh(
 
     suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> {
         return scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
     }
 
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =

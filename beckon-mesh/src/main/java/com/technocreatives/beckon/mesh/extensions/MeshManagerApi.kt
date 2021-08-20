@@ -42,7 +42,14 @@ suspend fun MeshManagerApi.nextAvailableUnicastAddress(unprovisionedMeshNode: Un
     return provisioningEmitter.await()
 }
 
-suspend fun MeshManagerApi.findProxyDevice(
+fun MeshManagerApi.isNodeInTheMesh(
+    scanRecord: ScanRecord,
+): Boolean {
+    val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
+    return isAdvertisedWithNodeIdentity(serviceData) && networkIdMatches(serviceData)
+}
+
+suspend fun MeshManagerApi.isProxyDevice(
     scanRecord: ScanRecord,
     meshNode: ProvisionedMeshNode,
     onFound: suspend () -> Unit
