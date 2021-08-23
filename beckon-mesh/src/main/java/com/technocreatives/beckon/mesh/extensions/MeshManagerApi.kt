@@ -45,8 +45,11 @@ suspend fun MeshManagerApi.nextAvailableUnicastAddress(unprovisionedMeshNode: Un
 fun MeshManagerApi.isNodeInTheMesh(
     scanRecord: ScanRecord,
 ): Boolean {
+    Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
     val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
-    return isAdvertisedWithNodeIdentity(serviceData) && networkIdMatches(serviceData)
+    val isNodeInTheMesh = isAdvertisingWithNetworkIdentity(serviceData) && networkIdMatches(serviceData)
+    Timber.d("isNodeInTheMesh: $isNodeInTheMesh")
+    return isNodeInTheMesh
 }
 
 suspend fun MeshManagerApi.isProxyDevice(

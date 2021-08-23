@@ -203,6 +203,7 @@ class Provisioning(
         return beckonMesh.scanForProxy()
             .mapZ {
                 it.firstOrNull {
+                    // TODO what if device is not proxy device? We do not need to connect to the current device.
                     meshApi.isProxyDevice(it.scanRecord!!, node.node) { beckonMesh.stopScan() }
                 }
             }.filterZ { it != null }
