@@ -55,7 +55,7 @@ class Connected(
     }
 
     fun sendVendorModelMessageAck(
-        node: Node,
+        element: Element,
         appKey: AppKey,
         vendorModel: VendorModel,
         opCode: Int,
@@ -68,7 +68,7 @@ class Connected(
             opCode,
             parameters
         )
-        return meshApi.createPdu(node.unicastAddress, message)
+        return meshApi.createPdu(element.address, message)
     }
 
     // Todo group vs virtual address

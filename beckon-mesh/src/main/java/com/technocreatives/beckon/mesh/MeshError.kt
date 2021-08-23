@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh
 
+import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.mesh.state.MeshState
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
@@ -26,6 +27,7 @@ sealed class CreateMeshPduError: MeshError {
     data class InvalidAddress(val dst: Int): CreateMeshPduError()
     object LabelUuidUnavailable : CreateMeshPduError()
     object ProvisionerAddressNotSet : CreateMeshPduError()
+    data class BleError(val error: BeckonActionError): CreateMeshPduError()
 }
 
 sealed class SendMeshMessageError: MeshError {

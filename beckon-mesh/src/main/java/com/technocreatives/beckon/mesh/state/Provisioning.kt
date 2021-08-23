@@ -11,12 +11,16 @@ import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
-import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.info
+import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
+import com.technocreatives.beckon.mesh.processor.MessageQueue
+import com.technocreatives.beckon.mesh.processor.Pdu
+import com.technocreatives.beckon.mesh.processor.PduSender
+import com.technocreatives.beckon.mesh.processor.PduSenderResult
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
@@ -24,6 +28,7 @@ import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.MeshProvisioningStatusCallbacks
@@ -101,21 +106,15 @@ class Provisioning(
     }
 
     private var beckonDevice: BeckonDevice? = null
+    private var queue: MessageQueue? = null
 
     init {
         meshApi.setProvisioningStatusCallbacks(provisioningStatusCallbacks)
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
             override fun onMeshPduCreated(pdu: ByteArray) {
                 Timber.d("sendPdu - onMeshPduCreated - ${pdu.info()}")
-                beckonDevice?.let { bd ->
-                    beckonMesh.execute {
-                        with(meshApi) {
-                            bd.sendPdu(pdu, MeshConstants.proxyDataInCharacteristic).fold(
-                                { Timber.w("SendPdu error: $it") },
-                                { Timber.d("sendPdu success") }
-                            )
-                        }
-                    }
+                runBlocking {
+                    queue!!.sendPdu(Pdu(pdu))
                 }
             }
 
@@ -152,6 +151,9 @@ class Provisioning(
 
             override fun onMeshMessageProcessed(dst: Int, message: MeshMessage) {
                 Timber.w("onMeshMessageProcessed ${message.info()}")
+                runBlocking {
+                    queue!!.messageProcessed(message)
+                }
             }
 
             override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
@@ -165,8 +167,8 @@ class Provisioning(
     }
 
     // todo think about it?
-    // disconnect device if needed
-    // change state of MeshManagerApi
+// disconnect device if needed
+// change state of MeshManagerApi
     suspend fun cancel(): Either<Throwable, Unit> = either {
         beckonDevice?.disconnect()?.bind()
         beckonMesh.updateState(Loaded(beckonMesh, meshApi))
@@ -210,7 +212,24 @@ class Provisioning(
             .mapEither { beckonMesh.connectForProxy(it!!.macAddress) }
             .first()
             .tap {
+                Timber.d("device is connected $it")
                 beckonDevice = it
+                val pduSender: PduSender = object : PduSender {
+                    override fun createPdu(
+                        dst: Int,
+                        meshMessage: MeshMessage
+                    ) = meshApi.createPdu(dst, meshMessage)
+
+                    override suspend fun sendPdu(pdu: Pdu): PduSenderResult =
+                        with(meshApi) {
+                            it.sendPdu(pdu.data, MeshConstants.proxyDataInCharacteristic)
+                        }
+                }
+                queue = MessageQueue(pduSender)
+                with(queue!!) {
+                    beckonMesh.execute()
+                }
+                Timber.d("end of connected")
             }
     }
 
@@ -220,7 +239,10 @@ class Provisioning(
     ): Either<Unit, Node> {
         val compositionDataGet = ConfigCompositionDataGet()
         Timber.d("createMeshPdu ${compositionDataGet.opCode} ${compositionDataGet.info()}")
-        meshApi.createMeshPdu(node.unicastAddress, compositionDataGet)
+//        meshApi.createMeshPdu(node.unicastAddress, compositionDataGet)
+        val result = queue!!.sendMessage(node.unicastAddress, compositionDataGet)
+        Timber.w("queue!!.sendMessage result $result")
+
         return exchangeKeysEmitter.await().tap {
             beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
         }
@@ -248,10 +270,15 @@ class Provisioning(
 
                     val configDefaultTtlGet = ConfigDefaultTtlGet()
                     Timber.d("createMeshPdu ConfigDefaultTtlGet ${configDefaultTtlGet.info()}")
-                    meshApi.createMeshPdu(
+                    val result = queue!!.sendMessage(
                         node.unicastAddress,
                         configDefaultTtlGet
                     )
+                    Timber.w("queue!!.sendMessage result $result")
+//                    meshApi.createMeshPdu(
+//                        node.unicastAddress,
+//                        configDefaultTtlGet
+//                    )
                 }
             }
             ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
@@ -262,10 +289,15 @@ class Provisioning(
                     delay(1500)
                     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
                     Timber.d("createMeshPdu ConfigNetworkTransmitSet ${networkTransmitSet.info()}")
-                    meshApi.createMeshPdu(
+                    val result = queue!!.sendMessage(
                         node.unicastAddress,
                         networkTransmitSet
                     )
+                    Timber.w("queue!!.sendMessage result $result")
+//                    meshApi.createMeshPdu(
+//                        node.unicastAddress,
+//                        networkTransmitSet
+//                    )
                 }
             }
             ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS -> {
@@ -273,14 +305,19 @@ class Provisioning(
                 beckonMesh.execute {
                     // TODO delay global
                     delay(1500)
-                    val index: Int = node.addedNetKeys!!.get(0)!!.index
+                    val index: Int = node.addedNetKeys!!.get(0)!!.index // primary network key
                     val networkKey: NetworkKey = meshNetwork.netKeys[index]
                     val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
                     Timber.d("createMeshPdu ConfigAppKeyAdd ${configAppKeyAdd.info()}")
-                    meshApi.createMeshPdu(
+                    val result = queue!!.sendMessage(
                         node.unicastAddress,
                         configAppKeyAdd
                     )
+                    Timber.w("queue!!.sendMessage result $result")
+//                    meshApi.createMeshPdu(
+//                        node.unicastAddress,
+//                        configAppKeyAdd
+//                    )
                 }
             }
             ConfigMessageOpCodes.CONFIG_APPKEY_STATUS -> {

@@ -121,7 +121,7 @@ class BeckonMesh(
 
     suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> {
         return scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
-            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
+//            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
     }
 
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
