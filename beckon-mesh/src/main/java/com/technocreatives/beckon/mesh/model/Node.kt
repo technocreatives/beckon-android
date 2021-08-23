@@ -3,11 +3,12 @@ package com.technocreatives.beckon.mesh.model
 import com.technocreatives.beckon.internal.toUuid
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 
+
 class Node(internal val node: ProvisionedMeshNode) {
     val unicastAddress: Int
         get() = node.unicastAddress
 
-    val elements get() = node.elements
+    val elements get() = node.elements.mapValues { Element(it.value!!) }
     val sequenceNumber get() = node.sequenceNumber
 
     val uuid get() = node.uuid.toUuid()
@@ -19,3 +20,4 @@ class Node(internal val node: ProvisionedMeshNode) {
     val appKeys get() = node.addedAppKeys.map { NodeAppKey(it) }
     val netKeys get() = node.addedNetKeys.map { NodeNetworkKey(it) }
 }
+

@@ -5,13 +5,13 @@ import no.nordicsemi.android.mesh.transport.Element as NrfElement
 import no.nordicsemi.android.mesh.transport.MeshModel as NrfMeshModel
 
 class Element(private val element: NrfElement) {
-    val models get() = element.meshModels.map { it.key to it.value.to() }
+    val models get() = element.meshModels.map { it.value.to(it.key) }
     val address get() = element.elementAddress
 }
 
-private fun NrfMeshModel.to(): MeshModel =
+private fun NrfMeshModel.to(index: Int): MeshModel =
     if (this is NrfVendorModel) {
-        VendorModel(this)
+        VendorModel(this, index)
     } else {
-        UnknownModel(this)
+        UnknownModel(this, index)
     }
