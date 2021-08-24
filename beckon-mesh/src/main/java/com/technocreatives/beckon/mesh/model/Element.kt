@@ -12,11 +12,11 @@ class Element(
 }
 
 private fun NrfMeshModel.to(index: Int, appKeys: List<AppKey>): MeshModel {
-     val keys = boundAppKeyIndexes.mapNotNull { key -> appKeys.find { it.keyIndex == key }
+    val keys = boundAppKeyIndexes.mapNotNull { key -> appKeys.find { it.keyIndex == key } }
 
     return if (this is NrfVendorModel) {
         VendorModel(this, index, keys)
     } else {
         UnknownModel(this, index, keys)
     }
-     }
+}
