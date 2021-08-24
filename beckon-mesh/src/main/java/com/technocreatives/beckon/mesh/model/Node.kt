@@ -13,7 +13,7 @@ class Node(
     val unicastAddress: Int
         get() = node.unicastAddress
 
-    val elements get() = node.elements.map { Element(it.value!!, it.key) }
+    val elements get() = node.elements.map { Element(it.value!!, it.key, appKeys) }
     val sequenceNumber get() = node.sequenceNumber
 
     val uuid get() = node.uuid.toUuid()
