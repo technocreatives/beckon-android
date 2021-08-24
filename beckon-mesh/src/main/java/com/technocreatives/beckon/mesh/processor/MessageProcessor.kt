@@ -14,27 +14,63 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
+import kotlin.reflect.KClass
 
-data class MeshAndSubject(
+@JvmInline
+value class Pdu(val data: ByteArray)
+
+typealias PduSenderResult = Either<BeckonActionError, Unit>
+
+interface PduSender {
+    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<CreateMeshPduError, Unit>
+    suspend fun sendPdu(pdu: Pdu): PduSenderResult
+}
+
+private data class IdMessage(val id: Int, val message: MeshMessage)
+private data class IdResult(val id: Int, val result: PduSenderResult)
+
+private data class MeshAndSubject(
     val dst: Int,
     val message: MeshMessage,
     val emitter: CompletableDeferred<Either<CreateMeshPduError, Unit>>
 )
 
-data class IdMessage(val id: Int, val message: MeshMessage)
-data class IdResult(val id: Int, val result: PduSenderResult)
+private data class BeckonMessage(
+    val id: Int,
+    val messsage: MeshMessage,
+    val processor: MessageProcessor,
+    val emitter: CompletableDeferred<Either<CreateMeshPduError, Unit>>
+)
+
+data class AckEmitter<T : MeshMessage>(
+    val opCode: Int,
+    val emitter: CompletableDeferred<Either<CreateMeshPduError, T>>
+)
 
 class MessageQueue(private val pduSender: PduSender) {
 
-    private val messageChannel = Channel<MeshAndSubject>()
+    private val incomingMessageChannel = Channel<MeshAndSubject>()
+    val incomingAckMessageChannel = Channel<AckEmitter<MeshMessage>>()
     private val resultChannel = Channel<IdResult>()
     private val pduChannel = Channel<Pdu>()
     private val processedMessageChannel = Channel<MeshMessage>()
+    private val receivedMessageChannel = Channel<MeshMessage>()
+
+    suspend inline fun sendAckMessage(
+        dst: Int,
+        mesh: MeshMessage,
+        opCode: Int
+    ): Either<CreateMeshPduError, MeshMessage> {
+        val emitter = CompletableDeferred<Either<CreateMeshPduError, MeshMessage>>()
+        val ackEmitter = AckEmitter(opCode, emitter)
+        incomingAckMessageChannel.send(ackEmitter)
+        return sendMessage(dst, mesh).flatMap { emitter.await() }
+    }
 
     suspend fun sendMessage(dst: Int, mesh: MeshMessage): Either<CreateMeshPduError, Unit> {
         Timber.d("sendMessage $dst, ${mesh.info()}")
         val emitter = CompletableDeferred<Either<CreateMeshPduError, Unit>>()
-        messageChannel.send(MeshAndSubject(dst, mesh, emitter))
+        incomingMessageChannel.send(MeshAndSubject(dst, mesh, emitter))
         return emitter.await()
     }
 
@@ -42,11 +78,37 @@ class MessageQueue(private val pduSender: PduSender) {
         pduChannel.send(pdu)
     }
 
+    suspend fun messageReceived(message: MeshMessage) {
+        receivedMessageChannel.send(message)
+    }
+
     suspend fun messageProcessed(message: MeshMessage) {
         processedMessageChannel.send(message)
     }
 
     fun CoroutineScope.execute() = launch {
+        ackProcess()
+        process()
+    }
+
+    private fun CoroutineScope.ackProcess() = launch {
+        val map: MutableMap<Int, AckEmitter<MeshMessage>> = mutableMapOf()
+        while (true) {
+            select<Unit> {
+                receivedMessageChannel.onReceive { message ->
+                    Timber.d("receivedMessageChannel.onReceive")
+                    map[message.opCode]?.emitter?.complete(message.right())
+                }
+
+                incomingAckMessageChannel.onReceive {
+                    Timber.d("incomingAckMessageChannel.onReceive")
+                    map[it.opCode] = it
+                }
+            }
+        }
+    }
+
+    private fun CoroutineScope.process() = launch {
         var id = 0
         val map: MutableMap<Int, BeckonMessage> = mutableMapOf()
         var pdus = mutableListOf<Pdu>()
@@ -56,7 +118,11 @@ class MessageQueue(private val pduSender: PduSender) {
                 resultChannel.onReceive { result ->
                     Timber.d("resultChannel.onReceive")
                     val message = map.remove(result.id)
-                    message?.emitter?.complete(result.result.mapLeft { CreateMeshPduError.BleError(it) }) ?: run {
+                    message?.emitter?.complete(result.result.mapLeft {
+                        CreateMeshPduError.BleError(
+                            it
+                        )
+                    }) ?: run {
                         Timber.d("there is no message with id ${result.id}")
                     }
                 }
@@ -74,7 +140,7 @@ class MessageQueue(private val pduSender: PduSender) {
                         }
                     }
                 }
-                messageChannel.onReceive {
+                incomingMessageChannel.onReceive {
                     Timber.d("messageChannel.onReceive")
                     isProcessing = true
                     id += 1
@@ -110,59 +176,12 @@ class MessageQueue(private val pduSender: PduSender) {
         processor.sendMessage()
     }
 
-//    private fun CoroutineScope.handleResponse(channel: ReceiveChannel<IdResult>) = launch {
-//        for (result in channel) {
-//            Timber.d("handleResponse result $result, map size: ${map.size}")
-//        }
-//    }
-
-//    private fun CoroutineScope.handlePdu(channel: ReceiveChannel<Pdu>) = launch {
-//        for (pdu in channel) {
-//            val result = pduSender.sendPdu(pdu)
-//            Timber.d("result $result")
-//        }
-//    }
-
-//    fun CoroutineScope.receivePdu(pdu: Pdu) = launch {
-//        Timber.d("Receive pdu ${currentMessage?.id}, ${pdu.data.size}")
-//        currentMessage?.processor?.receivePdu(pdu) ?: run {
-//            val result = pduSender.sendPdu(pdu)
-//            Timber.d("result $result")
-//        }
-//    }
-
-    suspend fun onReceiveProcessedMessage(
-        message: MeshMessage,
-        currentId: Int,
-        map: Map<Int, BeckonMessage>
-    ) {
-        Timber.d("onReceiveProcessedMessage ${message.javaClass.simpleName}")
-        val currentMessage = map[currentId]
-        Timber.d("currentMessage id: ${currentMessage?.id}")
-        currentMessage?.let {
-            it.processor.onMessageProcessed(message)
-        }
-    }
 }
 
-typealias PduSenderResult = Either<BeckonActionError, Unit>
-
-interface PduSender {
-    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<CreateMeshPduError, Unit>
-    suspend fun sendPdu(pdu: Pdu): PduSenderResult
-}
-
-data class BeckonMessage(
-    val id: Int,
-    val messsage: MeshMessage,
-    val processor: MessageProcessor,
-    val emitter: CompletableDeferred<Either<CreateMeshPduError, Unit>>
-)
-
-class MessageProcessor(
-    val dst: Int,
-    val idMesasage: IdMessage,
-    val sender: PduSender,
+private class MessageProcessor(
+    private val dst: Int,
+    private val idMesasage: IdMessage,
+    private val sender: PduSender,
 ) {
 
     private val emitter = CompletableDeferred<Either<CreateMeshPduError, IdMessage>>()
@@ -178,19 +197,4 @@ class MessageProcessor(
         emitter.complete(idMesasage.copy(message = message).right())
     }
 
-}
-
-
-data class Pdu(val data: ByteArray) {
-
-    override fun equals(other: Any?): Boolean {
-        if (javaClass != other?.javaClass) return false
-        other as Pdu
-        if (!data.contentEquals(other.data)) return false
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return data.contentHashCode()
-    }
 }

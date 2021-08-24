@@ -233,20 +233,66 @@ class Provisioning(
             }
     }
 
+    @SuppressLint("RestrictedApi")
     suspend fun exchangeKeys(
         beckonDevice: BeckonDevice,
         node: Node
-    ): Either<Unit, Node> {
+    ): Either<Any, Node> = either {
         val compositionDataGet = ConfigCompositionDataGet()
         Timber.d("createMeshPdu ${compositionDataGet.opCode} ${compositionDataGet.info()}")
 //        meshApi.createMeshPdu(node.unicastAddress, compositionDataGet)
         val result = queue!!.sendMessage(node.unicastAddress, compositionDataGet)
         Timber.w("queue!!.sendMessage result $result")
-
-        return exchangeKeysEmitter.await().tap {
-            beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
-        }
+        getConfigCompositionData(node.unicastAddress).bind()
+        getConfigDefaultTtl(node.unicastAddress).bind()
+        setConfigNetworkTransmit(node.unicastAddress).bind()
+        val index: Int = node.node.addedNetKeys!!.get(0)!!.index // primary network key
+        val networkKey: NetworkKey = meshApi.meshNetwork().netKeys[index]
+        addConfigAppKey(node.unicastAddress, networkKey, appKey)
+        node
+//        return exchangeKeysEmitter.await().tap {
+//            beckonMesh.updateState(Connected(beckonMesh, meshApi, beckonDevice))
+//        }
     }
+
+    private suspend fun getConfigCompositionData(address: Int): Either<CreateMeshPduError, ConfigCompositionDataStatus> {
+        return queue!!.sendAckMessage(
+            address,
+            ConfigCompositionDataGet(),
+            ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
+        )
+            .map { it as ConfigCompositionDataStatus }
+    }
+
+    private suspend fun getConfigDefaultTtl(address: Int): Either<CreateMeshPduError, ConfigDefaultTtlStatus> {
+        return queue!!.sendAckMessage(
+            address,
+            ConfigDefaultTtlGet(),
+            ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS
+        )
+            .map { it as ConfigDefaultTtlStatus }
+    }
+
+    private suspend fun setConfigNetworkTransmit(address: Int): Either<CreateMeshPduError, ConfigNetworkTransmitStatus> {
+        val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+        return queue!!.sendAckMessage(
+            address,
+            networkTransmitSet,
+            ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS
+        )
+            .map { it as ConfigNetworkTransmitStatus }
+    }
+
+    private suspend fun addConfigAppKey(address: Int, netKey: NetworkKey, appKey:ApplicationKey): Either<CreateMeshPduError, ConfigAppKeyStatus> {
+        val configAppKeyAdd = ConfigAppKeyAdd(netKey, appKey)
+        return queue!!.sendAckMessage(
+            address,
+            configAppKeyAdd,
+            ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
+        )
+            .map { it as ConfigAppKeyStatus }
+    }
+
 
     fun List<ProvisioningState.States>.isInviting(): Boolean {
         // todo correct this formula
@@ -261,74 +307,79 @@ class Provisioning(
         }
         val meshNetwork = meshApi.meshNetwork!!
         val node = meshNetwork.getNode(src)!!
-        when (message.opCode) {
-            ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt() -> {
-                Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
-                beckonMesh.execute {
-                    // TODO delay
-                    delay(500)
-
-                    val configDefaultTtlGet = ConfigDefaultTtlGet()
-                    Timber.d("createMeshPdu ConfigDefaultTtlGet ${configDefaultTtlGet.info()}")
-                    val result = queue!!.sendMessage(
-                        node.unicastAddress,
-                        configDefaultTtlGet
-                    )
-                    Timber.w("queue!!.sendMessage result $result")
-//                    meshApi.createMeshPdu(
+        queue?.let {
+            runBlocking {
+                it.messageReceived(message)
+            }
+        }
+//        when (message.opCode) {
+//            ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt() -> {
+//                Timber.d("onMessageReceived CONFIG_COMPOSITION_DATA_STATUS:")
+//                beckonMesh.execute {
+//                    // TODO delay
+//                    delay(500)
+//
+//                    val configDefaultTtlGet = ConfigDefaultTtlGet()
+//                    Timber.d("createMeshPdu ConfigDefaultTtlGet ${configDefaultTtlGet.info()}")
+//                    val result = queue!!.sendMessage(
 //                        node.unicastAddress,
 //                        configDefaultTtlGet
 //                    )
-                }
-            }
-            ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
-                val status = message as ConfigDefaultTtlStatus
-                Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
-                beckonMesh.execute {
-                    // TODO delay
-                    delay(1500)
-                    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
-                    Timber.d("createMeshPdu ConfigNetworkTransmitSet ${networkTransmitSet.info()}")
-                    val result = queue!!.sendMessage(
-                        node.unicastAddress,
-                        networkTransmitSet
-                    )
-                    Timber.w("queue!!.sendMessage result $result")
-//                    meshApi.createMeshPdu(
+//                    Timber.w("queue!!.sendMessage result $result")
+////                    meshApi.createMeshPdu(
+////                        node.unicastAddress,
+////                        configDefaultTtlGet
+////                    )
+//                }
+//            }
+//            ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS -> {
+//                val status = message as ConfigDefaultTtlStatus
+//                Timber.d("onMessageReceived CONFIG_DEFAULT_TTL_STATUS: $status")
+//                beckonMesh.execute {
+//                    // TODO delay
+//                    delay(1500)
+//                    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+//                    Timber.d("createMeshPdu ConfigNetworkTransmitSet ${networkTransmitSet.info()}")
+//                    val result = queue!!.sendMessage(
 //                        node.unicastAddress,
 //                        networkTransmitSet
 //                    )
-                }
-            }
-            ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS -> {
-                Timber.d("onMessageReceived CONFIG_NETWORK_TRANSMIT_STATUS")
-                beckonMesh.execute {
-                    // TODO delay global
-                    delay(1500)
-                    val index: Int = node.addedNetKeys!!.get(0)!!.index // primary network key
-                    val networkKey: NetworkKey = meshNetwork.netKeys[index]
-                    val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
-                    Timber.d("createMeshPdu ConfigAppKeyAdd ${configAppKeyAdd.info()}")
-                    val result = queue!!.sendMessage(
-                        node.unicastAddress,
-                        configAppKeyAdd
-                    )
-                    Timber.w("queue!!.sendMessage result $result")
-//                    meshApi.createMeshPdu(
+//                    Timber.w("queue!!.sendMessage result $result")
+////                    meshApi.createMeshPdu(
+////                        node.unicastAddress,
+////                        networkTransmitSet
+////                    )
+//                }
+//            }
+//            ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS -> {
+//                Timber.d("onMessageReceived CONFIG_NETWORK_TRANSMIT_STATUS")
+//                beckonMesh.execute {
+//                    // TODO delay global
+//                    delay(1500)
+//                    val index: Int = node.addedNetKeys!!.get(0)!!.index // primary network key
+//                    val networkKey: NetworkKey = meshNetwork.netKeys[index]
+//                    val configAppKeyAdd = ConfigAppKeyAdd(networkKey, appKey)
+//                    Timber.d("createMeshPdu ConfigAppKeyAdd ${configAppKeyAdd.info()}")
+//                    val result = queue!!.sendMessage(
 //                        node.unicastAddress,
 //                        configAppKeyAdd
 //                    )
-                }
-            }
-            ConfigMessageOpCodes.CONFIG_APPKEY_STATUS -> {
-                val status = message as ConfigAppKeyStatus
-                Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: ${status.isSuccessful}")
-                exchangeKeysEmitter.complete(Node(node).right())
-            }
-            else -> {
-                Timber.d("onMessageReceived other message when provisioning $src, $message")
-                exchangeKeysEmitter.complete(Unit.left())
-            }
-        }
+//                    Timber.w("queue!!.sendMessage result $result")
+////                    meshApi.createMeshPdu(
+////                        node.unicastAddress,
+////                        configAppKeyAdd
+////                    )
+//                }
+//            }
+//            ConfigMessageOpCodes.CONFIG_APPKEY_STATUS -> {
+//                val status = message as ConfigAppKeyStatus
+//                Timber.d("onMessageReceived CONFIG_APPKEY_STATUS: ${status.isSuccessful}")
+//                exchangeKeysEmitter.complete(Node(node).right())
+//            }
+//            else -> {
+//                Timber.d("onMessageReceived other message when provisioning $src, $message")
+//                exchangeKeysEmitter.complete(Unit.left())
+//            }
+//        }
     }
 }
