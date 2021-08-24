@@ -7,6 +7,7 @@ import no.nordicsemi.android.mesh.transport.MeshModel as NrfMeshModel
 class Element(private val element: NrfElement, val index: Int) {
     val models get() = element.meshModels.map { it.value.to(it.key) }
     val address get() = element.elementAddress
+
 }
 
 private fun NrfMeshModel.to(index: Int): MeshModel =

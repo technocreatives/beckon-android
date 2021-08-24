@@ -8,9 +8,13 @@ import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.model.*
-import com.technocreatives.beckon.mesh.model.Element
+import com.technocreatives.beckon.mesh.processor.MessageQueue
+import com.technocreatives.beckon.mesh.processor.Pdu
+import com.technocreatives.beckon.mesh.processor.PduSender
+import com.technocreatives.beckon.mesh.processor.PduSenderResult
+import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
+import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
 import timber.log.Timber
 
@@ -20,19 +24,30 @@ class Connected(
     private val beckonDevice: BeckonDevice
 ) : MeshState(beckonMesh, meshApi) {
 
+    private var queue: MessageQueue = MessageQueue(object : PduSender {
+        override fun createPdu(
+            dst: Int,
+            meshMessage: MeshMessage
+        ) = meshApi.createPdu(dst, meshMessage)
+
+        override suspend fun sendPdu(pdu: Pdu): PduSenderResult =
+            with(meshApi) {
+                beckonDevice.sendPdu(pdu.data, MeshConstants.proxyDataInCharacteristic)
+            }
+    })
+
     init {
         meshApi.setMeshManagerCallbacks(
             ConnectedMeshManagerCallbacks(
                 beckonDevice,
-                beckonMesh,
-                meshApi
+                meshApi,
+                queue
             )
         )
         meshApi.setMeshStatusCallbacks(
             ConnectedMessageStatusCallbacks(
-                beckonDevice,
-                beckonMesh,
-                meshApi
+                meshApi,
+                queue
             )
         )
     }
@@ -44,81 +59,110 @@ class Connected(
         loaded
     }
 
-    fun bindAppKeyToVendorModel(
-        node: Node,
-        appKey: AppKey,
-        element: Element,
-        vendorModel: VendorModel,
-    ): Either<CreateMeshPduError, Unit> {
-        val message = ConfigModelAppBind(element.address, vendorModel.modelId, appKey.keyIndex)
-        return meshApi.createPdu(node.unicastAddress, message)
-    }
-
-    fun sendVendorModelMessageAck(
-        element: Element,
-        appKey: AppKey,
-        vendorModel: VendorModel,
-        opCode: Int,
-        parameters: ByteArray
-    ): Either<CreateMeshPduError, Unit> {
-        val message = VendorModelMessageAcked(
-            appKey.applicationKey,
-            vendorModel.modelId,
-            vendorModel.companyIdentifier,
-            opCode,
-            parameters
+    suspend fun bindConfigModelApp(
+        unicastAddress: Int,
+        message: ConfigModelAppBind
+    ): Either<CreateMeshPduError, ConfigModelAppStatus> =
+        sendAckMessage(
+            unicastAddress,
+            message,
+            ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS
         )
-        return meshApi.createPdu(element.address, message)
-    }
+            .map { it as ConfigModelAppStatus }
 
-    // Todo group vs virtual address
-    fun subscribe(
-        group: Group,
-        node: Node,
-        element: Element,
-        model: VendorModel,
-    ): Either<CreateMeshPduError, Unit> {
-        val addressLabel = group.addressLabel
-        return if (addressLabel == null) {
-            meshApi.createPdu(
-                node.unicastAddress,
-                ConfigModelSubscriptionAdd(element.address, group.address, model.modelId)
-            )
-        } else {
-            meshApi.createPdu(
-                node.unicastAddress,
-                ConfigModelSubscriptionVirtualAddressAdd(
-                    element.address,
-                    addressLabel,
-                    model.modelId
-                )
-            )
-        }
-    }
+    suspend fun sendVendorModelMessageAck(
+        unicastAddress: Int,
+        message: VendorModelMessageAcked
+    ): Either<CreateMeshPduError, VendorModelMessageStatus> =
+        sendAckMessage(
+            unicastAddress,
+            message,
+            message.opCode
+        )
+            .map { it as VendorModelMessageStatus }
 
-    // all other features
-    init {
-//        beckonDevice.connectionStates()
-    }
+    suspend fun addConfigModelSubscriptionVirtualAddress(
+        unicastAddress: Int,
+        message: ConfigModelSubscriptionVirtualAddressAdd
+    ): Either<CreateMeshPduError, ConfigModelSubscriptionStatus> =
+        sendAckMessage(
+            unicastAddress,
+            message,
+            ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
+        )
+            .map { it as ConfigModelSubscriptionStatus }
+
+    suspend fun addConfigModelSubscription(
+        unicastAddress: Int,
+        message: ConfigModelSubscriptionAdd
+    ): Either<CreateMeshPduError, ConfigModelSubscriptionStatus> =
+        sendAckMessage(
+            unicastAddress,
+            ConfigCompositionDataGet(),
+            ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
+        )
+            .map { it as ConfigModelSubscriptionStatus }
+
+    suspend fun getConfigCompositionData(address: Int): Either<CreateMeshPduError, ConfigCompositionDataStatus> =
+        sendAckMessage(
+            address,
+            ConfigCompositionDataGet(),
+            ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
+        )
+            .map { it as ConfigCompositionDataStatus }
+
+    suspend fun getConfigDefaultTtl(address: Int): Either<CreateMeshPduError, ConfigDefaultTtlStatus> =
+        sendAckMessage(
+            address,
+            ConfigDefaultTtlGet(),
+            ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS
+        )
+            .map { it as ConfigDefaultTtlStatus }
+
+    suspend fun setConfigNetworkTransmit(
+        address: Int,
+        message: ConfigNetworkTransmitSet
+    ): Either<CreateMeshPduError, ConfigNetworkTransmitStatus> =
+        sendAckMessage(
+            address,
+            message,
+            ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS
+        )
+            .map { it as ConfigNetworkTransmitStatus }
+
+    suspend fun addConfigAppKey(
+        address: Int,
+        message: ConfigAppKeyAdd
+    ): Either<CreateMeshPduError, ConfigAppKeyStatus> =
+        sendAckMessage(
+            address,
+            message,
+            ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
+        ).map { it as ConfigAppKeyStatus }
+
+    private suspend fun sendAckMessage(
+        address: Int,
+        message: MeshMessage,
+        opCode: Int
+    ): Either<CreateMeshPduError, MeshMessage> =
+        queue.sendAckMessage(
+            address,
+            message,
+            opCode
+        )
 
 }
 
 class ConnectedMeshManagerCallbacks(
     private val beckonDevice: BeckonDevice,
-    private val beckonMesh: BeckonMesh,
     private val meshApi: BeckonMeshManagerApi,
+    private val queue: MessageQueue,
 ) : AbstractMeshManagerCallbacks() {
 
     override fun onMeshPduCreated(pdu: ByteArray) {
         Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
-        with(beckonMesh) {
-            beckonDevice.sendPdu(
-                pdu,
-                com.technocreatives.beckon.mesh.MeshConstants.proxyDataInCharacteristic
-            ).fold(
-                { timber.log.Timber.w("SendPdu error: $it") },
-                { timber.log.Timber.d("sendPdu success") }
-            )
+        runBlocking {
+            queue.sendPdu(Pdu(pdu))
         }
     }
 
@@ -134,18 +178,23 @@ class ConnectedMeshManagerCallbacks(
 
 
 class ConnectedMessageStatusCallbacks(
-    private val beckonDevice: BeckonDevice,
-    private val beckonMesh: BeckonMesh,
     meshApi: BeckonMeshManagerApi,
+    private val queue: MessageQueue
 ) : AbstractMessageStatusCallbacks(meshApi) {
     // verify message onMeshMessageReceived
     override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
         super.onMeshMessageReceived(src, meshMessage)
         Timber.w("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}")
+        runBlocking {
+            queue.messageReceived(meshMessage)
+        }
     }
 
     override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
         Timber.w("onMeshMessageProcessed - src: $dst, dst: ${meshMessage.dst},  sequenceNumber: ${meshMessage.sequenceNumber()}")
+        runBlocking {
+            queue.messageProcessed(meshMessage)
+        }
     }
 
     override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {

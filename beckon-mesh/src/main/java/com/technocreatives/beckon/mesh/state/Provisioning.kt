@@ -53,9 +53,6 @@ class Provisioning(
     private val provisioningEmitter =
         CompletableDeferred<Either<ProvisioningError, Node>>()
 
-    private val exchangeKeysEmitter =
-        CompletableDeferred<Either<Unit, Node>>()
-
     private var unicast = -1
 
     private val provisioningStatusCallbacks = object : MeshProvisioningStatusCallbacks {
