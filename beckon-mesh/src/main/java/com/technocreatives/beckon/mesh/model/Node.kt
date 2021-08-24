@@ -8,7 +8,7 @@ class Node(internal val node: ProvisionedMeshNode) {
     val unicastAddress: Int
         get() = node.unicastAddress
 
-    val elements get() = node.elements.mapValues { Element(it.value!!, it.key) }
+    val elements get() = node.elements.map { Element(it.value!!, it.key) }
     val sequenceNumber get() = node.sequenceNumber
 
     val uuid get() = node.uuid.toUuid()
