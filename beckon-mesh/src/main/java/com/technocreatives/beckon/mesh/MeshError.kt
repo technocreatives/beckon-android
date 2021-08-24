@@ -21,16 +21,17 @@ sealed class ProvisioningError : MeshError {
 
     object NoAvailableUnicastAddress : ProvisioningError()
     object NoAllocatedUnicastRange : ProvisioningError()
-    data class BleDisconnectError(val throwable: Throwable): ProvisioningError()
+    data class BleDisconnectError(val throwable: Throwable) : ProvisioningError()
 }
 
-sealed class CreateMeshPduError: MeshError {
-    data class InvalidAddress(val dst: Int): CreateMeshPduError()
-    object LabelUuidUnavailable : CreateMeshPduError()
-    object ProvisionerAddressNotSet : CreateMeshPduError()
-    data class BleError(val error: BeckonActionError): CreateMeshPduError()
-}
 
-sealed class SendMeshMessageError: MeshError {
+sealed interface SendMessageError : SendAckMessageError
 
-}
+data class InvalidAddress(val dst: Int) : SendMessageError
+object LabelUuidUnavailable : SendMessageError
+object ProvisionerAddressNotSet : SendMessageError
+data class BleError(val error: BeckonActionError) : SendMessageError
+
+sealed interface SendAckMessageError
+
+object TimeoutError: SendAckMessageError

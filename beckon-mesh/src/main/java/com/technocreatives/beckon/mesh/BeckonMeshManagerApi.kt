@@ -63,7 +63,7 @@ class BeckonMeshManagerApi(
 
     internal fun meshNetwork(): MeshNetwork = meshNetwork!!
 
-    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<CreateMeshPduError, Unit> {
+    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<SendMessageError, Unit> {
         Timber.w("createMeshPdu dst: $dst, sequenceNumber: ${meshMessage.sequenceNumber()}")
         return try {
             createMeshPdu(dst, meshMessage).right()
@@ -112,9 +112,9 @@ class BeckonMeshManagerApi(
 
 private fun IllegalArgumentException.createMeshPduError(dst: Int) =
     when (message) {
-        "Invalid address, destination address must be a valid 16-bit value." -> CreateMeshPduError.InvalidAddress(
+        "Invalid address, destination address must be a valid 16-bit value." -> InvalidAddress(
             dst
         )
-        "Label UUID unavailable for the virtual address provided" -> CreateMeshPduError.LabelUuidUnavailable
-        else -> CreateMeshPduError.ProvisionerAddressNotSet
+        "Label UUID unavailable for the virtual address provided" -> LabelUuidUnavailable
+        else -> ProvisionerAddressNotSet
     }

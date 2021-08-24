@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import com.technocreatives.beckon.internal.toUuid
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 
-
 class Node(
     internal val node: ProvisionedMeshNode,
     val appKeys: List<AppKey>,

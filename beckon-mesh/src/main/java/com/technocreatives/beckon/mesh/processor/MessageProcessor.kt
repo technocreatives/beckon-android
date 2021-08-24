@@ -5,7 +5,8 @@ import arrow.core.flatMap
 import arrow.core.right
 import arrow.core.traverseEither
 import com.technocreatives.beckon.BeckonActionError
-import com.technocreatives.beckon.mesh.CreateMeshPduError
+import com.technocreatives.beckon.mesh.BleError
+import com.technocreatives.beckon.mesh.SendMessageError
 import com.technocreatives.beckon.mesh.extensions.info
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +15,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
-import kotlin.reflect.KClass
 
 @JvmInline
 value class Pdu(val data: ByteArray)
@@ -22,7 +22,7 @@ value class Pdu(val data: ByteArray)
 typealias PduSenderResult = Either<BeckonActionError, Unit>
 
 interface PduSender {
-    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<CreateMeshPduError, Unit>
+    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<SendMessageError, Unit>
     suspend fun sendPdu(pdu: Pdu): PduSenderResult
 }
 
@@ -32,19 +32,19 @@ private data class IdResult(val id: Int, val result: PduSenderResult)
 private data class MeshAndSubject(
     val dst: Int,
     val message: MeshMessage,
-    val emitter: CompletableDeferred<Either<CreateMeshPduError, Unit>>
+    val emitter: CompletableDeferred<Either<SendMessageError, Unit>>
 )
 
 private data class BeckonMessage(
     val id: Int,
     val messsage: MeshMessage,
     val processor: MessageProcessor,
-    val emitter: CompletableDeferred<Either<CreateMeshPduError, Unit>>
+    val emitter: CompletableDeferred<Either<SendMessageError, Unit>>
 )
 
 data class AckEmitter<T : MeshMessage>(
     val opCode: Int,
-    val emitter: CompletableDeferred<Either<CreateMeshPduError, T>>
+    val emitter: CompletableDeferred<Either<SendMessageError, T>>
 )
 
 class MessageQueue(private val pduSender: PduSender) {
@@ -60,16 +60,16 @@ class MessageQueue(private val pduSender: PduSender) {
         dst: Int,
         mesh: MeshMessage,
         opCode: Int
-    ): Either<CreateMeshPduError, MeshMessage> {
-        val emitter = CompletableDeferred<Either<CreateMeshPduError, MeshMessage>>()
+    ): Either<SendMessageError, MeshMessage> {
+        val emitter = CompletableDeferred<Either<SendMessageError, MeshMessage>>()
         val ackEmitter = AckEmitter(opCode, emitter)
         incomingAckMessageChannel.send(ackEmitter)
         return sendMessage(dst, mesh).flatMap { emitter.await() }
     }
 
-    suspend fun sendMessage(dst: Int, mesh: MeshMessage): Either<CreateMeshPduError, Unit> {
+    suspend fun sendMessage(dst: Int, mesh: MeshMessage): Either<SendMessageError, Unit> {
         Timber.d("sendMessage $dst, ${mesh.info()}")
-        val emitter = CompletableDeferred<Either<CreateMeshPduError, Unit>>()
+        val emitter = CompletableDeferred<Either<SendMessageError, Unit>>()
         incomingMessageChannel.send(MeshAndSubject(dst, mesh, emitter))
         return emitter.await()
     }
@@ -119,7 +119,7 @@ class MessageQueue(private val pduSender: PduSender) {
                     Timber.d("resultChannel.onReceive")
                     val message = map.remove(result.id)
                     message?.emitter?.complete(result.result.mapLeft {
-                        CreateMeshPduError.BleError(
+                        BleError(
                             it
                         )
                     }) ?: run {
@@ -175,7 +175,6 @@ class MessageQueue(private val pduSender: PduSender) {
         map[messageId] = beckonMessage
         processor.sendMessage()
     }
-
 }
 
 private class MessageProcessor(
@@ -184,10 +183,10 @@ private class MessageProcessor(
     private val sender: PduSender,
 ) {
 
-    private val emitter = CompletableDeferred<Either<CreateMeshPduError, IdMessage>>()
+    private val emitter = CompletableDeferred<Either<SendMessageError, IdMessage>>()
 
     // send
-    suspend fun sendMessage(): Either<CreateMeshPduError, IdMessage> {
+    suspend fun sendMessage(): Either<SendMessageError, IdMessage> {
         Timber.d("sendMessage")
         return sender.createPdu(dst, idMesasage.message)
             .flatMap { emitter.await() }

@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh.state
 
 import arrow.core.Either
 import arrow.core.computations.either
+import arrow.core.left
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
@@ -68,7 +69,7 @@ class Connected(
     suspend fun bindConfigModelApp(
         unicastAddress: Int,
         message: ConfigModelAppBind
-    ): Either<CreateMeshPduError, ConfigModelAppStatus> =
+    ): Either<SendAckMessageError, ConfigModelAppStatus> =
         sendAckMessage(
             unicastAddress,
             message,
@@ -79,7 +80,7 @@ class Connected(
     suspend fun sendVendorModelMessageAck(
         unicastAddress: Int,
         message: VendorModelMessageAcked
-    ): Either<CreateMeshPduError, VendorModelMessageStatus> =
+    ): Either<SendAckMessageError, VendorModelMessageStatus> =
         sendAckMessage(
             unicastAddress,
             message,
@@ -90,7 +91,7 @@ class Connected(
     suspend fun addConfigModelSubscriptionVirtualAddress(
         unicastAddress: Int,
         message: ConfigModelSubscriptionVirtualAddressAdd
-    ): Either<CreateMeshPduError, ConfigModelSubscriptionStatus> =
+    ): Either<SendAckMessageError, ConfigModelSubscriptionStatus> =
         sendAckMessage(
             unicastAddress,
             message,
@@ -101,7 +102,7 @@ class Connected(
     suspend fun addConfigModelSubscription(
         unicastAddress: Int,
         message: ConfigModelSubscriptionAdd
-    ): Either<CreateMeshPduError, ConfigModelSubscriptionStatus> =
+    ): Either<SendAckMessageError, ConfigModelSubscriptionStatus> =
         sendAckMessage(
             unicastAddress,
             message,
@@ -109,7 +110,7 @@ class Connected(
         )
             .map { it as ConfigModelSubscriptionStatus }
 
-    suspend fun getConfigCompositionData(address: Int): Either<CreateMeshPduError, ConfigCompositionDataStatus> =
+    suspend fun getConfigCompositionData(address: Int): Either<SendAckMessageError, ConfigCompositionDataStatus> =
         sendAckMessage(
             address,
             ConfigCompositionDataGet(),
@@ -117,7 +118,7 @@ class Connected(
         )
             .map { it as ConfigCompositionDataStatus }
 
-    suspend fun getConfigDefaultTtl(address: Int): Either<CreateMeshPduError, ConfigDefaultTtlStatus> =
+    suspend fun getConfigDefaultTtl(address: Int): Either<SendAckMessageError, ConfigDefaultTtlStatus> =
         sendAckMessage(
             address,
             ConfigDefaultTtlGet(),
@@ -128,7 +129,7 @@ class Connected(
     suspend fun setConfigNetworkTransmit(
         address: Int,
         message: ConfigNetworkTransmitSet
-    ): Either<CreateMeshPduError, ConfigNetworkTransmitStatus> =
+    ): Either<SendAckMessageError, ConfigNetworkTransmitStatus> =
         sendAckMessage(
             address,
             message,
@@ -139,7 +140,7 @@ class Connected(
     suspend fun addConfigAppKey(
         address: Int,
         message: ConfigAppKeyAdd
-    ): Either<CreateMeshPduError, ConfigAppKeyStatus> =
+    ): Either<SendAckMessageError, ConfigAppKeyStatus> =
         sendAckMessage(
             address,
             message,
@@ -150,12 +151,14 @@ class Connected(
         address: Int,
         message: MeshMessage,
         opCode: Int
-    ): Either<CreateMeshPduError, MeshMessage> =
-        queue.sendAckMessage(
-            address,
-            message,
-            opCode
-        )
+    ): Either<SendAckMessageError, MeshMessage> =
+        withTimeout(30000) {
+            queue.sendAckMessage(
+                address,
+                message,
+                opCode
+            )
+        }
 
 }
 
