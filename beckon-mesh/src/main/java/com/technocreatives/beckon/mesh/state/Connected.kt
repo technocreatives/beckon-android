@@ -190,8 +190,8 @@ suspend fun Connected.setUpAppKey(
     getConfigDefaultTtl(node.unicastAddress).bind()
     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
     setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
-    val netKey = beckonMesh.networkKeys()[0]!!.networkKey
-    val appKey = beckonMesh.appKeys()[0]!!.applicationKey
+    val netKey = beckonMesh.networkKeys()[0].key
+    val appKey = beckonMesh.appKeys()[0].applicationKey
     val configAppKeyAdd = ConfigAppKeyAdd(netKey, appKey)
     addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
 }

@@ -131,7 +131,7 @@ class BeckonMesh(
     }
 
     suspend fun scanForProvisioning(node: Node): Either<BeckonError, BeckonDevice> =
-        scanForProxy()
+        scanForProxyP()
             .mapZ {
                 it.firstOrNull {
                     // TODO what if device is not proxy device? We do not need to connect to the current device.
@@ -141,10 +141,12 @@ class BeckonMesh(
             .mapEither { connectForProxy(it!!.macAddress) }
             .first()
 
-    suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> {
-        return scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
-//            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
-    }
+    private suspend fun scanForProxyP(): Flow<Either<ScanError, List<ScanResult>>> =
+        scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+
+    suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
+        scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
 
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
         meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic)

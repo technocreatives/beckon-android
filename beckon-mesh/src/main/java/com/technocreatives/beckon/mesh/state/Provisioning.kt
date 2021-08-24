@@ -77,7 +77,7 @@ class Provisioning(
             data: ByteArray?
         ) {
             Timber.d("onProvisioningCompleted: ${meshNode.nodeName} - $state - ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}")
-            provisioningEmitter.complete(Node(meshNode).right())
+            provisioningEmitter.complete(Node(meshNode, beckonMesh.appKeys(), beckonMesh.networkKeys()).right())
             beckonMesh.execute {
                 meshApi.updateNodes()
             }
