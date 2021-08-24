@@ -98,7 +98,7 @@ class Connected(
     ): Either<CreateMeshPduError, ConfigModelSubscriptionStatus> =
         sendAckMessage(
             unicastAddress,
-            ConfigCompositionDataGet(),
+            message,
             ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
         )
             .map { it as ConfigModelSubscriptionStatus }
@@ -175,6 +175,8 @@ class ConnectedMeshManagerCallbacks(
         return beckonDevice.getMaximumPacketSize()
     }
 }
+
+fun Connected.configAppKey() {}
 
 
 class ConnectedMessageStatusCallbacks(

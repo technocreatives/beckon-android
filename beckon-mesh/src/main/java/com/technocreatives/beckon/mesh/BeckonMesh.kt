@@ -75,10 +75,10 @@ class BeckonMesh(
     fun states(): Flow<MeshState> = stateSubject.asStateFlow()
     suspend fun currentState(): MeshState = currentState.get()
 
-    suspend fun startProvisioning(): Either<IllegalMeshStateError, Provisioning> {
+    suspend fun startProvisioning(beckonDevice: BeckonDevice): Either<IllegalMeshStateError, Provisioning> {
         val state = currentState.get()
         return if (state is Loaded) {
-            state.startProvisioning().right()
+            state.startProvisioning(beckonDevice).right()
         } else {
             IllegalMeshStateError(state).left()
         }
@@ -143,11 +143,5 @@ class BeckonMesh(
             }
             beckonDevice
         }
-
-    internal fun BeckonDevice.sendPdu(
-        pdu: ByteArray,
-        characteristic: Characteristic
-    ): Either<BeckonActionError, Unit> =
-        sendPdu(pdu, characteristic)
 
 }
