@@ -47,7 +47,7 @@ fun MeshManagerApi.isNodeInTheMesh(
 ): Boolean {
     Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
     val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
-    val networkIdMatches = networkIdMatches(serviceData)
+    val networkIdMatches = networkIdMatches(serviceData) && isAdvertisingWithNetworkIdentity(serviceData)
     Timber.d("isNodeInTheMesh: $networkIdMatches")
     return networkIdMatches
 }

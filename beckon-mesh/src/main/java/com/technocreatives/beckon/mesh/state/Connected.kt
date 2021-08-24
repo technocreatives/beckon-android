@@ -182,20 +182,20 @@ class ConnectedMeshManagerCallbacks(
     }
 }
 
-
 suspend fun Connected.setUpAppKey(
     node: Node,
+    netKey: NetworkKey,
+    appKey: AppKey,
 ): Either<Any, Unit> = either {
+
     getConfigCompositionData(node.unicastAddress).bind()
     getConfigDefaultTtl(node.unicastAddress).bind()
     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
     setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
-    val netKey = beckonMesh.networkKeys()[0].key
-    val appKey = beckonMesh.appKeys()[0].applicationKey
-    val configAppKeyAdd = ConfigAppKeyAdd(netKey, appKey)
+
+    val configAppKeyAdd = ConfigAppKeyAdd(netKey.key, appKey.applicationKey)
     addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
 }
-
 
 class ConnectedMessageStatusCallbacks(
     meshApi: BeckonMeshManagerApi,

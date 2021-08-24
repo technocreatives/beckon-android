@@ -8,11 +8,12 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
-import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
+import com.technocreatives.beckon.mesh.utils.tap
+import com.technocreatives.beckon.mesh.utils.tapLeft
 import kotlinx.coroutines.CompletableDeferred
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.MeshProvisioningStatusCallbacks
@@ -34,8 +35,6 @@ class Provisioning(
 
     private val provisioningEmitter =
         CompletableDeferred<Either<ProvisioningError, Node>>()
-
-    private var unicast = -1
 
     private val provisioningStatusCallbacks = object : MeshProvisioningStatusCallbacks {
 
@@ -77,7 +76,13 @@ class Provisioning(
             data: ByteArray?
         ) {
             Timber.d("onProvisioningCompleted: ${meshNode.nodeName} - $state - ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}")
-            provisioningEmitter.complete(Node(meshNode, beckonMesh.appKeys(), beckonMesh.networkKeys()).right())
+            provisioningEmitter.complete(
+                Node(
+                    meshNode,
+                    beckonMesh.appKeys(),
+                    beckonMesh.networkKeys()
+                ).right()
+            )
             beckonMesh.execute {
                 meshApi.updateNodes()
             }
@@ -121,7 +126,6 @@ class Provisioning(
                 return beckonDevice.getMaximumPacketSize()
             }
         })
-        meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {})
     }
 
     // todo think about it?
@@ -143,11 +147,11 @@ class Provisioning(
     suspend fun startProvisioning(unprovisionedNode: UnprovisionedNode): Either<ProvisioningError, Node> =
         either {
             Timber.d("startProvisioning ${unprovisionedNode.node.deviceUuid}")
-            meshApi.nextAvailableUnicastAddress(unprovisionedNode.node).fold({
+            meshApi.nextAvailableUnicastAddress(unprovisionedNode.node).tapLeft {
                 provisioningEmitter.complete(
                     it.left()
                 )
-            }, { unicast = it })
+            }
             meshApi.startProvisioning(unprovisionedNode.node)
             val node = provisioningEmitter.await().bind()
             beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
@@ -155,10 +159,8 @@ class Provisioning(
             node
         }
 
-
     fun List<ProvisioningState.States>.isInviting(): Boolean {
         // todo correct this formula
         return this.size <= 1
     }
-
 }

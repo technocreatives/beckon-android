@@ -48,6 +48,9 @@ class BeckonMeshManagerApi(
     fun appKeys(): List<AppKey> =
         meshNetwork().appKeys.map { AppKey(it) }
 
+    fun appKey(index: Int): AppKey? =
+        appKeys().find { it.keyIndex == index }
+
     fun networkKeys(): List<BeckonNetworkKey> =
         meshNetwork().netKeys.map { BeckonNetworkKey(it) }
 
