@@ -58,13 +58,13 @@ class BeckonMesh(
     fun nodes(): Flow<List<Node>> = meshApi.nodes()
 
     fun appKeys(): List<AppKey> =
-        meshApi.meshNetwork().appKeys.map { AppKey(it) }
+        meshApi.appKeys()
 
     fun networkKeys(): List<NetworkKey> =
-        meshApi.meshNetwork().netKeys.map { NetworkKey(it) }
+        meshApi.networkKeys()
 
     fun groups(): List<Group> =
-        meshApi.meshNetwork().groups.map { Group(it) }
+        meshApi.groups()
 
     fun createGroup(name: String, address: Int): Group? {
         val network = meshApi.meshNetwork()
@@ -108,15 +108,11 @@ class BeckonMesh(
         }
     }
 
-    suspend fun getProvisioningState(): Option<Provisioning> = TODO()
-
-
-    //    fun identify(provisioning: ProvisioningState, scanResult: ScanResult) = TODO()
     suspend fun stopScan() {
         beckonClient.stopScan()
     }
 
-    suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<ScanResult>>> {
+    private suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<ScanResult>>> {
         return beckonClient.scan(scannerSetting)
             .mapZ { it.sortedBy { it.macAddress } }
     }

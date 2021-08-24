@@ -1,10 +1,15 @@
 package com.technocreatives.beckon.mesh.model
 
+import android.annotation.SuppressLint
 import com.technocreatives.beckon.internal.toUuid
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 
 
-class Node(internal val node: ProvisionedMeshNode) {
+class Node(
+    internal val node: ProvisionedMeshNode,
+    val appKeys: List<AppKey>,
+    val netKeys: List<NetworkKey>
+) {
     val unicastAddress: Int
         get() = node.unicastAddress
 
@@ -17,7 +22,9 @@ class Node(internal val node: ProvisionedMeshNode) {
 
     val versionIdentifier get() = node.versionIdentifier
 
-    val appKeys get() = node.addedAppKeys.map { NodeAppKey(it) }
-    val netKeys get() = node.addedNetKeys.map { NodeNetworkKey(it) }
 }
 
+@SuppressLint("RestrictedApi")
+fun ProvisionedMeshNode.toNode(appKeys: List<AppKey>, netKeys: List<NetworkKey>): Node =
+    Node(this, addedAppKeys.mapNotNull { key -> appKeys.find { it.keyIndex == key.index } },
+        addedNetKeys.mapNotNull { key -> netKeys.find { it.key.keyIndex == key.index } })

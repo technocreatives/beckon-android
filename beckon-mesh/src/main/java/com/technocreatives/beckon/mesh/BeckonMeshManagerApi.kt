@@ -16,16 +16,16 @@ import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.AppKey
 import com.technocreatives.beckon.mesh.model.Group
 import com.technocreatives.beckon.mesh.model.Node
-import kotlinx.coroutines.*
+import com.technocreatives.beckon.mesh.model.toNode
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.MeshManagerApi
 import no.nordicsemi.android.mesh.MeshNetwork
-import no.nordicsemi.android.mesh.Provisioner
 import no.nordicsemi.android.mesh.transport.MeshMessage
-import no.nordicsemi.android.mesh.utils.MeshAddress
 import timber.log.Timber
-import java.lang.IllegalArgumentException
-import java.util.*
 import kotlin.coroutines.CoroutineContext
 import com.technocreatives.beckon.mesh.model.NetworkKey as BeckonNetworkKey
 
@@ -40,8 +40,9 @@ class BeckonMeshManagerApi(
     fun nodes(): Flow<List<Node>> = nodesSubject.asStateFlow()
 
     fun loadNodes(): List<Node> {
-        // todo background thread maybe?
-        return meshNetwork().nodes.map { Node(it) }
+        val appKeys = appKeys()
+        val netKeys = networkKeys()
+        return meshNetwork().nodes.map { it.toNode(appKeys, netKeys) }
     }
 
     fun appKeys(): List<AppKey> =
