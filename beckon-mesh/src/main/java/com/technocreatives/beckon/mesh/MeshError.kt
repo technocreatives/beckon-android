@@ -21,6 +21,7 @@ sealed class ProvisioningError : MeshError {
 
     object NoAvailableUnicastAddress : ProvisioningError()
     object NoAllocatedUnicastRange : ProvisioningError()
+    data class BleDisconnectError(val throwable: Throwable): ProvisioningError()
 }
 
 sealed class CreateMeshPduError: MeshError {

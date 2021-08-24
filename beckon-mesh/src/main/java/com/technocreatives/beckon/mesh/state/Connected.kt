@@ -8,6 +8,9 @@ import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
+import com.technocreatives.beckon.mesh.model.AppKey
+import com.technocreatives.beckon.mesh.model.NetworkKey
+import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.processor.MessageQueue
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
@@ -50,6 +53,9 @@ class Connected(
                 queue
             )
         )
+        with(queue) {
+            beckonMesh.execute()
+        }
     }
 
     suspend fun disconnect(): Either<Any, Loaded> = either {
@@ -176,7 +182,19 @@ class ConnectedMeshManagerCallbacks(
     }
 }
 
-fun Connected.configAppKey() {}
+
+suspend fun Connected.setUpAppKey(
+    node: Node,
+): Either<Any, Unit> = either {
+    getConfigCompositionData(node.unicastAddress).bind()
+    getConfigDefaultTtl(node.unicastAddress).bind()
+    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+    setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
+    val netKey = beckonMesh.networkKeys()[0]!!.networkKey
+    val appKey = beckonMesh.appKeys()[0]!!.applicationKey
+    val configAppKeyAdd = ConfigAppKeyAdd(netKey, appKey)
+    addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
+}
 
 
 class ConnectedMessageStatusCallbacks(

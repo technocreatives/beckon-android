@@ -21,4 +21,10 @@ class Loaded(beckonMesh: BeckonMesh, meshApi: BeckonMeshManagerApi) :
         beckonMesh.updateState(connected)
         connected
     }
+
+    suspend fun connect(beckonDevice: BeckonDevice): Connected {
+        val connected = Connected(beckonMesh, meshApi, beckonDevice)
+        beckonMesh.updateState(connected)
+        return connected
+    }
 }

@@ -84,7 +84,6 @@ class Provisioning(
         }
     }
 
-
     init {
         meshApi.setProvisioningStatusCallbacks(provisioningStatusCallbacks)
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
@@ -107,21 +106,21 @@ class Provisioning(
 
             override fun sendProvisioningPdu(meshNode: UnprovisionedMeshNode, pdu: ByteArray) {
                 Timber.d("sendPdu - provisioningProcess - ${pdu.size}")
-                    beckonMesh.execute {
-                        with(meshApi) {
-                            beckonDevice.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic).fold(
+                beckonMesh.execute {
+                    with(meshApi) {
+                        beckonDevice.sendPdu(pdu, MeshConstants.provisioningDataInCharacteristic)
+                            .fold(
                                 { Timber.w("SendPdu provisioningProcess error: $it") },
                                 { Timber.d("sendPdu provisioningProcess success") }
                             )
-                        }
                     }
+                }
             }
 
             override fun getMtu(): Int {
                 return beckonDevice.getMaximumPacketSize()
             }
         })
-
         meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {})
     }
 
@@ -141,16 +140,20 @@ class Provisioning(
         return inviteEmitter.await()
     }
 
-    suspend fun startProvisioning(unprovisionedNode: UnprovisionedNode): Either<ProvisioningError, Node> {
-        Timber.d("startProvisioning ${unprovisionedNode.node.deviceUuid}")
-        meshApi.nextAvailableUnicastAddress(unprovisionedNode.node).fold({
-            provisioningEmitter.complete(
-                it.left()
-            )
-        }, { unicast = it })
-        meshApi.startProvisioning(unprovisionedNode.node)
-        return provisioningEmitter.await()
-    }
+    suspend fun startProvisioning(unprovisionedNode: UnprovisionedNode): Either<ProvisioningError, Node> =
+        either {
+            Timber.d("startProvisioning ${unprovisionedNode.node.deviceUuid}")
+            meshApi.nextAvailableUnicastAddress(unprovisionedNode.node).fold({
+                provisioningEmitter.complete(
+                    it.left()
+                )
+            }, { unicast = it })
+            meshApi.startProvisioning(unprovisionedNode.node)
+            val node = provisioningEmitter.await().bind()
+            beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
+            beckonMesh.updateState(Loaded(beckonMesh, meshApi))
+            node
+        }
 
 
     fun List<ProvisioningState.States>.isInviting(): Boolean {

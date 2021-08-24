@@ -11,17 +11,22 @@ import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
+import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.*
 import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.state.Loaded
 import com.technocreatives.beckon.mesh.state.MeshState
 import com.technocreatives.beckon.mesh.state.Provisioning
+import com.technocreatives.beckon.mesh.utils.tap
+import com.technocreatives.beckon.util.filterZ
+import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
@@ -84,6 +89,16 @@ class BeckonMesh(
         }
     }
 
+
+    suspend fun getConnectedState(beckonDevice: BeckonDevice): Either<IllegalMeshStateError, Connected> {
+        val state = currentState.get()
+        return if (state is Loaded) {
+            state.connect(beckonDevice).right()
+        } else {
+            IllegalMeshStateError(state).left()
+        }
+    }
+
     suspend fun provisioningState(): Either<IllegalMeshStateError, Provisioning> {
         val state = currentState.get()
         return if (state is Provisioning) {
@@ -94,7 +109,7 @@ class BeckonMesh(
     }
 
     suspend fun getProvisioningState(): Option<Provisioning> = TODO()
-    suspend fun connectedState(): Either<Throwable, Connected> = TODO()
+
 
     //    fun identify(provisioning: ProvisioningState, scanResult: ScanResult) = TODO()
     suspend fun stopScan() {
@@ -118,6 +133,17 @@ class BeckonMesh(
         return scan(scanSetting(MeshConstants.MESH_PROVISIONING_SERVICE_UUID))
             .mapZ { it.mapNotNull { it.toUnprovisionedScanResult(meshApi) } }
     }
+
+    suspend fun scanForProvisioning(node: Node): Either<BeckonError, BeckonDevice> =
+        scanForProxy()
+            .mapZ {
+                it.firstOrNull {
+                    // TODO what if device is not proxy device? We do not need to connect to the current device.
+                    meshApi.isProxyDevice(it.scanRecord!!, node.node) { stopScan() }
+                }
+            }.filterZ { it != null }
+            .mapEither { connectForProxy(it!!.macAddress) }
+            .first()
 
     suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> {
         return scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
