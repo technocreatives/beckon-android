@@ -26,4 +26,4 @@ class Node(
 @SuppressLint("RestrictedApi")
 fun ProvisionedMeshNode.toNode(appKeys: List<AppKey>, netKeys: List<NetworkKey>): Node =
     Node(this, addedAppKeys.mapNotNull { key -> appKeys.find { it.keyIndex == key.index } },
-        addedNetKeys.mapNotNull { key -> netKeys.find { it.key.keyIndex == key.index } })
+        addedNetKeys.mapNotNull { key -> netKeys.find { it.keyIndex == key.index } })

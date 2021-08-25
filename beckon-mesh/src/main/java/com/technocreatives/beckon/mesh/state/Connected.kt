@@ -196,7 +196,7 @@ suspend fun Connected.setUpAppKey(
     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
     setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
 
-    val configAppKeyAdd = ConfigAppKeyAdd(netKey.key, appKey.applicationKey)
+    val configAppKeyAdd = ConfigAppKeyAdd(netKey.actualKey, appKey.applicationKey)
     addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
 }
 
