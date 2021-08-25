@@ -20,6 +20,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
+import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
 import timber.log.Timber
 
@@ -155,6 +156,16 @@ class Connected(
             message,
             ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
         ).map { it as ConfigAppKeyStatus }
+
+    suspend fun addProxyConfigAddressToFilter(
+        address: Int,
+        message: ProxyConfigAddAddressToFilter
+    )=
+        sendAckMessage(
+            address,
+            message,
+            ProxyConfigMessageOpCodes.FILTER_STATUS
+        ).map { it as ProxyConfigFilterStatus }
 
     private suspend fun sendAckMessage(
         address: Int,
