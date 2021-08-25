@@ -69,9 +69,7 @@ class Connected(
 
     suspend fun disconnect(): Either<ProvisioningError.BleDisconnectError, Loaded> = either {
         disconnectJob?.cancel()
-        beckonDevice.disconnect()
-            .mapLeft { ProvisioningError.BleDisconnectError(it) }
-            .bind()
+        beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
         val loaded = Loaded(beckonMesh, meshApi)
         beckonMesh.updateState(loaded)
         loaded
