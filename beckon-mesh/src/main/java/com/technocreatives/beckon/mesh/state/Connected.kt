@@ -2,12 +2,12 @@ package com.technocreatives.beckon.mesh.state
 
 import arrow.core.Either
 import arrow.core.computations.either
-import arrow.core.left
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
+import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.AppKey
 import com.technocreatives.beckon.mesh.model.NetworkKey
@@ -16,6 +16,7 @@ import com.technocreatives.beckon.mesh.processor.MessageQueue
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
 import com.technocreatives.beckon.mesh.processor.PduSenderResult
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
@@ -40,6 +41,8 @@ class Connected(
             }
     })
 
+    private var disconnectJob: Job? = null
+
     init {
         meshApi.setMeshManagerCallbacks(
             ConnectedMeshManagerCallbacks(
@@ -57,10 +60,18 @@ class Connected(
         with(queue) {
             beckonMesh.execute()
         }
+        disconnectJob = beckonMesh.execute {
+            beckonDevice.onDisconnect {
+                beckonMesh.updateState(Loaded(beckonMesh, meshApi))
+            }
+        }
     }
 
-    suspend fun disconnect(): Either<Any, Loaded> = either {
-        beckonDevice.disconnect().bind()
+    suspend fun disconnect(): Either<ProvisioningError.BleDisconnectError, Loaded> = either {
+        disconnectJob?.cancel()
+        beckonDevice.disconnect()
+            .mapLeft { ProvisioningError.BleDisconnectError(it) }
+            .bind()
         val loaded = Loaded(beckonMesh, meshApi)
         beckonMesh.updateState(loaded)
         loaded
@@ -159,7 +170,6 @@ class Connected(
                 opCode
             )
         }
-
 }
 
 class ConnectedMeshManagerCallbacks(
@@ -204,39 +214,34 @@ class ConnectedMessageStatusCallbacks(
     meshApi: BeckonMeshManagerApi,
     private val queue: MessageQueue
 ) : AbstractMessageStatusCallbacks(meshApi) {
-    // verify message onMeshMessageReceived
     override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
         super.onMeshMessageReceived(src, meshMessage)
-        Timber.w("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}")
+        Timber.d("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}")
         runBlocking {
             queue.messageReceived(meshMessage)
         }
     }
 
     override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
-        Timber.w("onMeshMessageProcessed - src: $dst, dst: ${meshMessage.dst},  sequenceNumber: ${meshMessage.sequenceNumber()}")
+        Timber.d("onMeshMessageProcessed - src: $dst, dst: ${meshMessage.dst},  sequenceNumber: ${meshMessage.sequenceNumber()}")
         runBlocking {
             queue.messageProcessed(meshMessage)
         }
     }
 
     override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-        Timber.w("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.toInt()}")
+        Timber.d("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.toInt()}")
     }
 
     override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-        Timber.w("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
-    }
-
-    override fun onTransactionFailed(dst: Int, hasIncompleteTimerExpired: Boolean) {
-        super.onTransactionFailed(dst, hasIncompleteTimerExpired)
+        Timber.d("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
     }
 
     override fun onUnknownPduReceived(src: Int, accessPayload: ByteArray?) {
-        super.onUnknownPduReceived(src, accessPayload)
+        Timber.d("onUnknownPduReceived - src: $src, accessPayload $accessPayload")
     }
 
     override fun onMessageDecryptionFailed(meshLayer: String?, errorMessage: String?) {
-        super.onMessageDecryptionFailed(meshLayer, errorMessage)
+        Timber.d("onUnknownPduReceived - meshLayer: $meshLayer, errorMessage $errorMessage")
     }
 }

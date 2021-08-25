@@ -9,12 +9,14 @@ import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
+import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.mesh.utils.tapLeft
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.MeshProvisioningStatusCallbacks
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
@@ -89,6 +91,8 @@ class Provisioning(
         }
     }
 
+    private var disconnectJob: Job? = null
+
     init {
         meshApi.setProvisioningStatusCallbacks(provisioningStatusCallbacks)
         meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
@@ -126,12 +130,18 @@ class Provisioning(
                 return beckonDevice.getMaximumPacketSize()
             }
         })
+        disconnectJob = beckonMesh.execute {
+            beckonDevice.onDisconnect {
+                beckonMesh.updateState(Loaded(beckonMesh, meshApi))
+            }
+        }
     }
 
     // todo think about it?
     // disconnect device if needed
     // change state of MeshManagerApi
     suspend fun cancel(): Either<Throwable, Unit> = either {
+        disconnectJob?.cancel()
         beckonDevice.disconnect().bind()
         beckonMesh.updateState(Loaded(beckonMesh, meshApi))
     }
@@ -155,6 +165,7 @@ class Provisioning(
             meshApi.startProvisioning(unprovisionedNode.node)
             val node = provisioningEmitter.await().bind()
             beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
+            disconnectJob?.cancel()
             beckonMesh.updateState(Loaded(beckonMesh, meshApi))
             node
         }
