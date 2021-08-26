@@ -1,14 +1,13 @@
 package com.technocreatives.beckon.mesh
 
 import android.content.Context
-import arrow.core.Either
+import arrow.core.*
 import arrow.core.computations.either
-import arrow.core.left
-import arrow.core.right
-import arrow.core.rightIfNotNull
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import no.nordicsemi.android.mesh.MeshNetwork
 import java.util.*
 
@@ -32,7 +31,8 @@ class BeckonMeshClient(
     suspend fun loadCurrentMesh(): Either<MeshLoadError, BeckonMesh> = either {
         disconnect().bind()
         val mesh = repository.currentMesh().rightIfNotNull { NoCurrentMeshFound }.bind()
-        loadFromDatabase(mesh.id).bind()
+        meshApi.load(mesh.id).bind()
+        BeckonMesh(context, beckonClient, meshApi)
     }
 
     suspend fun import(id: UUID): Either<MeshLoadError, BeckonMesh> = either {
@@ -54,50 +54,7 @@ class BeckonMeshClient(
         }
     }
 
-    private suspend fun loadFromDatabase(id: UUID): Either<MeshLoadError, BeckonMesh> = either {
-        val networkLoadingEmitter =
-            CompletableDeferred<Either<NetworkLoadFailedError, Unit>>()
-        meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
-            override fun onNetworkLoadFailed(error: String?) {
-                networkLoadingEmitter.complete(
-                    NetworkLoadFailedError(
-                        id,
-                        "MeshNetwork is empty"
-                    ).left()
-                )
-            }
+    private suspend fun import(mesh: Mesh): Either<MeshLoadError, BeckonMesh> =
+        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi) }
 
-            override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
-                networkLoadingEmitter.complete(Unit.right())
-            }
-        })
-        meshApi.loadMeshNetwork()
-        networkLoadingEmitter.await().bind()
-        meshApi.updateNodes()
-        BeckonMesh(context, beckonClient, meshApi)
-    }
-
-    private suspend fun import(mesh: Mesh): Either<MeshLoadError, BeckonMesh> = either {
-        val networkLoadingEmitter =
-            CompletableDeferred<Either<NetworkImportedFailedError, Unit>>()
-        meshApi.setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
-            override fun onNetworkImportFailed(error: String?) {
-                networkLoadingEmitter.complete(
-                    NetworkImportedFailedError(
-                        mesh.id,
-                        "Cannot import mesh ${mesh.id}"
-                    ).left()
-                )
-            }
-
-            override fun onNetworkImported(meshNetwork: MeshNetwork?) {
-                networkLoadingEmitter.complete(Unit.right())
-            }
-        })
-
-        meshApi.importMeshNetworkJson(mesh.data)
-        networkLoadingEmitter.await().bind()
-        meshApi.updateNodes()
-        BeckonMesh(context, beckonClient, meshApi)
-    }
 }
