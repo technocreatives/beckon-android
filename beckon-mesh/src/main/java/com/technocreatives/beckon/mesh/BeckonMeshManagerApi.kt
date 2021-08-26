@@ -37,7 +37,7 @@ class BeckonMeshManagerApi(
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
     private val nodesSubject = MutableStateFlow<List<Node>>(emptyList())
-    fun nodes(): Flow<List<Node>> = nodesSubject.asStateFlow()
+    fun nodes(): StateFlow<List<Node>> = nodesSubject.asStateFlow()
 
     fun loadNodes(): List<Node> {
         val appKeys = appKeys()

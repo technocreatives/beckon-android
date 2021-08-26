@@ -23,10 +23,7 @@ import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.*
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
@@ -55,7 +52,7 @@ class BeckonMesh(
         }
     }
 
-    fun nodes(): Flow<List<Node>> = meshApi.nodes()
+    fun nodes(): StateFlow<List<Node>> = meshApi.nodes()
 
     fun appKeys(): List<AppKey> =
         meshApi.appKeys()
