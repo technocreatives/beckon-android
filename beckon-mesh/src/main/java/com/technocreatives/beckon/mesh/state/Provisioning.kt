@@ -140,10 +140,12 @@ class Provisioning(
     // todo think about it?
     // disconnect device if needed
     // change state of MeshManagerApi
-    suspend fun cancel(): Either<ProvisioningError.BleDisconnectError, Unit> = either {
+    suspend fun cancel(): Either<ProvisioningError.BleDisconnectError, Loaded> = either {
         disconnectJob?.cancel()
         beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
-        beckonMesh.updateState(Loaded(beckonMesh, meshApi))
+        val loaded = Loaded(beckonMesh, meshApi)
+        beckonMesh.updateState(loaded)
+        loaded
     }
 
     suspend fun identify(

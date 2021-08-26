@@ -4,12 +4,19 @@ import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.mesh.state.MeshState
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
+import java.util.*
 
 sealed interface MeshError
 
 data class IllegalMeshStateError(val state: MeshState) : MeshError, Exception()
 
-data class MeshLoadFailedError(val error: String) : MeshError
+sealed interface MeshLoadError : MeshError
+
+data class NetworkLoadFailedError(val id: UUID, val error: String) : MeshLoadError
+data class NetworkImportedFailedError(val id: UUID, val error: String) : MeshLoadError
+data class MeshIdNotFound(val id: UUID) : MeshLoadError
+object NoCurrentMeshFound : MeshLoadError
+data class BleDisconnectError(val throwable: Throwable) : MeshLoadError
 
 sealed class ProvisioningError : MeshError {
 
@@ -23,7 +30,6 @@ sealed class ProvisioningError : MeshError {
     object NoAllocatedUnicastRange : ProvisioningError()
     data class BleDisconnectError(val throwable: Throwable) : ProvisioningError()
 }
-
 
 sealed interface SendMessageError : SendAckMessageError
 

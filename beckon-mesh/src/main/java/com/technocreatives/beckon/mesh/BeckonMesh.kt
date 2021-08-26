@@ -117,12 +117,19 @@ class BeckonMesh(
             .mapZ { it.sortedBy { it.macAddress } }
     }
 
+    suspend fun disconnect(): Either<ProvisioningError.BleDisconnectError, Loaded> =
+        when (val state = currentState.get()) {
+            is Loaded -> state.right()
+            is Connected -> state.disconnect()
+            is Provisioning -> state.cancel()
+        }
+
     fun close() {
-        job.cancel()
         meshApi.close()
+        job.cancel()
     }
 
-    fun <T> execute(f: suspend () -> T) =
+    internal fun <T> execute(f: suspend () -> T) =
         launch { f() }
 
     suspend fun scanForProvisioning(): Flow<Either<ScanError, List<UnprovisionedScanResult>>> {
