@@ -76,6 +76,16 @@ class Connected(
         loaded
     }
 
+    suspend fun unbindConfigModelApp(
+        unicastAddress: Int,
+        message: ConfigModelAppUnbind
+    ): Either<SendAckMessageError, ConfigModelAppStatus> =
+        sendAckMessage(
+            unicastAddress,
+            message,
+            ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS
+        ).map { it as ConfigModelAppStatus }
+
     suspend fun bindConfigModelApp(
         unicastAddress: Int,
         message: ConfigModelAppBind
@@ -84,8 +94,7 @@ class Connected(
             unicastAddress,
             message,
             ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS
-        )
-            .map { it as ConfigModelAppStatus }
+        ).map { it as ConfigModelAppStatus }
 
     suspend fun sendVendorModelMessageAck(
         unicastAddress: Int,
@@ -95,8 +104,7 @@ class Connected(
             unicastAddress,
             message,
             message.opCode
-        )
-            .map { it as VendorModelMessageStatus }
+        ).map { it as VendorModelMessageStatus }
 
     suspend fun addConfigModelSubscriptionVirtualAddress(
         unicastAddress: Int,
@@ -106,8 +114,7 @@ class Connected(
             unicastAddress,
             message,
             ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
-        )
-            .map { it as ConfigModelSubscriptionStatus }
+        ).map { it as ConfigModelSubscriptionStatus }
 
     suspend fun addConfigModelSubscription(
         unicastAddress: Int,
@@ -117,24 +124,21 @@ class Connected(
             unicastAddress,
             message,
             ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
-        )
-            .map { it as ConfigModelSubscriptionStatus }
+        ).map { it as ConfigModelSubscriptionStatus }
 
     suspend fun getConfigCompositionData(address: Int): Either<SendAckMessageError, ConfigCompositionDataStatus> =
         sendAckMessage(
             address,
             ConfigCompositionDataGet(),
             ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
-        )
-            .map { it as ConfigCompositionDataStatus }
+        ).map { it as ConfigCompositionDataStatus }
 
     suspend fun getConfigDefaultTtl(address: Int): Either<SendAckMessageError, ConfigDefaultTtlStatus> =
         sendAckMessage(
             address,
             ConfigDefaultTtlGet(),
             ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS
-        )
-            .map { it as ConfigDefaultTtlStatus }
+        ).map { it as ConfigDefaultTtlStatus }
 
     suspend fun setConfigNetworkTransmit(
         address: Int,
@@ -144,8 +148,7 @@ class Connected(
             address,
             message,
             ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS
-        )
-            .map { it as ConfigNetworkTransmitStatus }
+        ).map { it as ConfigNetworkTransmitStatus }
 
     suspend fun addConfigAppKey(
         address: Int,
@@ -160,7 +163,7 @@ class Connected(
     suspend fun addProxyConfigAddressToFilter(
         address: Int,
         message: ProxyConfigAddAddressToFilter
-    )=
+    ) =
         sendAckMessage(
             address,
             message,

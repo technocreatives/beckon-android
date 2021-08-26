@@ -40,7 +40,6 @@ class BeckonMeshManagerApi(
     fun nodes(): Flow<List<Node>> = nodesSubject.asStateFlow()
 
     fun loadNodes(): List<Node> {
-        Timber.d("####################loadNodes")
         val appKeys = appKeys()
         val netKeys = networkKeys()
         return meshNetwork().nodes.map { it.toNode(appKeys, netKeys) }
@@ -59,7 +58,6 @@ class BeckonMeshManagerApi(
         meshNetwork().groups.map { Group(it) }
 
     suspend fun updateNodes() {
-        Timber.d("##################updateNodes")
         nodesSubject.emit(loadNodes())
     }
 
