@@ -13,6 +13,7 @@ data class IllegalMeshStateError(val state: MeshState) : MeshError, Exception()
 sealed interface MeshLoadError : MeshError
 
 data class NetworkLoadFailedError(val id: UUID, val error: String) : MeshLoadError
+data class CreateNetworkFailedError(val error: String) : MeshLoadError
 data class NetworkImportedFailedError(val id: UUID, val error: String) : MeshLoadError
 data class MeshIdNotFound(val id: UUID) : MeshLoadError
 object NoCurrentMeshFound : MeshLoadError

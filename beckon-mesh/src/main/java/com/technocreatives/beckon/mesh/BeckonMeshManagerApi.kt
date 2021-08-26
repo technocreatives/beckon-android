@@ -85,7 +85,26 @@ class BeckonMeshManagerApi(
                         ).left()
                     )
                 }
+                override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
+                    networkLoadingEmitter.complete(Unit.right())
+                }
+            })
+            loadMeshNetwork()
+            networkLoadingEmitter.await().tap { updateNodes() }
+        }
 
+    suspend fun load(): Either<MeshLoadError, Unit> =
+        withContext(Dispatchers.IO) {
+            val networkLoadingEmitter =
+                CompletableDeferred<Either<CreateNetworkFailedError, Unit>>()
+            setMeshManagerCallbacks(object : AbstractMeshManagerCallbacks() {
+                override fun onNetworkLoadFailed(error: String?) {
+                    networkLoadingEmitter.complete(
+                        CreateNetworkFailedError(
+                            "MeshNetwork is empty"
+                        ).left()
+                    )
+                }
                 override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
                     networkLoadingEmitter.complete(Unit.right())
                 }

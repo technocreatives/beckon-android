@@ -14,7 +14,7 @@ import java.util.*
 class BeckonMeshClient(
     private val context: Context,
     private val beckonClient: BeckonClient,
-    private val repository: MeshRepository = NoopRepository
+    private val repository: MeshRepository
 ) {
     private val meshApi = BeckonMeshManagerApi(context)
 
@@ -32,6 +32,12 @@ class BeckonMeshClient(
         disconnect().bind()
         val mesh = repository.currentMesh().rightIfNotNull { NoCurrentMeshFound }.bind()
         meshApi.load(mesh.id).bind()
+        BeckonMesh(context, beckonClient, meshApi)
+    }
+
+    suspend fun load(): Either<MeshLoadError, BeckonMesh> = either {
+        disconnect().bind()
+        meshApi.load().bind()
         BeckonMesh(context, beckonClient, meshApi)
     }
 
