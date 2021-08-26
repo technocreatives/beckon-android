@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh.callbacks
 
 import androidx.annotation.CallSuper
 import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
+import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshStatusCallbacks
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS
 import no.nordicsemi.android.mesh.transport.ControlMessage
@@ -31,7 +32,9 @@ abstract class AbstractMessageStatusCallbacks(private val meshApi: BeckonMeshMan
     @CallSuper
     override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
         if(message.opCode == CONFIG_NODE_RESET_STATUS) {
-            meshApi.loadNodes()
+            runBlocking {
+                meshApi.updateNodes()
+            }
         }
     }
 

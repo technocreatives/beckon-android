@@ -196,7 +196,9 @@ class ConnectedMeshManagerCallbacks(
 
     override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
         Timber.d("onNetworkUpdated")
-        meshApi.loadNodes()
+        runBlocking {
+            meshApi.updateNodes()
+        }
     }
 
     override fun getMtu(): Int {

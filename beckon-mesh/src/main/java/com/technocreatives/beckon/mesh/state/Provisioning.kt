@@ -17,6 +17,7 @@ import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.mesh.utils.tapLeft
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.MeshProvisioningStatusCallbacks
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
@@ -110,7 +111,9 @@ class Provisioning(
 
             override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
                 Timber.d("onNetworkUpdated")
-                meshApi.loadNodes()
+                runBlocking {
+                    meshApi.updateNodes()
+                }
             }
 
             override fun sendProvisioningPdu(meshNode: UnprovisionedMeshNode, pdu: ByteArray) {
