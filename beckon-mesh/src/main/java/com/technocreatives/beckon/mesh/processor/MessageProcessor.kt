@@ -37,7 +37,7 @@ private data class MeshAndSubject(
 
 private data class BeckonMessage(
     val id: Int,
-    val messsage: MeshMessage,
+    val message: MeshMessage,
     val processor: MessageProcessor,
     val emitter: CompletableDeferred<Either<SendMessageError, Unit>>
 )
@@ -97,7 +97,7 @@ class MessageQueue(private val pduSender: PduSender) {
             select<Unit> {
                 receivedMessageChannel.onReceive { message ->
                     Timber.d("receivedMessageChannel.onReceive")
-                    map[message.opCode]?.emitter?.complete(message.right())
+                    map.remove(message.opCode)?.emitter?.complete(message.right())
                 }
 
                 incomingAckMessageChannel.onReceive {
@@ -179,7 +179,7 @@ class MessageQueue(private val pduSender: PduSender) {
 
 private class MessageProcessor(
     private val dst: Int,
-    private val idMesasage: IdMessage,
+    private val idMessage: IdMessage,
     private val sender: PduSender,
 ) {
 
@@ -188,12 +188,12 @@ private class MessageProcessor(
     // send
     suspend fun sendMessage(): Either<SendMessageError, IdMessage> {
         Timber.d("sendMessage")
-        return sender.createPdu(dst, idMesasage.message)
+        return sender.createPdu(dst, idMessage.message)
             .flatMap { emitter.await() }
     }
 
     fun onMessageProcessed(message: MeshMessage) {
-        emitter.complete(idMesasage.copy(message = message).right())
+        emitter.complete(idMessage.copy(message = message).right())
     }
 
 }

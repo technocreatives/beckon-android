@@ -228,11 +228,11 @@ class ConnectedMessageStatusCallbacks(
     meshApi: BeckonMeshManagerApi,
     private val queue: MessageQueue
 ) : AbstractMessageStatusCallbacks(meshApi) {
-    override fun onMeshMessageReceived(src: Int, meshMessage: MeshMessage) {
-        super.onMeshMessageReceived(src, meshMessage)
-        Timber.d("onMeshMessageReceived - src: $src, dst: ${meshMessage.dst}, meshMessage: ${meshMessage.sequenceNumber()}")
+    override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
+        super.onMeshMessageReceived(src, message)
+        Timber.d("onMeshMessageReceived - src: $src, dst: ${message.dst}, meshMessage: ${message.sequenceNumber()}")
         runBlocking {
-            queue.messageReceived(meshMessage)
+            queue.messageReceived(message)
         }
     }
 

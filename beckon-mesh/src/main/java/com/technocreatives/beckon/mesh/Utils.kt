@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.mesh
 
-import arrow.core.Either
-import arrow.core.left
+import arrow.core.*
+import arrow.core.computations.either
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScannerSetting
 import kotlinx.coroutines.*
@@ -14,6 +14,7 @@ import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import no.nordicsemi.android.mesh.utils.MeshParserUtils
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import java.util.*
+import kotlin.collections.foldRight
 import kotlinx.coroutines.withTimeout as withTimeoutWithException
 
 fun <T> MutableSharedFlow<T>.blockingEmit(value: T) {
@@ -72,6 +73,4 @@ suspend fun withTimeout(
     timeMillis: Long,
     block: suspend CoroutineScope.() -> Either<SendMessageError, MeshMessage>
 ): Either<SendAckMessageError, MeshMessage> =
-    Either.catch { withTimeoutWithException(timeMillis, block) }
-        .mapLeft { TimeoutError }
-        .fold({ it.left() }, { it })
+    withTimeoutOrNull(timeMillis, block) ?: TimeoutError.left()
