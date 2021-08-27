@@ -87,7 +87,7 @@ class BeckonMesh(
     }
 
 
-    suspend fun getConnectedState(beckonDevice: BeckonDevice): Either<IllegalMeshStateError, Connected> {
+    suspend fun startConnectedState(beckonDevice: BeckonDevice): Either<IllegalMeshStateError, Connected> {
         val state = currentState.get()
         return if (state is Loaded) {
             state.connect(beckonDevice).right()
@@ -99,6 +99,15 @@ class BeckonMesh(
     suspend fun provisioningState(): Either<IllegalMeshStateError, Provisioning> {
         val state = currentState.get()
         return if (state is Provisioning) {
+            state.right()
+        } else {
+            IllegalMeshStateError(state).left()
+        }
+    }
+
+    suspend fun connectedState(): Either<IllegalMeshStateError, Connected> {
+        val state = currentState.get()
+        return if (state is Connected) {
             state.right()
         } else {
             IllegalMeshStateError(state).left()
