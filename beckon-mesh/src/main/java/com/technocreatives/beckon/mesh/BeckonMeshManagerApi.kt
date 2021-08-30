@@ -54,11 +54,12 @@ class BeckonMeshManagerApi(
     fun networkKeys(): List<BeckonNetworkKey> =
         meshNetwork().netKeys.map { BeckonNetworkKey(it) }
 
-    fun groups(): List<Group> =
-        meshNetwork().groups.map { Group(it) }
+    private val groupsSubject = MutableStateFlow<List<Group>>(emptyList())
+    fun groups(): StateFlow<List<Group>> = groupsSubject.asStateFlow()
 
-    suspend fun updateNodes() {
+    suspend fun updateNetwork() {
         nodesSubject.emit(loadNodes())
+        groupsSubject.emit(meshNetwork().groups.map { Group(it) })
     }
 
     internal fun meshNetwork(): MeshNetwork = meshNetwork!!
@@ -85,12 +86,13 @@ class BeckonMeshManagerApi(
                         ).left()
                     )
                 }
+
                 override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
                     networkLoadingEmitter.complete(Unit.right())
                 }
             })
             loadMeshNetwork()
-            networkLoadingEmitter.await().tap { updateNodes() }
+            networkLoadingEmitter.await().tap { updateNetwork() }
         }
 
     suspend fun load(): Either<MeshLoadError, Unit> =
@@ -105,12 +107,13 @@ class BeckonMeshManagerApi(
                         ).left()
                     )
                 }
+
                 override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
                     networkLoadingEmitter.complete(Unit.right())
                 }
             })
             loadMeshNetwork()
-            networkLoadingEmitter.await().tap { updateNodes() }
+            networkLoadingEmitter.await().tap { updateNetwork() }
         }
 
     suspend fun import(mesh: Mesh): Either<MeshLoadError, Unit> =
@@ -133,7 +136,7 @@ class BeckonMeshManagerApi(
             })
 
             importMeshNetworkJson(mesh.data)
-            networkLoadingEmitter.await().tap { updateNodes() }
+            networkLoadingEmitter.await().tap { updateNetwork() }
         }
 
     suspend fun exportCurrentMesh(id: UUID): Mesh? =

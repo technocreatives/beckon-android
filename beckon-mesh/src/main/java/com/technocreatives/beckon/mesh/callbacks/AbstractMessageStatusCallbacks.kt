@@ -33,7 +33,7 @@ abstract class AbstractMessageStatusCallbacks(private val meshApi: BeckonMeshMan
     override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
         if(message.opCode == CONFIG_NODE_RESET_STATUS) {
             runBlocking {
-                meshApi.updateNodes()
+                meshApi.updateNetwork()
             }
         }
     }

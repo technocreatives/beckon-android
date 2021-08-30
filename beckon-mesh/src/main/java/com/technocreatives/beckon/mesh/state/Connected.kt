@@ -200,7 +200,7 @@ class ConnectedMeshManagerCallbacks(
     override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
         Timber.d("onNetworkUpdated")
         runBlocking {
-            meshApi.updateNodes()
+            meshApi.updateNetwork()
         }
     }
 

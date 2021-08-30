@@ -60,7 +60,7 @@ class BeckonMesh(
     fun networkKeys(): List<NetworkKey> =
         meshApi.networkKeys()
 
-    fun groups(): List<Group> =
+    fun groups(): StateFlow<List<Group>> =
         meshApi.groups()
 
     fun createGroup(name: String, address: Int): Group? {

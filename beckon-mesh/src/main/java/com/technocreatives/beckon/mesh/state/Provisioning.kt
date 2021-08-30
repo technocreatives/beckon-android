@@ -13,7 +13,6 @@ import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
-import com.technocreatives.beckon.mesh.utils.tap
 import com.technocreatives.beckon.mesh.utils.tapLeft
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
@@ -87,7 +86,7 @@ class Provisioning(
                 ).right()
             )
             beckonMesh.execute {
-                meshApi.updateNodes()
+                meshApi.updateNetwork()
             }
         }
     }
@@ -112,7 +111,7 @@ class Provisioning(
             override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
                 Timber.d("onNetworkUpdated")
                 runBlocking {
-                    meshApi.updateNodes()
+                    meshApi.updateNetwork()
                 }
             }
 
