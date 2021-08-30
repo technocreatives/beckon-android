@@ -1,8 +1,8 @@
 package com.technocreatives.beckon.mesh
 
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.Either
-import arrow.core.Option
 import arrow.core.computations.either
 import arrow.core.left
 import arrow.core.right
@@ -10,6 +10,7 @@ import arrow.fx.coroutines.Atomic
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
+import com.technocreatives.beckon.internal.toUuid
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
@@ -18,17 +19,15 @@ import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.state.Loaded
 import com.technocreatives.beckon.mesh.state.MeshState
 import com.technocreatives.beckon.mesh.state.Provisioning
-import com.technocreatives.beckon.mesh.utils.tap
-import com.technocreatives.beckon.util.filterZ
-import com.technocreatives.beckon.util.mapEither
-import com.technocreatives.beckon.util.mapZ
+import com.technocreatives.beckon.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 class BeckonMesh(
-    context: Context,
+    private val context: Context,
     private val beckonClient: BeckonClient,
     private val meshApi: BeckonMeshManagerApi
 ) : CoroutineScope {
@@ -46,13 +45,20 @@ class BeckonMesh(
         stateSubject = MutableStateFlow(initialState)
     }
 
-    init {
-        runBlocking {
-            initState()
-        }
+    suspend fun register() {
+        initState()
     }
 
+    suspend fun unregister() {
+        meshApi.close()
+        job.cancel()
+    }
+
+
     fun nodes(): StateFlow<List<Node>> = meshApi.nodes()
+
+    fun meshUuid(): UUID =
+        meshApi.meshNetwork().meshUUID.toUuid()
 
     fun appKeys(): List<AppKey> =
         meshApi.appKeys()
@@ -130,11 +136,6 @@ class BeckonMesh(
             is Provisioning -> state.cancel()
         }
 
-    fun close() {
-        meshApi.close()
-        job.cancel()
-    }
-
     internal fun <T> execute(f: suspend () -> T) =
         launch { f() }
 
@@ -144,7 +145,7 @@ class BeckonMesh(
     }
 
     suspend fun scanForProvisioning(node: Node): Either<BeckonError, BeckonDevice> =
-        scanForProxyP()
+        scanForProxy()
             .mapZ {
                 it.firstOrNull {
                     // TODO what if device is not proxy device? We do not need to connect to the current device.
@@ -154,12 +155,20 @@ class BeckonMesh(
             .mapEither { connectForProxy(it!!.macAddress) }
             .first()
 
-    private suspend fun scanForProxyP(): Flow<Either<ScanError, List<ScanResult>>> =
+    private suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
         scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
 
-    suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
-        scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+    suspend fun scanForProxy(filter: (BluetoothDevice) -> Boolean): Flow<Either<ScanError, List<ScanResult>>> {
+        val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
+        val connectedDevices = context.bluetoothManager()
+            .connectedDevices()
+            .filter { filter(it) }
+            .map { ScanResult(it, 1000, null) }
+
+        return scan(scannerSetting)
             .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
+            .mapZ { connectedDevices + it }
+    }
 
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
         meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic)
@@ -173,7 +182,8 @@ class BeckonMesh(
     ): Either<BeckonError, BeckonDevice> =
         either {
             val beckonDevice = beckonClient.connect(macAddress).bind()
-            val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
+            // TODO
+            val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu)
             beckonDevice.subscribe(characteristic).bind()
             with(meshApi) {
                 beckonDevice.handleNotifications(characteristic)

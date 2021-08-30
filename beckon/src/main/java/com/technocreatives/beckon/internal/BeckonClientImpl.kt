@@ -26,16 +26,16 @@ import com.technocreatives.beckon.data.DeviceRepository
 import com.technocreatives.beckon.redux.BeckonAction
 import com.technocreatives.beckon.redux.BeckonStore
 import com.technocreatives.beckon.util.*
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
+import kotlin.coroutines.CoroutineContext
 
 internal class BeckonClientImpl(
     private val context: Context,
@@ -43,15 +43,13 @@ internal class BeckonClientImpl(
     private val deviceRepository: DeviceRepository,
     private val bluetoothReceiver: Receiver,
     private val scanner: Scanner
-) : BeckonClient {
+) : BeckonClient, CoroutineScope {
 
-    // TODO remove
-//    private val bag = CompositeDisposable()
+    private val job = Job()
+    private lateinit var registerJob: Job
+    override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
     override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
-//        coroutineContext[Job]?.invokeOnCompletion {
-//            stopScan()
-//        }
         val originalScanStream = scanner.startScan(setting)
         return if (setting.useFilter) {
             val connected =
@@ -89,16 +87,25 @@ internal class BeckonClientImpl(
             .map { }
     }
 
-    override suspend fun search(
+    override suspend fun searchAndConnect(
         setting: ScannerSetting,
         descriptor: Descriptor
     ): Flow<Either<ConnectionError, BeckonDevice>> {
         Timber.d("Search: $setting")
+        val connectedDevices = search(setting)
+        return flow {
+            connectedDevices.forEach {
+                emit(connectAndValidateRequirements(it, descriptor))
+            }
+        }
+    }
+
+    override suspend fun search(setting: ScannerSetting): List<BluetoothDevice> {
+        Timber.d("Search: $setting")
         val connectedDevicesInSystem = context.bluetoothManager()
             .connectedDevices()
             .filter { device -> setting.filters.any { it.filter(device) } }
-
-        val connectedDevices = if (setting.useFilter) {
+        return if (setting.useFilter) {
             val connected =
                 beckonStore.currentState().connectedDevices.map { it.metadata().macAddress }
             val saved = deviceRepository.currentDevices().map { it.macAddress }
@@ -109,15 +116,6 @@ internal class BeckonClientImpl(
         } else {
             connectedDevicesInSystem
         }
-        return flow {
-            connectedDevices.forEach {
-                emit(connectAndValidateRequirements(it, descriptor))
-            }
-        }
-
-        // return Observable.fromArray(*connectedDevices.toTypedArray())
-        //     .flatMapSingle { connect(it, descriptor) }
-        //     .asFlow()
     }
 
     override suspend fun connect(
@@ -213,9 +211,8 @@ internal class BeckonClientImpl(
             }
     }
 
-    override fun connectedDevices(): Flow<List<Metadata>> {
-        return beckonStore.states().map { it.connectedDevices.map { it.metadata() } }
-    }
+    override fun connectedDevices(): Flow<List<Metadata>> =
+        beckonStore.states().map { it.connectedDevices.map { it.metadata() } }
 
     override suspend fun findSavedDevice(macAddress: MacAddress): Either<BeckonDeviceError.SavedDeviceNotFound, SavedMetadata> {
         return deviceRepository.findDevice(macAddress)
@@ -226,37 +223,36 @@ internal class BeckonClientImpl(
         return deviceRepository.devices()
     }
 
-    override suspend fun register(context: Context) {
-        bluetoothReceiver.register(context)
+    override fun register(context: Context) {
+        registerJob =
+            launch {
+                bluetoothReceiver.register(context)
 
-        // do scan to check if bluetooth turn on from off state
-        beckonStore.states()
-//            .subscribeOn(Schedulers.io())
-//            .observeOn(Schedulers.io())
-            .map { it.bluetoothState }
-            .distinctUntilChanged()
-            .filter { it == BluetoothState.ON }
-            .map { deviceRepository.currentDevices() }
-            .collect { reconnectSavedDevices(it) }
+                // do scan to check if bluetooth turn on from off state
+                beckonStore.states()
+                    .map { it.bluetoothState }
+                    .distinctUntilChanged()
+                    .filter { it == BluetoothState.ON }
+                    .map { deviceRepository.currentDevices() }
+                    .collect { reconnectSavedDevices(it) }
 
-        beckonStore.states()
-            .map { it.bluetoothState }
-            .distinctUntilChanged()
-            .filter { it == BluetoothState.OFF }
-            .collect {
-                beckonStore.currentState().connectedDevices.onEach {
-                    runBlocking(Dispatchers.IO) {
-                        it.disconnect().fold(
-                            {
-                                Timber.d("Disconnect after BT_OFF success")
-                            },
-                            {
-                                Timber.w("Disconnect after BT_OFF failed $it")
-                            }
-                        )
+                beckonStore.states()
+                    .map { it.bluetoothState }
+                    .distinctUntilChanged()
+                    .filter { it == BluetoothState.OFF }
+                    .collect {
+                        beckonStore.currentState().connectedDevices.onEach {
+                            it.disconnect().fold(
+                                {
+                                    Timber.d("Disconnect after BT_OFF success")
+                                },
+                                {
+                                    Timber.w("Disconnect after BT_OFF failed $it")
+                                }
+                            )
+                        }
+                        beckonStore.dispatch(BeckonAction.RemoveAllConnectedDevices)
                     }
-                }
-                beckonStore.dispatch(BeckonAction.RemoveAllConnectedDevices)
             }
     }
 
@@ -265,9 +261,10 @@ internal class BeckonClientImpl(
         return devices.parTraverseEither { connect(it) }
     }
 
-    override suspend fun unregister(context: Context) {
+    override fun unregister(context: Context) {
         bluetoothReceiver.unregister(context)
-//        bag.clear()
+        registerJob.cancel()
+        job.cancel()
     }
 
     override fun bluetoothState(): Flow<BluetoothState> {

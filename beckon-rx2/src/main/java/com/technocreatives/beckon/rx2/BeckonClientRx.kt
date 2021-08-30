@@ -36,7 +36,7 @@ interface BeckonClientRx {
     fun search(
         setting: ScannerSetting,
         descriptor: Descriptor
-    ): Observable<Either<ConnectionError, com.technocreatives.beckon.rx2.BeckonDeviceRx>>
+    ): Observable<Either<ConnectionError, BeckonDeviceRx>>
 
     /*
     * Connect to a scanned device and then verify if all characteristics work
@@ -45,7 +45,7 @@ interface BeckonClientRx {
     fun connect(
         result: ScanResult,
         descriptor: Descriptor
-    ): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx>
+    ): Single<BeckonDeviceRx>
 
     /*
     * Connect to a saved device and then verify if all characteristics work
@@ -54,7 +54,7 @@ interface BeckonClientRx {
     * */
     fun connect(
         metadata: SavedMetadata
-    ): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx>
+    ): Single<BeckonDeviceRx>
 
     fun disconnect(macAddress: MacAddress): Completable
 
@@ -76,7 +76,7 @@ interface BeckonClientRx {
      */
     fun remove(macAddress: MacAddress): Single<MacAddress>
 
-    fun findConnectedDevice(macAddress: MacAddress): Single<com.technocreatives.beckon.rx2.BeckonDeviceRx>
+    fun findConnectedDevice(macAddress: MacAddress): Single<BeckonDeviceRx>
 
     /**
      * Return a stream of state

@@ -6,7 +6,7 @@ import com.squareup.moshi.JsonClass
 import no.nordicsemi.android.ble.data.Data
 import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
-import java.util.UUID
+import java.util.*
 
 typealias MacAddress = String
 
@@ -20,24 +20,30 @@ data class DeviceFilter(
     val address: String? = null,
     val serviceUuid: String? = null
 ) {
-    fun filter(device: BluetoothDevice): Boolean {
-        return filterMacAddress(device) && filterName(device)
-    }
+    fun filter(device: BluetoothDevice): Boolean =
+        filterMacAddress(device) && filterName(device) && filterServiceUuid(device)
 
-    private fun filterName(device: BluetoothDevice): Boolean {
-        return if (name == null) true
+    private fun filterName(device: BluetoothDevice): Boolean =
+        if (name == null) true
         else device.name == name
-    }
 
-    private fun filterMacAddress(device: BluetoothDevice): Boolean {
-        return if (address == null) true
+    private fun filterMacAddress(device: BluetoothDevice): Boolean =
+        if (address == null) true
         else device.address == address
-    }
+
+    //
+    private fun filterServiceUuid(device: BluetoothDevice): Boolean =
+        when {
+            serviceUuid == null -> true
+            device.uuids == null -> false
+            else -> device.uuids.any { it.uuid.toString().lowercase(Locale.US) == serviceUuid.lowercase(Locale.US) }
+        }
 }
 
 data class ScannerSetting(
     val settings: ScanSettings,
     val filters: List<DeviceFilter>,
+    // filter out all devices that are connected with Beckon or all devices are in beckon store
     val useFilter: Boolean
 )
 

@@ -98,15 +98,11 @@ fun BeckonClient.rx(): BeckonClientRx {
             this@rx.savedDevices().asObservable()
 
         override fun register(context: Context) {
-            runBlocking(Dispatchers.IO) {
-                this@rx.register(context)
-            }
+            this@rx.register(context)
         }
 
         override fun unregister(context: Context) {
-            runBlocking(Dispatchers.IO) {
-                this@rx.unregister(context)
-            }
+            this@rx.unregister(context)
         }
 
         override fun bluetoothState(): Observable<BluetoothState> =

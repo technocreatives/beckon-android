@@ -1,5 +1,6 @@
 package com.technocreatives.beckon
 
+import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.Either
 import com.technocreatives.beckon.data.DeviceRepositoryImpl
@@ -43,11 +44,12 @@ interface BeckonClient {
      * Search for all currently connected devices in the systems which satisfies ScannerSetting
      * If setting.useFilter == True, this function will ignore all connected and saved devices in Beckon
      */
-    suspend fun search(
+    suspend fun searchAndConnect(
         setting: ScannerSetting,
         descriptor: Descriptor
     ): Flow<Either<ConnectionError, BeckonDevice>>
 
+    suspend fun search(setting: ScannerSetting): List<BluetoothDevice>
     /*
     * Connect to a scanned device and then verify if all characteristics work
     * Return @BeckonDevice or ConnectFailedException when it fails
@@ -107,9 +109,9 @@ interface BeckonClient {
     fun savedDevices(): Flow<List<SavedMetadata>>
 
     // hook up functions
-    suspend fun register(context: Context)
+    fun register(context: Context)
 
-    suspend fun unregister(context: Context)
+    fun unregister(context: Context)
 
     // utilities
     // todo remove

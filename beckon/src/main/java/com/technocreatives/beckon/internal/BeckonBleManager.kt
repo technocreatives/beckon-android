@@ -21,6 +21,7 @@ import no.nordicsemi.android.ble.callback.MtuCallback
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -29,7 +30,10 @@ internal class BeckonBleManager(
     context: Context,
     val device: BluetoothDevice,
     val descriptor: Descriptor
-) : BleManager(context) {
+) : BleManager(context), CoroutineScope {
+
+    private val job = Job()
+    override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
     private var bluetoothGatt: BluetoothGatt? = null
 
@@ -229,7 +233,7 @@ internal class BeckonBleManager(
                     val characteristics = allCharacteristics(bluetoothGatt!!)
                     val detail = DeviceDetail(services, characteristics)
                     //
-                    GlobalScope.launch {
+                    launch {
                         // TODO Add timeout error???
                         either<BeckonError, Unit> {
                             val delayTime = 1600L
@@ -264,7 +268,6 @@ internal class BeckonBleManager(
                 }
             }
             private val MTU_SIZE_DEFAULT = 23
-            private val MTU_SIZE_MAX = 517
 
             override fun onDeviceDisconnected() {
                 overrideMtu(MTU_SIZE_DEFAULT)
@@ -472,12 +475,6 @@ internal class BeckonBleManager(
                 changeSubject.emit(Change(uuid, data))
             }
         }
-//        val readCallback = DataReceivedCallback { device, data ->
-//            Timber.d("Read DataReceivedCallback $device $data")
-//            runBlocking {
-//                changeSubject.emit(Change(uuid, data))
-//            }
-//        }
 
         setNotificationCallback(gatt).with(callback)
         enableNotifications(gatt)
