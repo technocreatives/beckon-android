@@ -86,7 +86,7 @@ class MessageQueue(private val pduSender: PduSender) {
         processedMessageChannel.send(message)
     }
 
-    fun CoroutineScope.execute() = launch {
+    fun CoroutineScope.execute() {
         ackProcess()
         process()
     }
