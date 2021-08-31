@@ -184,6 +184,27 @@ class Connected(
                 opCode
             )
         }
+
+}
+
+
+suspend fun Connected.setUpAppKey(
+    node: Node,
+    netKey: NetworkKey,
+    appKey: AppKey,
+): Either<Any, Unit> = either {
+
+    getConfigCompositionData(node.unicastAddress).bind()
+
+    getConfigDefaultTtl(node.unicastAddress).bind()
+
+    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+
+    setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
+
+    val configAppKeyAdd = ConfigAppKeyAdd(netKey.actualKey, appKey.applicationKey)
+
+    addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
 }
 
 class ConnectedMeshManagerCallbacks(
@@ -209,25 +230,6 @@ class ConnectedMeshManagerCallbacks(
     override fun getMtu(): Int {
         return beckonDevice.getMaximumPacketSize()
     }
-}
-
-suspend fun Connected.setUpAppKey(
-    node: Node,
-    netKey: NetworkKey,
-    appKey: AppKey,
-): Either<Any, Unit> = either {
-
-    getConfigCompositionData(node.unicastAddress).bind()
-
-    getConfigDefaultTtl(node.unicastAddress).bind()
-
-    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
-
-    setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
-
-    val configAppKeyAdd = ConfigAppKeyAdd(netKey.actualKey, appKey.applicationKey)
-
-    addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
 }
 
 class ConnectedMessageStatusCallbacks(

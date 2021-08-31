@@ -1,2 +1,3 @@
-include ':app', ':beckon', ':beckon-mesh'
-// ':beckon-rx2',
+include ':beckon', ':beckon-mesh'
+// ':app', ':beckon-rx2',
+
