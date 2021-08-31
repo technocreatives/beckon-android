@@ -13,7 +13,6 @@ import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
-import com.technocreatives.beckon.mesh.utils.tapLeft
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
@@ -33,7 +32,7 @@ class Provisioning(
 ) : MeshState(beckonMesh, meshApi) {
 
     private val inviteEmitter =
-        CompletableDeferred<Either<ProvisioningError.ProvisioningFailed, UnprovisionedNode>>()
+        CompletableDeferred<Either<ProvisioningFailed, UnprovisionedNode>>()
 
     private val provisioningEmitter =
         CompletableDeferred<Either<ProvisioningError, Node>>()
@@ -64,7 +63,7 @@ class Provisioning(
             state: ProvisioningState.States?,
             data: ByteArray?
         ) {
-            val failed = ProvisioningError.ProvisioningFailed(meshNode, state, data).left()
+            val failed = ProvisioningFailed(meshNode, state, data).left()
             if (accumulatedStates.isInviting()) {
                 inviteEmitter.complete(failed)
             } else {
@@ -139,12 +138,14 @@ class Provisioning(
         }
     }
 
+    override suspend fun isValid(): Boolean = beckonMesh.isCurrentState<Provisioning>()
+
     // todo think about it?
     // disconnect device if needed
     // change state of MeshManagerApi
-    suspend fun cancel(): Either<ProvisioningError.BleDisconnectError, Loaded> = either {
+    suspend fun cancel(): Either<BleDisconnectError, Loaded> = either {
         disconnectJob?.cancel()
-        beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
+        beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
         val loaded = Loaded(beckonMesh, meshApi)
         beckonMesh.updateState(loaded)
         loaded
@@ -153,29 +154,31 @@ class Provisioning(
     suspend fun identify(
         scanResult: UnprovisionedScanResult,
         attentionTimer: Int
-    ): Either<ProvisioningError.ProvisioningFailed, UnprovisionedNode> {
+    ): Either<ProvisioningFailed, UnprovisionedNode> {
         meshApi.identifyNode(scanResult.uuid, attentionTimer)
         return inviteEmitter.await()
     }
 
+    // todo add other type of provisioning like OOB
     suspend fun startProvisioning(unprovisionedNode: UnprovisionedNode): Either<ProvisioningError, Node> =
         either {
             Timber.d("startProvisioning ${unprovisionedNode.node.deviceUuid}")
-            meshApi.nextAvailableUnicastAddress(unprovisionedNode.node).tapLeft {
-                provisioningEmitter.complete(
-                    it.left()
-                )
-            }
+
+            val unicast = meshApi.nextAvailableUnicastAddress(unprovisionedNode.node).bind()
+            Timber.d("startProvisioning new unicast: $unicast")
+
             meshApi.startProvisioning(unprovisionedNode.node)
             val node = provisioningEmitter.await().bind()
-            beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
+            Timber.d("Finished provisioning - start disconnect")
+
+            beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
             disconnectJob?.cancel()
+
             beckonMesh.updateState(Loaded(beckonMesh, meshApi))
             node
         }
 
-    fun List<ProvisioningState.States>.isInviting(): Boolean {
-        // todo correct this formula
-        return this.size <= 1
-    }
+    // todo correct this formula
+    fun List<ProvisioningState.States>.isInviting(): Boolean =
+        this.size <= 1
 }

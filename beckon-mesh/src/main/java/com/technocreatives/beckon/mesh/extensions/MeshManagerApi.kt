@@ -4,6 +4,8 @@ import android.os.ParcelUuid
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.technocreatives.beckon.mesh.NoAllocatedUnicastRange
+import com.technocreatives.beckon.mesh.NoAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.ProvisioningError
 import kotlinx.coroutines.CompletableDeferred
 import no.nordicsemi.android.mesh.MeshBeacon
@@ -30,13 +32,13 @@ suspend fun MeshManagerApi.nextAvailableUnicastAddress(unprovisionedMeshNode: Un
             val availableUnicast: Int =
                 it.nextAvailableUnicastAddress(elementCount, provisioner)
             if (availableUnicast == -1) {
-                provisioningEmitter.complete(ProvisioningError.NoAvailableUnicastAddress.left())
+                provisioningEmitter.complete(NoAvailableUnicastAddress.left())
             } else {
                 it.assignUnicastAddress(availableUnicast)
                 provisioningEmitter.complete(availableUnicast.right())
             }
         } catch (ex: IllegalArgumentException) {
-            provisioningEmitter.complete(ProvisioningError.NoAllocatedUnicastRange.left())
+            provisioningEmitter.complete(NoAllocatedUnicastRange.left())
         }
     }
     return provisioningEmitter.await()

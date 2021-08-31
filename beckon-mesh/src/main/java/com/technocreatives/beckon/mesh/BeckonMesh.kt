@@ -15,10 +15,7 @@ import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.*
-import com.technocreatives.beckon.mesh.state.Connected
-import com.technocreatives.beckon.mesh.state.Loaded
-import com.technocreatives.beckon.mesh.state.MeshState
-import com.technocreatives.beckon.mesh.state.Provisioning
+import com.technocreatives.beckon.mesh.state.*
 import com.technocreatives.beckon.util.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -111,6 +108,11 @@ class BeckonMesh(
         }
     }
 
+    internal suspend inline fun <reified T: MeshState>isCurrentState(): Boolean{
+        return currentState.get() is T
+    }
+
+
     suspend fun connectedState(): Either<IllegalMeshStateError, Connected> {
         val state = currentState.get()
         return if (state is Connected) {
@@ -129,11 +131,12 @@ class BeckonMesh(
             .mapZ { it.sortedBy { it.macAddress } }
     }
 
-    suspend fun disconnect(): Either<ProvisioningError.BleDisconnectError, Loaded> =
+    suspend fun disconnect(): Either<BleDisconnectError, Loaded> =
         when (val state = currentState.get()) {
             is Loaded -> state.right()
             is Connected -> state.disconnect()
             is Provisioning -> state.cancel()
+            is KeyRefresh -> TODO()
         }
 
     internal fun <T> execute(f: suspend () -> T) =

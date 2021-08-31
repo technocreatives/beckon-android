@@ -6,7 +6,6 @@ import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
 
 
 sealed class MeshState(val beckonMesh: BeckonMesh, val meshApi: BeckonMeshManagerApi) {
-
-    fun isValid(): Boolean = TODO()
+    abstract suspend fun isValid(): Boolean
 }
 

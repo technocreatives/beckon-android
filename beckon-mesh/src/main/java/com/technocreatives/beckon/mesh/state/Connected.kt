@@ -68,9 +68,11 @@ class Connected(
         }
     }
 
-    suspend fun disconnect(): Either<ProvisioningError.BleDisconnectError, Loaded> = either {
+    override suspend fun isValid(): Boolean = beckonMesh.isCurrentState<Connected>()
+
+    suspend fun disconnect(): Either<BleDisconnectError, Loaded> = either {
         disconnectJob?.cancel()
-        beckonDevice.disconnect().mapLeft { ProvisioningError.BleDisconnectError(it) }.bind()
+        beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
         val loaded = Loaded(beckonMesh, meshApi)
         beckonMesh.updateState(loaded)
         loaded
@@ -216,11 +218,15 @@ suspend fun Connected.setUpAppKey(
 ): Either<Any, Unit> = either {
 
     getConfigCompositionData(node.unicastAddress).bind()
+
     getConfigDefaultTtl(node.unicastAddress).bind()
+
     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+
     setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
 
     val configAppKeyAdd = ConfigAppKeyAdd(netKey.actualKey, appKey.applicationKey)
+
     addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
 }
 

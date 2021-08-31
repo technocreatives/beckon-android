@@ -9,6 +9,9 @@ import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
 
 class Loaded(beckonMesh: BeckonMesh, meshApi: BeckonMeshManagerApi) :
     MeshState(beckonMesh, meshApi) {
+
+    override suspend fun isValid(): Boolean = beckonMesh.isCurrentState<Loaded>()
+
     suspend fun startProvisioning(beckonDevice: BeckonDevice): Provisioning {
         val provisioning = Provisioning(beckonMesh, meshApi, beckonDevice)
         beckonMesh.updateState(provisioning)
