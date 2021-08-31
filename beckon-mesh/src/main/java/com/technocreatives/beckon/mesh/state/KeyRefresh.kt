@@ -2,16 +2,16 @@ package com.technocreatives.beckon.mesh.state
 
 import arrow.core.Either
 import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.mesh.BeckonMesh
-import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
-import com.technocreatives.beckon.mesh.MeshConstants
+import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.model.NetworkKey
 import com.technocreatives.beckon.mesh.processor.MessageQueue
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
 import com.technocreatives.beckon.mesh.processor.PduSenderResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import no.nordicsemi.android.mesh.transport.MeshMessage
 
 class KeyRefresh(
@@ -59,10 +59,5 @@ class KeyRefresh(
 
     override suspend fun isValid(): Boolean = beckonMesh.isCurrentState<KeyRefresh>()
 
-    suspend fun distributeNetKey(key: NetworkKey, newKey: ByteArray) {
-        val updatedKey = Either.catch {
-             meshApi.meshNetwork().distributeNetKey(key.actualKey, newKey)
-        }
-    }
 }
 

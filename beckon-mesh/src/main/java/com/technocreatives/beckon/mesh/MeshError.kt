@@ -1,6 +1,8 @@
 package com.technocreatives.beckon.mesh
 
 import com.technocreatives.beckon.BeckonActionError
+import no.nordicsemi.android.mesh.NetworkKey as NrfNetworkKey
+import com.technocreatives.beckon.mesh.model.NetworkKey
 import com.technocreatives.beckon.mesh.state.MeshState
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
@@ -42,3 +44,7 @@ sealed interface SendAckMessageError
 object TimeoutError : SendAckMessageError
 
 sealed interface KeyRefreshError : MeshError
+
+data class InvalidNetKey(val key: ByteArray): KeyRefreshError
+data class NetworkNotDistributed(val key: NetworkKey): KeyRefreshError
+data class RevokeOldKeyFailed(val key: NrfNetworkKey): KeyRefreshError

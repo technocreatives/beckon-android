@@ -1,6 +1,6 @@
 package com.technocreatives.beckon.mesh.state
 
-import arrow.core.Either
+import arrow.core.*
 import arrow.core.computations.either
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
@@ -16,12 +16,17 @@ import com.technocreatives.beckon.mesh.processor.MessageQueue
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
 import com.technocreatives.beckon.mesh.processor.PduSenderResult
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import no.nordicsemi.android.mesh.MeshNetwork
+import no.nordicsemi.android.mesh.NetworkKey as NrfNetworkKey
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
+import no.nordicsemi.android.mesh.utils.MeshParserUtils
+import no.nordicsemi.android.mesh.utils.SecureUtils
 import timber.log.Timber
 
 class Connected(
@@ -185,8 +190,73 @@ class Connected(
             )
         }
 
+    suspend fun distributeNetKey(
+        key: NetworkKey,
+        newKey: ByteArray
+    ): Either<InvalidNetKey, NetworkKey> =
+        withContext(Dispatchers.IO) {
+            Either.catch {
+                meshApi.meshNetwork().distributeNetKey(key.actualKey, newKey)
+                    .let { NetworkKey(it) }
+            }.mapLeft { InvalidNetKey(newKey) }
+        }
+
+    suspend fun updateConfigNetKey(
+        address: Int,
+        message: ConfigNetKeyUpdate
+    ): Either<SendAckMessageError, ConfigNetKeyStatus> =
+        sendAckMessage(
+            address, message, ConfigMessageOpCodes.CONFIG_NETKEY_STATUS
+        ).map { it as ConfigNetKeyStatus }
+
+    suspend fun switchToNewKey(key: NetworkKey): Either<NetworkNotDistributed, NrfNetworkKey> =
+        withContext(Dispatchers.IO) {
+            Either.catch {
+                meshApi.meshNetwork().switchToNewKey(key.actualKey)
+            }.mapLeft { NetworkNotDistributed(key) }
+                .map { meshApi.meshNetwork().getNetKey(key.keyIndex) }
+        }
+
+    suspend fun revokeOldKey(key: NrfNetworkKey): Either<RevokeOldKeyFailed, NrfNetworkKey> =
+        withContext(Dispatchers.IO) {
+            if (meshApi.meshNetwork().revokeOldKey(key)) {
+                meshApi.meshNetwork().getNetKey(key.keyIndex).right()
+            } else {
+                RevokeOldKeyFailed(key).left()
+            }
+        }
+
+    suspend fun setConfigKeyRefreshPhase(
+        address: Int,
+        message: ConfigKeyRefreshPhaseSet
+    ): Either<SendAckMessageError, ConfigKeyRefreshPhaseStatus> =
+        sendAckMessage(
+            address, message, ConfigMessageOpCodes.CONFIG_KEY_REFRESH_PHASE_STATUS
+        ).map { it as ConfigKeyRefreshPhaseStatus }
+
 }
 
+suspend fun Connected.netKeyRefresh(key: NetworkKey): Either<Any, Any> = either {
+    val newKey = MeshParserUtils.toByteArray(SecureUtils.generateRandomNetworkKey())
+    Timber.d("======== New Key: ${newKey.size}")
+    val nodes = meshApi.nodes(key)
+    Timber.d("======== nodes: ${nodes.size}")
+    val updatedKey = distributeNetKey(key, newKey).bind()
+    Timber.d("======== Updated Key oldKey: ${updatedKey.actualKey.oldKey.size}")
+    val updateMessage = ConfigNetKeyUpdate(updatedKey.actualKey)
+    val e = nodes.traverseEither { updateConfigNetKey(it.unicastAddress, updateMessage) }.bind()
+    Timber.d("======== updateConfigNetKey: $e")
+    val k1 = switchToNewKey(updatedKey).bind()
+    Timber.d("======== switchToNewKey: $k1")
+    val k2 = revokeOldKey(k1).bind()
+    Timber.d("======== revokeOldKey: $k2")
+    val refreshMessage = ConfigKeyRefreshPhaseSet(k2, NrfNetworkKey.REVOKE_OLD_KEYS)
+    val e2 =
+        nodes.traverseEither { setConfigKeyRefreshPhase(it.unicastAddress, refreshMessage) }.bind()
+
+    Timber.d("======== setConfigKeyRefreshPhase: $e2")
+    e2
+}
 
 suspend fun Connected.setUpAppKey(
     node: Node,

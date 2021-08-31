@@ -13,6 +13,7 @@ import com.technocreatives.beckon.SplitPackage
 import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.writeSplit
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
+import com.technocreatives.beckon.mesh.extensions.hasKey
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.AppKey
 import com.technocreatives.beckon.mesh.model.Group
@@ -27,7 +28,7 @@ import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
 import java.util.*
 import kotlin.coroutines.CoroutineContext
-import com.technocreatives.beckon.mesh.model.NetworkKey as BeckonNetworkKey
+import com.technocreatives.beckon.mesh.model.NetworkKey as BeckonNetKey
 
 class BeckonMeshManagerApi(
     context: Context,
@@ -39,11 +40,21 @@ class BeckonMeshManagerApi(
     private val nodesSubject = MutableStateFlow<List<Node>>(emptyList())
     fun nodes(): StateFlow<List<Node>> = nodesSubject.asStateFlow()
 
-    fun loadNodes(): List<Node> {
-        val appKeys = appKeys()
-        val netKeys = networkKeys()
-        return meshNetwork().nodes.map { it.toNode(appKeys, netKeys) }
-    }
+    private suspend fun loadNodes(): List<Node> =
+        withContext(Dispatchers.IO) {
+            val appKeys = appKeys()
+            val netKeys = networkKeys()
+            meshNetwork().nodes.map { it.toNode(appKeys, netKeys) }
+        }
+
+    suspend fun nodes(key: BeckonNetKey): List<Node> =
+        withContext(Dispatchers.IO) {
+            val appKeys = appKeys()
+            val netKeys = networkKeys()
+            meshNetwork().nodes.filter { it.hasKey(key.actualKey) }
+                .drop(1)
+                .map { it.toNode(appKeys, netKeys) }
+        }
 
     fun appKeys(): List<AppKey> =
         meshNetwork().appKeys.map { AppKey(it) }
@@ -51,8 +62,8 @@ class BeckonMeshManagerApi(
     fun appKey(index: Int): AppKey? =
         appKeys().find { it.keyIndex == index }
 
-    fun networkKeys(): List<BeckonNetworkKey> =
-        meshNetwork().netKeys.map { BeckonNetworkKey(it) }
+    fun networkKeys(): List<BeckonNetKey> =
+        meshNetwork().netKeys.map { BeckonNetKey(it) }
 
     private val groupsSubject = MutableStateFlow<List<Group>>(emptyList())
     fun groups(): StateFlow<List<Group>> = groupsSubject.asStateFlow()
@@ -144,7 +155,6 @@ class BeckonMeshManagerApi(
             exportMeshNetwork()?.let { Mesh(id, it) }
         }
 
-
     suspend fun BeckonDevice.sendPdu(
         pdu: ByteArray,
         characteristic: Characteristic
@@ -156,13 +166,12 @@ class BeckonMeshManagerApi(
             handleWriteCallbacks(splitPackage)
         }
 
-    private fun handleWriteCallbacks(splitPackage: SplitPackage) {
+    private fun handleWriteCallbacks(splitPackage: SplitPackage) =
         launch {
             handleWriteCallbacks(splitPackage.mtu, splitPackage.data.value!!)
         }
-    }
 
-    fun BeckonDevice.handleNotifications(characteristic: Characteristic) {
+    fun BeckonDevice.handleNotifications(characteristic: Characteristic) =
         launch {
             changes(characteristic.uuid, ::identity)
                 .onEach {
@@ -176,7 +185,6 @@ class BeckonMeshManagerApi(
                     )
                 }
         }
-    }
 
     fun close() {
         job.cancel()

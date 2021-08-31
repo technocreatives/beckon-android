@@ -51,7 +51,6 @@ class BeckonMesh(
         job.cancel()
     }
 
-
     fun nodes(): StateFlow<List<Node>> = meshApi.nodes()
 
     fun meshUuid(): UUID =
