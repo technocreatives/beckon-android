@@ -46,5 +46,6 @@ object TimeoutError : SendAckMessageError
 sealed interface KeyRefreshError : MeshError
 
 data class InvalidNetKey(val key: ByteArray): KeyRefreshError
+data class InvalidAppKey(val key: ByteArray): KeyRefreshError
 data class NetworkNotDistributed(val key: NetworkKey): KeyRefreshError
 data class RevokeOldKeyFailed(val key: NrfNetworkKey): KeyRefreshError
