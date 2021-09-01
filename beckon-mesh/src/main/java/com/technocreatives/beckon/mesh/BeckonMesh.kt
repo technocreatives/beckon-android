@@ -4,6 +4,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.Either
 import arrow.core.computations.either
+import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.Atomic
@@ -15,8 +16,27 @@ import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.*
+<<<<<<< Updated upstream
 import com.technocreatives.beckon.mesh.state.*
 import com.technocreatives.beckon.util.*
+||||||| constructed merge base
+import com.technocreatives.beckon.mesh.state.Connected
+import com.technocreatives.beckon.mesh.state.Loaded
+import com.technocreatives.beckon.mesh.state.MeshState
+import com.technocreatives.beckon.mesh.state.Provisioning
+import com.technocreatives.beckon.mesh.utils.tap
+import com.technocreatives.beckon.util.filterZ
+import com.technocreatives.beckon.util.mapEither
+import com.technocreatives.beckon.util.mapZ
+=======
+import com.technocreatives.beckon.mesh.state.Connected
+import com.technocreatives.beckon.mesh.state.Loaded
+import com.technocreatives.beckon.mesh.state.MeshState
+import com.technocreatives.beckon.mesh.state.Provisioning
+import com.technocreatives.beckon.util.filterZ
+import com.technocreatives.beckon.util.mapEither
+import com.technocreatives.beckon.util.mapZ
+>>>>>>> Stashed changes
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
@@ -65,9 +85,19 @@ class BeckonMesh(
     fun groups(): StateFlow<List<Group>> =
         meshApi.groups()
 
-    fun createGroup(name: String, address: Int): Group? {
+    fun createGroup(name: String, address: Int): Either<Throwable, Group> {
         val network = meshApi.meshNetwork()
-        return network.createGroup(network.selectedProvisioner, address, name)?.let { Group(it) }
+        return Either.catch {
+            network.createGroup(network.selectedProvisioner, address, name)!!
+
+        }.flatMap {
+            Either.catch {
+                network.addGroup(it)
+                it
+            }
+        }.map {
+            Group(it)
+        }
     }
 
     suspend fun updateState(state: MeshState) {

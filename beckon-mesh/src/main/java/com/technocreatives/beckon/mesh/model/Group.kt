@@ -6,4 +6,5 @@ class Group(private val group: NrfGroup) {
     val addressLabel get() = group.addressLabel
     val address get() = group.address
     val name get() = group.name
+
 }
