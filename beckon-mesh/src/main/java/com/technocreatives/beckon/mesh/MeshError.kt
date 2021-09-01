@@ -47,5 +47,6 @@ sealed interface KeyRefreshError : MeshError
 
 data class InvalidNetKey(val key: ByteArray): KeyRefreshError
 data class InvalidAppKey(val key: ByteArray): KeyRefreshError
-data class NetworkNotDistributed(val key: NetworkKey): KeyRefreshError
+data class NetworkNotDistributed(val key: NrfNetworkKey): KeyRefreshError
+data class SwitchKeysFailed(val key: NrfNetworkKey): KeyRefreshError
 data class RevokeOldKeyFailed(val key: NrfNetworkKey): KeyRefreshError

@@ -7,8 +7,10 @@ import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
+import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
+import com.technocreatives.beckon.mesh.extensions.toHex
 import com.technocreatives.beckon.mesh.model.AppKey
 import com.technocreatives.beckon.mesh.model.NetworkKey
 import com.technocreatives.beckon.mesh.model.Node
@@ -197,7 +199,7 @@ class Connected(
         withContext(Dispatchers.IO) {
             Either.catch {
                 meshApi.meshNetwork().distributeNetKey(key.actualKey, newKey)
-                    .let { NetworkKey(it) }
+                    .let { NetworkKey(it) } // todo DistributedFailed
             }.mapLeft {
                 Timber.w("========== Invalid Net Key $it")
                 InvalidNetKey(newKey)
@@ -212,18 +214,23 @@ class Connected(
             address, message, ConfigMessageOpCodes.CONFIG_NETKEY_STATUS
         ).map { it as ConfigNetKeyStatus }
 
-    suspend fun switchToNewKey(key: NetworkKey): Either<NetworkNotDistributed, NrfNetworkKey> =
-        withContext(Dispatchers.IO) {
+    suspend fun switchToNewKey(key: NetworkKey): Either<SwitchKeysFailed, NrfNetworkKey> {
+        val actualKey = key.actualKey
+        return withContext(Dispatchers.IO) {
             Either.catch {
-                meshApi.meshNetwork().switchToNewKey(key.actualKey)
-            }.mapLeft { NetworkNotDistributed(key) }
-                .map { meshApi.meshNetwork().getNetKey(key.keyIndex) }
+                meshApi.meshNetwork().switchToNewKey(actualKey)
+            }.mapLeft { SwitchKeysFailed(key.actualKey) }
+                .flatMap {
+                    if (it) actualKey.right()
+                    else SwitchKeysFailed(actualKey).left()
+                }
         }
+    }
 
     suspend fun revokeOldKey(key: NrfNetworkKey): Either<RevokeOldKeyFailed, NrfNetworkKey> =
         withContext(Dispatchers.IO) {
             if (meshApi.meshNetwork().revokeOldKey(key)) {
-                meshApi.meshNetwork().getNetKey(key.keyIndex).right()
+                key.right()
             } else {
                 RevokeOldKeyFailed(key).left()
             }
@@ -255,67 +262,112 @@ class Connected(
         sendAckMessage(
             address, message, ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
         ).map { it as ConfigAppKeyStatus }
+
+    suspend fun resetConfigNode(
+        address: Int,
+    ): Either<SendAckMessageError, ConfigNodeResetStatus> =
+        sendAckMessage(
+            address, ConfigNodeReset(), ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS
+        ).map { it as ConfigNodeResetStatus }
+
+}
+
+
+suspend fun Connected.nodeRemoval(node: Node): Either<Any, Any> = either {
+    val status = resetConfigNode(node.unicastAddress).bind()
+    node.netKeys.traverseEither { netKeyRefresh(it) }.bind()
 }
 
 suspend fun Connected.netKeyRefresh(netKey: NetworkKey): Either<Any, Any> = either {
     val newKey = MeshParserUtils.toByteArray(SecureUtils.generateRandomNetworkKey())
-    Timber.d("======== Current Net Key: ${netKey.key.toHex()}")
-    Timber.d("======== New Key: ${newKey.toHex()}")
+    Timber.d("======== NewKey: ${newKey.toHex()}")
+    Timber.d("======== NetKey: ${netKey.actualKey.info()}")
+
     val nodes = meshApi.nodes(netKey)
     Timber.d("======== nodes: ${nodes.size}")
+
     val updatedKey = distributeNetKey(netKey, newKey).bind()
-    Timber.d("======== Updated Key oldKey: ${updatedKey.actualKey.oldKey.toHex()}, current: ${updatedKey.actualKey.key.toHex()},")
+    Timber.d("======== Updated Key: ${updatedKey.actualKey.info()}")
+
     val updateMessage = ConfigNetKeyUpdate(updatedKey.actualKey)
     val e = nodes.traverseEither { updateConfigNetKey(it.unicastAddress, updateMessage) }.bind()
     Timber.d("======== updateConfigNetKey: ${e.map { it.isSuccessful }}")
+
     val k1 = switchToNewKey(updatedKey).bind()
-    Timber.d("======== switchToNewKey: ${k1.key.toHex()}")
-    val refreshMessage = ConfigKeyRefreshPhaseSet(k1, NrfNetworkKey.REVOKE_OLD_KEYS)
+    Timber.d("======== switchToNewKey: ${k1.info()}")
+
+    val useNewKeyMessage = ConfigKeyRefreshPhaseSet(k1, NrfNetworkKey.USE_NEW_KEYS)
     val e2 =
-        nodes.traverseEither { setConfigKeyRefreshPhase(it.unicastAddress, refreshMessage) }.bind()
-    Timber.d("======== setConfigKeyRefreshPhase: ${e2.map { it.isSuccessful }}")
+        nodes.traverseEither { setConfigKeyRefreshPhase(it.unicastAddress, useNewKeyMessage) }.bind()
+    Timber.d("======== useNewKeyMessage: ${e2.map { it.isSuccessful }}")
+
     val k2 = revokeOldKey(k1).bind()
-    Timber.d("======== revokeOldKey: ${k2.key.toHex()}")
-    meshApi.networkKeys().map { Timber.d("New Net Keys ${it.key.toHex()} & ${it.actualKey.phaseDescription}") }
+    Timber.d("======== revokeOldKey: ${k2.info()}")
+
+    val revokeOldKeysMessage = ConfigKeyRefreshPhaseSet(k2, NrfNetworkKey.REVOKE_OLD_KEYS)
+    val e3 =
+        nodes.traverseEither { setConfigKeyRefreshPhase(it.unicastAddress, revokeOldKeysMessage) }.bind()
+    Timber.d("======== revokeOldKeysMessage: ${e3.map { it.isSuccessful }}")
+
+    meshApi.networkKeys().map { Timber.d("New Net Key ${it.key.info()}") }
     e2
 }
 
-suspend fun Connected.keyRefresh(netKey: NetworkKey, appKey: AppKey): Either<Any, Any> = either {
+suspend fun Connected.netKeyRefresh(netKey: NetworkKey, appKey: AppKey): Either<Any, Any> = either {
     val newKey = MeshParserUtils.toByteArray(SecureUtils.generateRandomNetworkKey())
+    Timber.d("======== NewKey: ${newKey.toHex()}")
+    Timber.d("======== NetKey: ${netKey.actualKey.info()}")
 
-    Timber.d("======== Current Net Key: ${netKey.key.toHex()}")
-    Timber.d("======== New Key: ${newKey.toHex()}")
     val nodes = meshApi.nodes(netKey)
     Timber.d("======== nodes: ${nodes.size}")
+
     val updatedKey = distributeNetKey(netKey, newKey).bind()
-    Timber.d("======== Updated Key oldKey: ${updatedKey.actualKey.oldKey.toHex()}, current: ${updatedKey.actualKey.key.toHex()},")
+    Timber.d("======== Updated Key: ${updatedKey.actualKey.info()}")
+
     val updateMessage = ConfigNetKeyUpdate(updatedKey.actualKey)
     val e = nodes.traverseEither { updateConfigNetKey(it.unicastAddress, updateMessage) }.bind()
     Timber.d("======== updateConfigNetKey: ${e.map { it.isSuccessful }}")
+
+
+    val appKeyRefreshResult = appKeyRefresh(appKey, nodes).bind()
+    Timber.d("===== appKeyRefreshResult $appKeyRefreshResult")
+    // revert
+
+    val k1 = switchToNewKey(updatedKey).bind()
+    Timber.d("======== switchToNewKey: ${k1.info()}")
+
+    val useNewKeyMessage = ConfigKeyRefreshPhaseSet(k1, NrfNetworkKey.USE_NEW_KEYS)
+    val e2 =
+        nodes.traverseEither { setConfigKeyRefreshPhase(it.unicastAddress, useNewKeyMessage) }.bind()
+    Timber.d("======== useNewKeyMessage: ${e2.map { it.isSuccessful }}")
+
+    val k2 = revokeOldKey(k1).bind()
+    Timber.d("======== revokeOldKey: ${k2.info()}")
+
+    val revokeOldKeysMessage = ConfigKeyRefreshPhaseSet(k2, NrfNetworkKey.REVOKE_OLD_KEYS)
+    val e3 =
+        nodes.traverseEither { setConfigKeyRefreshPhase(it.unicastAddress, revokeOldKeysMessage) }.bind()
+    Timber.d("======== revokeOldKeysMessage: ${e3.map { it.isSuccessful }}")
+
+    meshApi.networkKeys().map { Timber.d("New Net Key ${it.key.info()}") }
+    e2
+}
+
+suspend fun Connected.appKeyRefresh(appKey: AppKey, nodes: List<Node>): Either<Any, Any> = either {
+
     val newAppKey = MeshParserUtils.toByteArray(SecureUtils.generateRandomApplicationKey())
+    Timber.d("======== Current App Key: ${appKey.applicationKey.info()}")
     Timber.d("======== New App Key: ${newAppKey.toHex()}")
+
     val updatedAppKey = distributeAppKey(appKey, newAppKey).bind()
-    Timber.d("======== updatedAppKey: ${updatedAppKey.key.toHex()}")
+    Timber.d("======== updatedAppKey: ${updatedAppKey.applicationKey.info()}")
+
     val updateAppKeyMessage = ConfigAppKeyUpdate(updatedAppKey.applicationKey)
     val e1 =
         nodes.traverseEither { updateConfigAppKey(it.unicastAddress, updateAppKeyMessage) }.bind()
-    Timber.d("======== updateConfigAppKey: ${e1.map { it.isSuccessful }}")
-    val k1 = switchToNewKey(updatedKey).bind()
-    Timber.d("======== switchToNewKey: ${k1.key.toHex()}")
-    val k2 = revokeOldKey(k1).bind()
-    Timber.d("======== revokeOldKey: ${k2.key.toHex()}")
-    val refreshMessage = ConfigKeyRefreshPhaseSet(k2, NrfNetworkKey.REVOKE_OLD_KEYS)
-    val e2 =
-        nodes.traverseEither { setConfigKeyRefreshPhase(it.unicastAddress, refreshMessage) }.bind()
-    meshApi.networkKeys().map { Timber.d("New Net Keys ${it.key.toHex()}") }
-    meshApi.appKeys().map { Timber.d("New App Keys ${it.key.toHex()}") }
-    Timber.d("======== setConfigKeyRefreshPhase: ${e2.map { it.isSuccessful }}")
-    e2
+    meshApi.appKeys().map { Timber.d("New App Key ${it.key.info()}") }
+    e1
 }
-
-private fun ByteArray.toHex(): String =
-    joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-
 suspend fun Connected.setUpAppKey(
     node: Node,
     netKey: NetworkKey,
@@ -350,6 +402,9 @@ class ConnectedMeshManagerCallbacks(
 
     override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
         Timber.d("===== onNetworkUpdated")
+        meshNetwork.netKeys.map {
+            Timber.d("==== Updated NetKey ${it.info()}")
+        }
         runBlocking {
             meshApi.updateNetwork()
         }

@@ -14,6 +14,7 @@ import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.writeSplit
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.extensions.hasKey
+import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.model.AppKey
 import com.technocreatives.beckon.mesh.model.Group
@@ -114,13 +115,17 @@ class BeckonMeshManagerApi(
                 override fun onNetworkLoadFailed(error: String?) {
                     networkLoadingEmitter.complete(
                         CreateNetworkFailedError(
-                            "MeshNetwork is empty"
+                            error ?: "NetworkLoadFailed is empty"
                         ).left()
                     )
                 }
 
                 override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
                     networkLoadingEmitter.complete(Unit.right())
+                    Timber.d("===== onNetworkUpdated")
+                    meshNetwork!!.netKeys.map {
+                        Timber.d("==== Updated NetKey ${it.info()}")
+                    }
                 }
             })
             loadMeshNetwork()
