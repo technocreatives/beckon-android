@@ -16,29 +16,13 @@ import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.*
-<<<<<<< Updated upstream
 import com.technocreatives.beckon.mesh.state.*
 import com.technocreatives.beckon.util.*
-||||||| constructed merge base
-import com.technocreatives.beckon.mesh.state.Connected
-import com.technocreatives.beckon.mesh.state.Loaded
-import com.technocreatives.beckon.mesh.state.MeshState
-import com.technocreatives.beckon.mesh.state.Provisioning
-import com.technocreatives.beckon.mesh.utils.tap
-import com.technocreatives.beckon.util.filterZ
-import com.technocreatives.beckon.util.mapEither
-import com.technocreatives.beckon.util.mapZ
-=======
-import com.technocreatives.beckon.mesh.state.Connected
-import com.technocreatives.beckon.mesh.state.Loaded
-import com.technocreatives.beckon.mesh.state.MeshState
-import com.technocreatives.beckon.mesh.state.Provisioning
-import com.technocreatives.beckon.util.filterZ
-import com.technocreatives.beckon.util.mapEither
-import com.technocreatives.beckon.util.mapZ
->>>>>>> Stashed changes
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.*
 import kotlin.coroutines.CoroutineContext
@@ -137,7 +121,7 @@ class BeckonMesh(
         }
     }
 
-    internal suspend inline fun <reified T: MeshState>isCurrentState(): Boolean{
+    internal suspend inline fun <reified T : MeshState> isCurrentState(): Boolean {
         return currentState.get() is T
     }
 
