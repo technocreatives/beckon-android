@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh.callbacks
 
 import androidx.annotation.CallSuper
 import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
+import com.technocreatives.beckon.mesh.extensions.toHex
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshStatusCallbacks
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS
@@ -10,23 +11,23 @@ import no.nordicsemi.android.mesh.transport.MeshMessage
 
 abstract class AbstractMessageStatusCallbacks(private val meshApi: BeckonMeshManagerApi) : MeshStatusCallbacks{
     override fun onTransactionFailed(dst: Int, hasIncompleteTimerExpired: Boolean) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onTransactionFailed $dst $hasIncompleteTimerExpired")
     }
 
     override fun onUnknownPduReceived(src: Int, accessPayload: ByteArray?) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onUnknownPduReceived $src ${accessPayload?.toHex()}")
     }
 
     override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onBlockAcknowledgementProcessed $dst")
     }
 
     override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onBlockAcknowledgementReceived $src")
     }
 
     override fun onMeshMessageProcessed(dst: Int, message: MeshMessage) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onMeshMessageProcessed $dst")
     }
 
     @CallSuper
@@ -39,6 +40,6 @@ abstract class AbstractMessageStatusCallbacks(private val meshApi: BeckonMeshMan
     }
 
     override fun onMessageDecryptionFailed(meshLayer: String?, errorMessage: String?) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onMessageDecryptionFailed $meshLayer")
     }
 }

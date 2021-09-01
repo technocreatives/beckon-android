@@ -6,35 +6,35 @@ import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
 
 abstract class AbstractMeshManagerCallbacks : MeshManagerCallbacks {
     override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onNetworkLoaded")
     }
 
 
     override fun onNetworkLoadFailed(error: String?) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onNetworkLoadFailed: $error")
     }
 
     override fun onNetworkImported(meshNetwork: MeshNetwork?) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onNetworkImported")
     }
 
     override fun onNetworkImportFailed(error: String?) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onNetworkImportFailed $error")
     }
 
     override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onNetworkUpdated")
     }
 
     override fun sendProvisioningPdu(meshNode: UnprovisionedMeshNode, pdu: ByteArray) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: sendProvisioningPdu")
     }
 
     override fun onMeshPduCreated(pdu: ByteArray) {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: onMeshPduCreated")
     }
 
     override fun getMtu(): Int {
-        TODO("Not yet implemented")
+        TODO("Callback is not implemented: getMtu")
     }
 }
