@@ -6,10 +6,22 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
+import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
+import kotlinx.coroutines.runBlocking
+import no.nordicsemi.android.mesh.MeshNetwork
 
 class Loaded(beckonMesh: BeckonMesh, meshApi: BeckonMeshManagerApi) :
     MeshState(beckonMesh, meshApi) {
 
+    init {
+        meshApi.setMeshManagerCallbacks(object: AbstractMeshManagerCallbacks() {
+            override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
+                runBlocking {
+                    meshApi.updateNetwork()
+                }
+            }
+        })
+    }
     override suspend fun isValid(): Boolean = beckonMesh.isCurrentState<Loaded>()
 
     suspend fun startProvisioning(beckonDevice: BeckonDevice): Provisioning {

@@ -401,10 +401,6 @@ class ConnectedMeshManagerCallbacks(
     }
 
     override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
-        Timber.d("===== onNetworkUpdated")
-        meshNetwork.netKeys.map {
-            Timber.d("==== Updated NetKey ${it.info()}")
-        }
         runBlocking {
             meshApi.updateNetwork()
         }

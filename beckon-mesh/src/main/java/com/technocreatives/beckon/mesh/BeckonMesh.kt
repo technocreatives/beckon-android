@@ -146,7 +146,7 @@ class BeckonMesh(
 
     suspend fun disconnect(): Either<BleDisconnectError, Loaded> =
         when (val state = currentState.get()) {
-            is Loaded -> state.right(
+            is Loaded -> state.right()
             is Connected -> state.disconnect()
             is Provisioning -> state.cancel()
         }
