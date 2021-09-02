@@ -44,6 +44,7 @@ private data class BeckonMessage(
 
 data class AckEmitter<T : MeshMessage>(
     val opCode: Int,
+    val dst: Int,
     val emitter: CompletableDeferred<Either<SendMessageError, T>>
 )
 
@@ -62,7 +63,7 @@ class MessageQueue(private val pduSender: PduSender) {
         opCode: Int
     ): Either<SendMessageError, MeshMessage> {
         val emitter = CompletableDeferred<Either<SendMessageError, MeshMessage>>()
-        val ackEmitter = AckEmitter(opCode, emitter)
+        val ackEmitter = AckEmitter(opCode, dst, emitter)
         incomingAckMessageChannel.send(ackEmitter)
         return sendMessage(dst, mesh).flatMap { emitter.await() }
     }
@@ -97,7 +98,11 @@ class MessageQueue(private val pduSender: PduSender) {
             select<Unit> {
                 receivedMessageChannel.onReceive { message ->
                     Timber.d("receivedMessageChannel.onReceive")
-                    map.remove(message.opCode)?.emitter?.complete(message.right())
+                    map[message.opCode]?.let {
+                        if (it.dst == message.src) {
+                            map.remove(message.opCode)?.emitter?.complete(message.right())
+                        }
+                    }
                 }
 
                 incomingAckMessageChannel.onReceive {
