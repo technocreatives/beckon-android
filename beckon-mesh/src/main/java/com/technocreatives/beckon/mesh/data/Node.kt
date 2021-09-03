@@ -1,6 +1,8 @@
 package com.technocreatives.beckon.mesh.data
 
 import com.technocreatives.beckon.mesh.data.serializer.HexToIntSerializer
+import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
+import com.technocreatives.beckon.mesh.data.serializer.NodeSecuritySerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -11,10 +13,13 @@ data class Node(
     @SerialName("UUID")
     val uuid: NodeId,
     val name: String,
-    val deviceKey: String? = null,
+    @Serializable(with = KeySerializer::class)
+    val deviceKey: Key? = null,
     val unicastAddress: UnicastAddress,
-    val security: String,
-    val configComplete: Boolean,
+    @Serializable(with = NodeSecuritySerializer::class)
+    val security: Int,
+    @SerialName("configComplete")
+    val isConfigured: Boolean,
     val cid: String? = null,
     val pid: String? = null,
     val vid: String? = null,

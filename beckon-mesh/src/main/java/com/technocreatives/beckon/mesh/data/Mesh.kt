@@ -19,7 +19,7 @@ data class Mesh(
     val meshUuid: UUID,
     val meshName: String,
     @Serializable(with = OffsetDateTimeSerializer::class)
-    val timestamp: OffsetDateTime,
+    val timestamp: Long,
     val partial: Boolean,
     val netKeys: List<NetKey> = emptyList(),
     val appKeys: List<AppKey> = emptyList(),

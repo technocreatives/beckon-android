@@ -1,12 +1,14 @@
 package com.technocreatives.beckon.mesh.data
 
+import com.technocreatives.beckon.mesh.data.serializer.HexToIntSerializer
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Element(
-    val name: String,
+    val name: String = "", // TODO ios is missing
     val index: ElementIndex,
-    val location: String,
+    @Serializable(with = HexToIntSerializer::class)
+    val location: Int,
     val models: List<Model>,
 )
 

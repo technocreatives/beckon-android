@@ -2,10 +2,9 @@ package com.technocreatives.beckon.mesh.data
 
 import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
+import com.technocreatives.beckon.mesh.data.serializer.NetKeySecuritySerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import no.nordicsemi.android.mesh.ApplicationKey
-import java.time.LocalDateTime
-import java.time.OffsetDateTime
 
 @Serializable
 @JvmInline
@@ -22,9 +21,11 @@ data class NetKey(
     @Serializable(with = KeySerializer::class)
     val key: Key,
     val phase: Int,
-    val minSecurity: String,
+    @SerialName("minSecurity")
+    @Serializable(with = NetKeySecuritySerializer::class)
+    val isSecurity: Boolean,
     @Serializable(with = OffsetDateTimeSerializer::class)
-    val timestamp: OffsetDateTime,
+    val timestamp: Long,
 )
 
 @Serializable
@@ -35,10 +36,6 @@ data class AppKey(
 
     @Serializable(with = KeySerializer::class)
     val key: Key,
-)
-
-fun ApplicationKey.transform(): AppKey = AppKey(
-    name, AppKeyIndex(keyIndex), NetKeyIndex(boundNetKeyIndex), Key(key)
 )
 
 @Serializable

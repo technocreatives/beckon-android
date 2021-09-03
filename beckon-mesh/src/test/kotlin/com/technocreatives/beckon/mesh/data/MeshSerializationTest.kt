@@ -14,7 +14,7 @@ class MeshSerializationTest : StringSpec({
         "/mesh/empty.json",
         "/mesh/many.json",
         "/mesh/netkey.json",
-        "/mesh/noDeviceKey.json"
+        "/mesh/noDeviceKey.json",
     )
 
     "mesh decode & encode" {
