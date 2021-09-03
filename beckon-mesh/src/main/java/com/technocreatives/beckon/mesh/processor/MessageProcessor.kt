@@ -38,7 +38,7 @@ private data class MeshAndSubject(
 private data class BeckonMessage(
     val id: Int,
     val message: MeshMessage,
-    val processor: MessageProcessor,
+    val item: MessageItem,
     val emitter: CompletableDeferred<Either<SendMessageError, Unit>>
 )
 
@@ -48,7 +48,28 @@ data class AckEmitter<T : MeshMessage>(
     val emitter: CompletableDeferred<Either<SendMessageError, T>>
 )
 
-class MessageQueue(private val pduSender: PduSender) {
+private class MessageItem(
+    private val dst: Int,
+    private val idMessage: IdMessage,
+    private val sender: PduSender,
+) {
+
+    private val emitter = CompletableDeferred<Either<SendMessageError, IdMessage>>()
+
+    // send
+    suspend fun sendMessage(): Either<SendMessageError, IdMessage> {
+        Timber.d("sendMessage")
+        return sender.createPdu(dst, idMessage.message)
+            .flatMap { emitter.await() }
+    }
+
+    fun onMessageProcessed(message: MeshMessage) {
+        emitter.complete(idMessage.copy(message = message).right())
+    }
+
+}
+
+class MessageProcessor(private val pduSender: PduSender) {
 
     private val incomingMessageChannel = Channel<MeshAndSubject>()
     val incomingAckMessageChannel = Channel<AckEmitter<MeshMessage>>()
@@ -135,7 +156,7 @@ class MessageQueue(private val pduSender: PduSender) {
                     Timber.d("processedMessageChannel.onReceive")
                     val bm = map[id]
                     bm?.let {
-                        it.processor.onMessageProcessed(message)
+                        it.item.onMessageProcessed(message)
                         val result = pdus.traverseEither { pduSender.sendPdu(it) }.map { }
                         Timber.d("travel result $result")
                         pdus = mutableListOf()
@@ -170,7 +191,7 @@ class MessageQueue(private val pduSender: PduSender) {
         map: MutableMap<Int, BeckonMessage>
     ) = launch {
         Timber.d("processMessage $messageId $message")
-        val processor = MessageProcessor(
+        val processor = MessageItem(
             message.dst,
             IdMessage(messageId, message.message),
             pduSender,
@@ -182,23 +203,3 @@ class MessageQueue(private val pduSender: PduSender) {
     }
 }
 
-private class MessageProcessor(
-    private val dst: Int,
-    private val idMessage: IdMessage,
-    private val sender: PduSender,
-) {
-
-    private val emitter = CompletableDeferred<Either<SendMessageError, IdMessage>>()
-
-    // send
-    suspend fun sendMessage(): Either<SendMessageError, IdMessage> {
-        Timber.d("sendMessage")
-        return sender.createPdu(dst, idMessage.message)
-            .flatMap { emitter.await() }
-    }
-
-    fun onMessageProcessed(message: MeshMessage) {
-        emitter.complete(idMessage.copy(message = message).right())
-    }
-
-}

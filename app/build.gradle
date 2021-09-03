@@ -6,7 +6,7 @@ android {
     compileSdkVersion 30
     defaultConfig {
         applicationId "com.technocreatives.beckon.example"
-        minSdkVersion 24
+        minSdkVersion 26
         targetSdkVersion 30
         buildToolsVersion = "30.0.2"
         versionCode 1

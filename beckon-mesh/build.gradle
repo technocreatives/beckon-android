@@ -2,15 +2,16 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'de.mannodermaus.android-junit5'
+apply plugin: 'kotlinx-serialization'
 
 group='com.github.technocreatives.beckon-android'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     defaultConfig {
-        minSdkVersion 24
-        targetSdkVersion 30
+        minSdkVersion 26
+        targetSdkVersion 31
         versionCode 1
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -43,21 +44,8 @@ android {
     }
 
     testOptions {
-        junitPlatform {
-            filters {
-                engines {
-                    include 'spek2'
-                }
-            }
-            jacocoOptions {
-                // here goes all jacoco config, for example
-                html.enabled = true
-                xml.enabled = false
-                csv.enabled = false
-                unitTests.all {
-                    testLogging.events = ["passed", "skipped", "failed"]
-                }
-            }
+        unitTests.all {
+            useJUnitPlatform()
         }
     }
 }
@@ -73,10 +61,6 @@ dependencies {
 
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    // RxJava
-    api "io.reactivex.rxjava2:rxjava:$rxJava"
-    api "io.reactivex.rxjava2:rxandroid:$rxAndroid"
-
     // Code quality tools
     ktlint "com.pinterest:ktlint:$ktlint_version"
 
@@ -88,16 +72,13 @@ dependencies {
     implementation("io.arrow-kt:arrow-fx-coroutines")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
 
-    // spek
-    testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
-    testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
-    // spek requires kotlin-reflect, omit when already in classpath
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    testImplementation "io.kotest:kotest-runner-junit5:4.6.2"
+    testImplementation "io.kotest:kotest-assertions-core:4.6.2"
+    testImplementation 'commons-io:commons-io:2.11.0'
 
-    testImplementation 'org.mockito:mockito-core:2.28.2'
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
-    testImplementation 'com.willowtreeapps.assertk:assertk-jvm:0.17'
 }
 
 //task ktlint(type: JavaExec, group: "verification") {
