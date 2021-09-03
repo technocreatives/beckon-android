@@ -13,6 +13,8 @@ import com.technocreatives.beckon.SplitPackage
 import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.writeSplit
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
+import com.technocreatives.beckon.mesh.data.Mesh
+import com.technocreatives.beckon.mesh.data.transform
 import com.technocreatives.beckon.mesh.extensions.hasKey
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
@@ -39,7 +41,11 @@ class BeckonMeshManagerApi(
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
     private val nodesSubject = MutableStateFlow<List<Node>>(emptyList())
+    private val meshSubject by lazy {
+         MutableStateFlow(meshNetwork().transform())
+    }
     fun nodes(): StateFlow<List<Node>> = nodesSubject.asStateFlow()
+    fun meshes(): StateFlow<Mesh> = meshSubject.asStateFlow()
 
     private suspend fun loadNodes(): List<Node> =
         withContext(Dispatchers.IO) {
@@ -70,6 +76,7 @@ class BeckonMeshManagerApi(
     fun groups(): StateFlow<List<Group>> = groupsSubject.asStateFlow()
 
     suspend fun updateNetwork() {
+        meshSubject.emit(meshNetwork().transform())
         nodesSubject.emit(loadNodes())
         groupsSubject.emit(meshNetwork().groups.map { Group(it) })
     }
@@ -132,7 +139,7 @@ class BeckonMeshManagerApi(
             networkLoadingEmitter.await().tap { updateNetwork() }
         }
 
-    suspend fun import(mesh: Mesh): Either<MeshLoadError, Unit> =
+    suspend fun import(mesh: MeshData): Either<MeshLoadError, Unit> =
         withContext(Dispatchers.IO) {
             val networkLoadingEmitter =
                 CompletableDeferred<Either<NetworkImportedFailedError, Unit>>()
@@ -155,9 +162,9 @@ class BeckonMeshManagerApi(
             networkLoadingEmitter.await().tap { updateNetwork() }
         }
 
-    suspend fun exportCurrentMesh(id: UUID): Mesh? =
+    suspend fun exportCurrentMesh(id: UUID): MeshData? =
         withContext(Dispatchers.IO) {
-            exportMeshNetwork()?.let { Mesh(id, it) }
+            exportMeshNetwork()?.let { MeshData(id, it) }
         }
 
     suspend fun BeckonDevice.sendPdu(

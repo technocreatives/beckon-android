@@ -35,8 +35,8 @@ data class VendorModel(
         b
     }
 
-    private val companyIdentifiers by lazy { buffer.getShort(0) }
-    private val companyName by lazy { CompanyIdentifiers.getCompanyName(companyIdentifiers) }
+    val companyIdentifier by lazy { buffer.getShort(0) }
+    val companyName by lazy { CompanyIdentifiers.getCompanyName(companyIdentifier) }
 
     val name get() = "Vendor Model"
 }
@@ -72,6 +72,9 @@ data class ModelData(
         modelId, bind, subscribe, publish
     )
 }
+
+fun List<AppKeyIndex>.toAppKeys(allKeys: List<AppKey>) =
+    mapNotNull { index -> allKeys.find { it.index == index } }
 
 @Serializable
 @JvmInline

@@ -3,6 +3,7 @@ package com.technocreatives.beckon.mesh.state
 import arrow.core.*
 import arrow.core.computations.either
 import com.technocreatives.beckon.mesh.*
+import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.toHex
 import com.technocreatives.beckon.mesh.model.AppKey
@@ -67,9 +68,9 @@ suspend fun Connected.distributeAppKey(
     }
 
 
-suspend fun Connected.nodeRemoval(node: Node): Either<Any, Any> = either {
-    val status = bearer.resetConfigNode(node.unicastAddress).bind()
-    node.netKeys.traverseEither { netKeyRefresh(it) }.bind()
+suspend fun Connected.nodeRemoval(address: UnicastAddress): Either<Any, Any> = either {
+    bearer.resetConfigNode(address.value).bind()
+//    node.netKeys.traverseEither { netKeyRefresh(it) }.bind()
 }
 
 suspend fun Connected.netKeyRefresh(netKey: NetworkKey): Either<Any, Any> = either {

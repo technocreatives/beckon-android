@@ -61,15 +61,34 @@ fun NrfMeshModel.transform(): Model =
     ).toModel()
 
 fun NrfElement.transform(index: ElementIndex) = Element(
-    name, index, locationDescriptor, meshModels.map { it.value.transform() }
+    UnicastAddress(elementAddress),
+    name,
+    index,
+    locationDescriptor,
+    meshModels.map { it.value.transform() }
 )
 
 @SuppressLint("RestrictedApi")
 fun NrfProvisioner.transform() = Provisioner(
     provisionerName, UUID.fromString(meshUuid),
-    allocatedUnicastRanges.map { AddressRange(AddressValue(it.lowAddress), AddressValue(it.highAddress)) },
-    allocatedGroupRanges.map { AddressRange(AddressValue(it.lowAddress), AddressValue(it.highAddress)) },
-    allocatedSceneRanges.map { SceneRange(AddressValue(it.firstScene), AddressValue(it.lastScene)) },
+    allocatedUnicastRanges.map {
+        AddressRange(
+            AddressValue(it.lowAddress),
+            AddressValue(it.highAddress)
+        )
+    },
+    allocatedGroupRanges.map {
+        AddressRange(
+            AddressValue(it.lowAddress),
+            AddressValue(it.highAddress)
+        )
+    },
+    allocatedSceneRanges.map {
+        SceneRange(
+            AddressValue(it.firstScene),
+            AddressValue(it.lastScene)
+        )
+    },
 )
 
 fun ProvisionedMeshNode.transform() = Node(
@@ -89,7 +108,9 @@ fun ProvisionedMeshNode.transform() = Node(
     networkTransmitSettings?.transform(),
     addedNetKeys.map { it.toNetKey() },
     addedAppKeys.map { it.toAppKey() },
-    elements.map { it.value.transform(ElementIndex(it.key)) }
+    elements.map { it.value.transform(ElementIndex(it.key)) },
+    sequenceNumber,
+    versionIdentifier
 )
 
 fun NetworkTransmitSettings.transform() = NetworkTransmit(

@@ -3,12 +3,12 @@ package com.technocreatives.beckon.mesh
 import java.util.*
 
 interface MeshRepository {
-    suspend fun save(mesh: Mesh): List<Mesh>
-    suspend fun remove(id: UUID): List<Mesh>
-    suspend fun remove(ids: List<UUID>): List<Mesh>
-    suspend fun currentMesh(): Mesh?
-    suspend fun find(id: UUID): Mesh?
-    suspend fun all(): List<Mesh>
+    suspend fun save(mesh: MeshData): List<MeshData>
+    suspend fun remove(id: UUID): List<MeshData>
+    suspend fun remove(ids: List<UUID>): List<MeshData>
+    suspend fun currentMesh(): MeshData?
+    suspend fun find(id: UUID): MeshData?
+    suspend fun all(): List<MeshData>
 }
 
-data class Mesh(val id: UUID, val data: String)
+data class MeshData(val id: UUID, val data: String)

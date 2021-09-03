@@ -12,6 +12,7 @@ import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.internal.toUuid
+import com.technocreatives.beckon.mesh.data.Mesh
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
@@ -68,6 +69,9 @@ class BeckonMesh(
 
     fun groups(): StateFlow<List<Group>> =
         meshApi.groups()
+
+    fun meshes(): StateFlow<Mesh> =
+        meshApi.meshes()
 
     fun createGroup(name: String, address: Int): Either<Throwable, Group> {
         val network = meshApi.meshNetwork()

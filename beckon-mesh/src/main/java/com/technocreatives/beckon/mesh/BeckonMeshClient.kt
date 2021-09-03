@@ -4,11 +4,6 @@ import android.content.Context
 import arrow.core.*
 import arrow.core.computations.either
 import com.technocreatives.beckon.BeckonClient
-import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import no.nordicsemi.android.mesh.MeshNetwork
 import java.util.*
 
 class BeckonMeshClient(
@@ -60,7 +55,7 @@ class BeckonMeshClient(
         }
     }
 
-    private suspend fun import(mesh: Mesh): Either<MeshLoadError, BeckonMesh> =
+    private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> =
         meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi) }
 
 }

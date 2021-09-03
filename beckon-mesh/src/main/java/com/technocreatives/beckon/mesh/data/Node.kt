@@ -28,9 +28,12 @@ data class Node(
     val defaultTTL: Int,
     val excluded: Boolean,
     val networkTransmit: NetworkTransmit? = null,
+//    val relayRetransmit: RelayRetransmit? = null, //TODO ??
     val netKeys: List<NodeNetKey> = emptyList(),
     val appKeys: List<NodeAppKey> = emptyList(),
     val elements: List<Element> = emptyList(),
+    @Transient val sequenceNumber: Int = 0,
+    @Transient val versionIdentifier: Int? = null,
 )
 
 @Serializable
@@ -52,6 +55,12 @@ data class NodeNetKey(
     val index: NetKeyIndex,
     val updated: Boolean
 )
+
+fun List<NodeNetKey>.toNetKeys(allKeys: List<NetKey>) =
+    mapNotNull { key -> allKeys.find { it.index == key.index } }
+
+fun List<NodeAppKey>.toAppKeys(allKeys: List<AppKey>) =
+    mapNotNull { key -> allKeys.find { it.index == key.index } }
 
 @Serializable
 data class NodeAppKey(
