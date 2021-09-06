@@ -70,7 +70,8 @@ fun NrfElement.transform(index: ElementIndex) = Element(
 
 @SuppressLint("RestrictedApi")
 fun NrfProvisioner.transform() = Provisioner(
-    provisionerName, UUID.fromString(meshUuid),
+    provisionerName,
+    UUID.fromString(provisionerUuid),
     allocatedUnicastRanges.map {
         AddressRange(
             AddressValue(it.lowAddress),
@@ -89,6 +90,7 @@ fun NrfProvisioner.transform() = Provisioner(
             AddressValue(it.lastScene)
         )
     },
+    isLastSelected,
 )
 
 fun ProvisionedMeshNode.transform() = Node(

@@ -30,5 +30,10 @@ data class Mesh(
     val networkExclusions: List<NetworkExclusion> = emptyList()
 )
 
+fun Mesh.nodesWithoutProvisioner(): List<Node> {
+    val selectedProvisioner = provisioners.findLast { it.isLastSelected }
+    return nodes.filter { it.uuid.uuid != selectedProvisioner?.uuid }
+}
+
 @Serializable
 data class NetworkExclusion(val ivIndex: Int, val addresses: List<Int>)

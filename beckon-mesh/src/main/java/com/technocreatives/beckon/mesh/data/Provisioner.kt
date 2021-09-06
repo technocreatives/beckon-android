@@ -16,6 +16,7 @@ data class Provisioner(
     val allocatedUnicastRange: List<AddressRange>,
     val allocatedGroupRange: List<AddressRange>,
     val allocatedSceneRange: List<SceneRange>,
+    @Transient val isLastSelected: Boolean = false,
 )
 
 @Serializable(with = AddressSerializer::class)
@@ -26,6 +27,7 @@ data class AddressRange(
     val lowAddress: AddressValue,
     val highAddress: AddressValue,
 )
+
 @Serializable
 data class SceneRange(
     val firstScene: AddressValue,
