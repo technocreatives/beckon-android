@@ -73,6 +73,7 @@ class BeckonMesh(
     fun meshes(): StateFlow<Mesh> =
         meshApi.meshes()
 
+    // todo fix error
     fun createGroup(name: String, address: Int): Either<Throwable, Group> {
         val network = meshApi.meshNetwork()
         return Either.catch {

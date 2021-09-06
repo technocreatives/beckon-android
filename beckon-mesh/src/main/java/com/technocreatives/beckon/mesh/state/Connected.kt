@@ -40,7 +40,7 @@ class Connected(
             }
     })
 
-    val bearer = MessageBearer(processor)
+    internal val bearer = MessageBearer(processor)
 
     private var disconnectJob: Job? = null
 
