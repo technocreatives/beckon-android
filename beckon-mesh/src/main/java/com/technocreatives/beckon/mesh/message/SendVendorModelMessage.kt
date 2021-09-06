@@ -2,10 +2,7 @@ package com.technocreatives.beckon.mesh.message
 
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
-import com.technocreatives.beckon.mesh.data.AppKeyIndex
-import com.technocreatives.beckon.mesh.data.ModelId
-import com.technocreatives.beckon.mesh.data.UnicastAddress
-import com.technocreatives.beckon.mesh.data.findAppKey
+import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.state.Connected
 import no.nordicsemi.android.mesh.transport.VendorModelMessageUnacked
 
@@ -22,6 +19,23 @@ suspend fun Connected.sendVendorModelMessage(
     message: SendVendorModelMessage
 ): Either<SendAckMessageError, Unit> {
 
+    return sendVendorModelMessage(unicast.value, message)
+}
+
+suspend fun Connected.sendVendorModelMessage(
+    unicast: GroupAddress,
+    message: SendVendorModelMessage
+): Either<SendAckMessageError, Unit> {
+
+    return sendVendorModelMessage(unicast.value, message)
+
+}
+
+private suspend fun Connected.sendVendorModelMessage(
+    address: Int,
+    message: SendVendorModelMessage
+): Either<SendAckMessageError, Unit> {
+
     val meshMessage = VendorModelMessageUnacked(
         meshApi.meshNetwork().findAppKey(message.appKeyIndex)!!,
         message.modelId.value,
@@ -30,6 +44,6 @@ suspend fun Connected.sendVendorModelMessage(
         message.parameters
     )
 
-    return bearer.sendVendorModelMessage(unicast.value, meshMessage)
+    return bearer.sendVendorModelMessage(address, meshMessage)
 
 }

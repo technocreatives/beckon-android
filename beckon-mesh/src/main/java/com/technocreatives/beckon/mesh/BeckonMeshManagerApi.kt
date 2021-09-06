@@ -41,15 +41,7 @@ class BeckonMeshManagerApi(
         MutableStateFlow(meshNetwork().transform())
     }
 
-    //    fun nodes(): StateFlow<List<Node>> = nodesSubject.asStateFlow()
     fun meshes(): StateFlow<Mesh> = meshSubject.asStateFlow()
-
-//    private suspend fun loadNodes(): List<Node> =
-//        withContext(Dispatchers.IO) {
-//            val appKeys = appKeys()
-//            val netKeys = networkKeys()
-//            meshNetwork().nodes.map { it.toNode(appKeys, netKeys) }
-//        }
 
     suspend fun nodes(key: NetKey): List<Node> =
         withContext(Dispatchers.IO) {
@@ -57,13 +49,9 @@ class BeckonMeshManagerApi(
             mesh.nodes.filter { it.netKeys.any { it.index == key.index } }
         }
 
-//    fun networkKeys(): List<BeckonNetKey> =
-//        meshNetwork().netKeys.map { BeckonNetKey(it) }
-//
     suspend fun updateNetwork() {
-        meshSubject.emit(meshNetwork().transform())
-//        nodesSubject.emit(loadNodes())
-//        groupsSubject.emit(meshNetwork().groups.map { Group(it) })
+        val mesh = meshNetwork().transform()
+        meshSubject.emit(mesh)
     }
 
     internal fun meshNetwork(): MeshNetwork = meshNetwork!!
