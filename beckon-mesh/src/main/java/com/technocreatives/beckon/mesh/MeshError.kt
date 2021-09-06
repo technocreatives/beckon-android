@@ -2,7 +2,6 @@ package com.technocreatives.beckon.mesh
 
 import com.technocreatives.beckon.BeckonActionError
 import no.nordicsemi.android.mesh.NetworkKey as NrfNetworkKey
-import com.technocreatives.beckon.mesh.model.NetworkKey
 import com.technocreatives.beckon.mesh.state.MeshState
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode

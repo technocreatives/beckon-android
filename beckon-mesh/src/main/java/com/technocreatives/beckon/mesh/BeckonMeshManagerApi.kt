@@ -28,7 +28,6 @@ import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
 import java.util.*
 import kotlin.coroutines.CoroutineContext
-import com.technocreatives.beckon.mesh.model.NetworkKey as BeckonNetKey
 
 class BeckonMeshManagerApi(
     context: Context,
