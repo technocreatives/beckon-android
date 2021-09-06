@@ -102,7 +102,7 @@ fun ProvisionedMeshNode.transform() = Node(
     pid = productIdentifier?.let { CompositionDataParser.formatProductIdentifier(it, false) },
     vid = versionIdentifier?.let { CompositionDataParser.formatVersionIdentifier(it, false) },
     crpl = crpl,
-    nodeFeatures?.transform(),
+    nodeFeatures.transform(),
     ttl,
     isExcluded,
     networkTransmitSettings?.transform(),

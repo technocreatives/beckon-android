@@ -24,7 +24,7 @@ data class Node(
     val pid: String? = null,
     val vid: String? = null,
     val crpl: Int? = null,
-    val features: Features?,
+    val features: Features? = null,
     val defaultTTL: Int,
     val excluded: Boolean,
     val networkTransmit: NetworkTransmit? = null,
