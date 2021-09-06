@@ -23,7 +23,7 @@ data class Node(
     val cid: String? = null,
     val pid: String? = null,
     val vid: String? = null,
-    val crpl: String? = null,
+    val crpl: Int? = null,
     val features: Features,
     val defaultTTL: Int,
     val excluded: Boolean,
