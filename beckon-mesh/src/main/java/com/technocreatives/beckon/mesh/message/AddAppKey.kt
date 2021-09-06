@@ -23,7 +23,7 @@ suspend fun Connected.addAppKey(
         )
     }
 
-    return bearer.addConfigAppKey(unicast.value, meshMessage)
+    return bearer.addConfigAppKey(unicast, meshMessage)
         .map { it.transform() }
 
 }

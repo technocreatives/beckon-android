@@ -7,11 +7,11 @@ import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
+import com.technocreatives.beckon.mesh.data.AppKey
+import com.technocreatives.beckon.mesh.data.NetKey
+import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.model.AppKey
-import com.technocreatives.beckon.mesh.model.NetworkKey
-import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.processor.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
@@ -82,22 +82,24 @@ class Connected(
 
 
 suspend fun Connected.setUpAppKey(
-    node: Node,
-    netKey: NetworkKey,
+    nodeAddress: UnicastAddress,
+    netKey: NetKey,
     appKey: AppKey,
 ): Either<Any, Unit> = either {
 
-    bearer.getConfigCompositionData(node.unicastAddress).bind()
+    bearer.getConfigCompositionData(nodeAddress).bind()
 
-    bearer.getConfigDefaultTtl(node.unicastAddress).bind()
+    bearer.getConfigDefaultTtl(nodeAddress).bind()
 
     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
 
-    bearer.setConfigNetworkTransmit(node.unicastAddress, networkTransmitSet).bind()
+    bearer.setConfigNetworkTransmit(nodeAddress, networkTransmitSet).bind()
 
-    val configAppKeyAdd = ConfigAppKeyAdd(netKey.actualKey, appKey.applicationKey)
+    val networkKey = beckonMesh.netKey(netKey.index)!!
+    val applicationKey = beckonMesh.appKey(appKey.index)!!
+    val configAppKeyAdd = ConfigAppKeyAdd(networkKey, applicationKey)
 
-    bearer.addConfigAppKey(node.unicastAddress, configAppKeyAdd).bind()
+    bearer.addConfigAppKey(nodeAddress, configAppKeyAdd).bind()
 }
 
 class ConnectedMeshManagerCallbacks(

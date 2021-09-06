@@ -12,11 +12,11 @@ import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.internal.toUuid
-import com.technocreatives.beckon.mesh.data.Mesh
+import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
-import com.technocreatives.beckon.mesh.model.*
+import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.state.*
 import com.technocreatives.beckon.util.*
 import kotlinx.coroutines.CoroutineScope
@@ -24,6 +24,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.mesh.ApplicationKey
+import no.nordicsemi.android.mesh.NetworkKey
+import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import timber.log.Timber
 import java.util.*
 import kotlin.coroutines.CoroutineContext
@@ -56,19 +59,20 @@ class BeckonMesh(
         job.cancel()
     }
 
-    fun nodes(): StateFlow<List<Node>> = meshApi.nodes()
-
     fun meshUuid(): UUID =
         meshApi.meshNetwork().meshUUID.toUuid()
 
-    fun appKeys(): List<AppKey> =
-        meshApi.appKeys()
+    fun appKeys() =
+        meshApi.meshNetwork().transform().appKeys
 
-    fun networkKeys(): List<NetworkKey> =
-        meshApi.networkKeys()
+    fun networkKeys() =
+        meshApi.meshNetwork().transform().netKeys
 
-    fun groups(): StateFlow<List<Group>> =
-        meshApi.groups()
+    fun netKey(index: NetKeyIndex): NetworkKey? =
+        meshApi.meshNetwork().netKeys.find { it.keyIndex == index.value }
+
+    fun appKey(index: AppKeyIndex): ApplicationKey? =
+        meshApi.meshNetwork().appKeys.find { it.keyIndex == index.value }
 
     fun meshes(): StateFlow<Mesh> =
         meshApi.meshes()
@@ -85,7 +89,7 @@ class BeckonMesh(
                 it
             }
         }.map {
-            Group(it)
+            it.transform()
         }
     }
 
@@ -164,12 +168,12 @@ class BeckonMesh(
             .mapZ { it.mapNotNull { it.toUnprovisionedScanResult(meshApi) } }
     }
 
-    suspend fun scanForProvisioning(node: Node): Either<BeckonError, BeckonDevice> =
+    suspend fun scanForProvisioning(node: ProvisionedMeshNode): Either<BeckonError, BeckonDevice> =
         scanForProxy()
             .mapZ {
                 it.firstOrNull {
                     // TODO what if device is not proxy device? We do not need to connect to the current device.
-                    meshApi.isProxyDevice(it.scanRecord!!, node.node) { stopScan() }
+                    meshApi.isProxyDevice(it.scanRecord!!, node) { stopScan() }
                 }
             }.filterZ { it != null }
             .mapEither { connectForProxy(it!!.macAddress) }
@@ -203,7 +207,8 @@ class BeckonMesh(
         either {
             val beckonDevice = beckonClient.connect(macAddress).bind()
             // TODO
-            val mtu = beckonDevice.requestMtu(MeshConstants.maxMtu)
+            beckonDevice.requestMtu(MeshConstants.maxMtu)
+                .fold({ Timber.w("RequestMtu failed $it") }, { Timber.d("RequestMtu success $it") })
             beckonDevice.subscribe(characteristic).bind()
             with(meshApi) {
                 beckonDevice.handleNotifications(characteristic)

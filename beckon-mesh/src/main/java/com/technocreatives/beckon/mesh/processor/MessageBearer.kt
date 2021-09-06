@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh.processor
 
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
+import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.withTimeout
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
@@ -78,46 +79,46 @@ class MessageBearer(val processor: MessageProcessor) {
             ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
         ).map { it as ConfigModelSubscriptionStatus }
 
-    suspend fun getConfigCompositionData(address: Int): Either<SendAckMessageError, ConfigCompositionDataStatus> =
+    suspend fun getConfigCompositionData(address: UnicastAddress): Either<SendAckMessageError, ConfigCompositionDataStatus> =
         sendAckMessage(
-            address,
+            address.value,
             ConfigCompositionDataGet(),
             ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
         ).map { it as ConfigCompositionDataStatus }
 
-    suspend fun getConfigDefaultTtl(address: Int): Either<SendAckMessageError, ConfigDefaultTtlStatus> =
+    suspend fun getConfigDefaultTtl(address: UnicastAddress): Either<SendAckMessageError, ConfigDefaultTtlStatus> =
         sendAckMessage(
-            address,
+            address.value,
             ConfigDefaultTtlGet(),
             ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS
         ).map { it as ConfigDefaultTtlStatus }
 
     suspend fun setConfigNetworkTransmit(
-        address: Int,
+        address: UnicastAddress,
         message: ConfigNetworkTransmitSet
     ): Either<SendAckMessageError, ConfigNetworkTransmitStatus> =
         sendAckMessage(
-            address,
+            address.value,
             message,
             ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS
         ).map { it as ConfigNetworkTransmitStatus }
 
     suspend fun addConfigAppKey(
-        address: Int,
+        address: UnicastAddress,
         message: ConfigAppKeyAdd
     ): Either<SendAckMessageError, ConfigAppKeyStatus> =
         sendAckMessage(
-            address,
+            address.value,
             message,
             ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
         ).map { it as ConfigAppKeyStatus }
 
     suspend fun addProxyConfigAddressToFilter(
-        address: Int,
+        address: UnicastAddress,
         message: ProxyConfigAddAddressToFilter
     ) =
         sendAckMessage(
-            address,
+            address.value,
             message,
             ProxyConfigMessageOpCodes.FILTER_STATUS
         ).map { it as ProxyConfigFilterStatus }

@@ -14,14 +14,11 @@ import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.writeSplit
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.data.Mesh
+import com.technocreatives.beckon.mesh.data.NetKey
+import com.technocreatives.beckon.mesh.data.Node
 import com.technocreatives.beckon.mesh.data.transform
-import com.technocreatives.beckon.mesh.extensions.hasKey
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.model.AppKey
-import com.technocreatives.beckon.mesh.model.Group
-import com.technocreatives.beckon.mesh.model.Node
-import com.technocreatives.beckon.mesh.model.toNode
 import com.technocreatives.beckon.mesh.utils.tap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -40,45 +37,34 @@ class BeckonMeshManagerApi(
     private val job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
-    private val nodesSubject = MutableStateFlow<List<Node>>(emptyList())
+    //    private val nodesSubject = MutableStateFlow<List<Node>>(emptyList())
     private val meshSubject by lazy {
-         MutableStateFlow(meshNetwork().transform())
+        MutableStateFlow(meshNetwork().transform())
     }
-    fun nodes(): StateFlow<List<Node>> = nodesSubject.asStateFlow()
+
+    //    fun nodes(): StateFlow<List<Node>> = nodesSubject.asStateFlow()
     fun meshes(): StateFlow<Mesh> = meshSubject.asStateFlow()
 
-    private suspend fun loadNodes(): List<Node> =
+//    private suspend fun loadNodes(): List<Node> =
+//        withContext(Dispatchers.IO) {
+//            val appKeys = appKeys()
+//            val netKeys = networkKeys()
+//            meshNetwork().nodes.map { it.toNode(appKeys, netKeys) }
+//        }
+
+    suspend fun nodes(key: NetKey): List<Node> =
         withContext(Dispatchers.IO) {
-            val appKeys = appKeys()
-            val netKeys = networkKeys()
-            meshNetwork().nodes.map { it.toNode(appKeys, netKeys) }
+            val mesh = meshNetwork().transform()
+            mesh.nodes.filter { it.netKeys.any { it.index == key.index } }
         }
 
-    suspend fun nodes(key: BeckonNetKey): List<Node> =
-        withContext(Dispatchers.IO) {
-            val appKeys = appKeys()
-            val netKeys = networkKeys()
-            meshNetwork().nodes.filter { it.hasKey(key.actualKey) }
-                .drop(1)
-                .map { it.toNode(appKeys, netKeys) }
-        }
-
-    fun appKeys(): List<AppKey> =
-        meshNetwork().appKeys.map { AppKey(it) }
-
-    fun appKey(index: Int): AppKey? =
-        appKeys().find { it.keyIndex == index }
-
-    fun networkKeys(): List<BeckonNetKey> =
-        meshNetwork().netKeys.map { BeckonNetKey(it) }
-
-    private val groupsSubject = MutableStateFlow<List<Group>>(emptyList())
-    fun groups(): StateFlow<List<Group>> = groupsSubject.asStateFlow()
-
+//    fun networkKeys(): List<BeckonNetKey> =
+//        meshNetwork().netKeys.map { BeckonNetKey(it) }
+//
     suspend fun updateNetwork() {
         meshSubject.emit(meshNetwork().transform())
-        nodesSubject.emit(loadNodes())
-        groupsSubject.emit(meshNetwork().groups.map { Group(it) })
+//        nodesSubject.emit(loadNodes())
+//        groupsSubject.emit(meshNetwork().groups.map { Group(it) })
     }
 
     internal fun meshNetwork(): MeshNetwork = meshNetwork!!

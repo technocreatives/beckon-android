@@ -10,7 +10,6 @@ import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
-import com.technocreatives.beckon.mesh.model.Node
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import kotlinx.coroutines.CompletableDeferred
@@ -35,7 +34,7 @@ class Provisioning(
         CompletableDeferred<Either<ProvisioningFailed, UnprovisionedNode>>()
 
     private val provisioningEmitter =
-        CompletableDeferred<Either<ProvisioningError, Node>>()
+        CompletableDeferred<Either<ProvisioningError, ProvisionedMeshNode>>()
 
     private val provisioningStatusCallbacks = object : MeshProvisioningStatusCallbacks {
 
@@ -78,11 +77,7 @@ class Provisioning(
         ) {
             Timber.d("onProvisioningCompleted: ${meshNode.nodeName} - $state - ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}")
             provisioningEmitter.complete(
-                Node(
-                    meshNode,
-                    beckonMesh.appKeys(),
-                    beckonMesh.networkKeys()
-                ).right()
+                meshNode.right()
             )
             beckonMesh.execute {
                 meshApi.updateNetwork()
@@ -160,7 +155,7 @@ class Provisioning(
     }
 
     // todo add other type of provisioning like OOB
-    suspend fun startProvisioning(unprovisionedNode: UnprovisionedNode): Either<ProvisioningError, Node> =
+    suspend fun startProvisioning(unprovisionedNode: UnprovisionedNode): Either<ProvisioningError, ProvisionedMeshNode> =
         either {
             Timber.d("startProvisioning ${unprovisionedNode.node.deviceUuid}")
 
