@@ -54,6 +54,7 @@ fun MeshManagerApi.isNodeInTheMesh(
     return networkIdMatches
 }
 
+// TODO Look into the expected behaviour of a node after provisioning
 suspend fun MeshManagerApi.isProxyDevice(
     scanRecord: ScanRecord,
     meshNode: ProvisionedMeshNode,
