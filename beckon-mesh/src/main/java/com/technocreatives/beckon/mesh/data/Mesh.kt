@@ -4,8 +4,10 @@ import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import no.nordicsemi.android.mesh.MeshNetwork
-import java.time.OffsetDateTime
+import no.nordicsemi.android.mesh.models.SigModelParser
+import no.nordicsemi.android.mesh.transport.MeshModel
+import no.nordicsemi.android.mesh.utils.SecureUtils
+import java.time.Instant
 import java.util.*
 
 @Serializable
@@ -28,7 +30,94 @@ data class Mesh(
     val groups: List<Group> = emptyList(),
     val scenes: List<Scene> = emptyList(),
     val networkExclusions: List<NetworkExclusion> = emptyList()
-)
+) {
+    companion object {
+
+        private val SCHEMA = "http://json-schema.org/draft-04/schema#"
+        private val ID =
+            "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#"
+        private val VERSION = "1.0.0"
+
+        fun generateMesh(meshName: String, provisionerName: String): Mesh {
+            val uuid = UUID.randomUUID()
+            val appKeys = generateAppKeys()
+            val netKeys = generateNetKeys()
+            val unicastRanges = listOf(AddressRange(AddressValue(0x0001), AddressValue(0x199A)))
+            val groupRanges = listOf(AddressRange(AddressValue(0xC000), AddressValue(0xCC9A)))
+            val sceneRanges = listOf(SceneRange(AddressValue(0x0001), AddressValue(0x3333)))
+            val provisioner = Provisioner(
+                provisionerName,
+                UUID.randomUUID(),
+                unicastRanges,
+                groupRanges,
+                sceneRanges,
+                true
+            )
+            val provisionerNode = generateProvisionerNode(provisioner, appKeys, netKeys)
+            return Mesh(
+                SCHEMA,
+                ID,
+                VERSION,
+                uuid,
+                meshName,
+                Instant.now().toEpochMilli(),
+                false,
+                netKeys,
+                appKeys,
+                listOf(provisioner),
+                listOf(provisionerNode)
+            )
+        }
+
+        private fun generateProvisionerNode(
+            provisioner: Provisioner,
+            appKeys: List<AppKey>,
+            netKeys: List<NetKey>
+        ): Node {
+            val model =
+                SigModelParser.getSigModel(SigModelParser.CONFIGURATION_CLIENT.toInt()).transform()
+            val unicast = UnicastAddress(1)
+            val element = Element(
+                unicast,
+                "Element 0x0001",
+                ElementIndex(0),
+                location = 0,
+                listOf(model)
+            ) //TODO
+            val nodeNetKeys = netKeys.map { NodeNetKey(it.index, true) }
+            val nodeAppKeys = appKeys.map { NodeAppKey(it.index, true) }
+            return Node(
+                NodeId(provisioner.uuid),
+                provisioner.name,
+                Key(SecureUtils.generateRandomNumber()),
+                UnicastAddress(1),
+                security = 0,
+                isConfigured = true,
+                defaultTTL = 5,
+                features = Features.Unsupported(),
+                excluded = false,
+                sequenceNumber = 0,
+                elements = listOf(element),
+                netKeys = nodeNetKeys,
+                appKeys = nodeAppKeys,
+            )
+        }
+
+        private fun generateNetKeys(): List<NetKey> =
+            listOf(NetKey("NetKey 1", NetKeyIndex(0), Key(SecureUtils.generateRandomNumber())))
+
+        private fun generateAppKeys() =
+            listOf(
+                AppKey(
+                    "AppKey 1",
+                    AppKeyIndex(0),
+                    NetKeyIndex(0),
+                    Key(SecureUtils.generateRandomNumber())
+                )
+            )
+    }
+
+}
 
 fun Mesh.nodesWithoutProvisioner(): List<Node> {
     val selectedProvisioner = provisioners.findLast { it.isLastSelected }

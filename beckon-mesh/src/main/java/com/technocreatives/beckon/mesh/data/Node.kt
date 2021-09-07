@@ -74,7 +74,11 @@ data class Features(
     val lowPower: Int,
     val proxy: Int,
     val relay: Int,
-)
+) {
+    companion object {
+        fun Unsupported() = Features(2, 2, 2, 2)
+    }
+}
 
 @Serializable
 data class NetworkTransmit(

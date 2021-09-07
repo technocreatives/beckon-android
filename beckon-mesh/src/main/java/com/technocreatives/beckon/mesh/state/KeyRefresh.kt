@@ -33,7 +33,7 @@ suspend fun Connected.distributeNetKey(
         }
     }
 
-suspend fun Connected.switchToNewKey(key: NetworkKey): Either<SwitchKeysFailed, no.nordicsemi.android.mesh.NetworkKey> {
+suspend fun Connected.switchToNewKey(key: NetworkKey): Either<SwitchKeysFailed, NetworkKey> {
     return withContext(Dispatchers.IO) {
         Either.catch {
             meshApi.meshNetwork().switchToNewKey(key)
@@ -45,7 +45,7 @@ suspend fun Connected.switchToNewKey(key: NetworkKey): Either<SwitchKeysFailed, 
     }
 }
 
-suspend fun Connected.revokeOldKey(key: no.nordicsemi.android.mesh.NetworkKey): Either<RevokeOldKeyFailed, no.nordicsemi.android.mesh.NetworkKey> =
+suspend fun Connected.revokeOldKey(key: NetworkKey): Either<RevokeOldKeyFailed, NetworkKey> =
     withContext(Dispatchers.IO) {
         if (meshApi.meshNetwork().revokeOldKey(key)) {
             key.right()
@@ -94,7 +94,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey): Either<Any, Any> = either {
     Timber.d("======== switchToNewKey: ${k1.info()}")
 
     val useNewKeyMessage =
-        ConfigKeyRefreshPhaseSet(k1, no.nordicsemi.android.mesh.NetworkKey.USE_NEW_KEYS)
+        ConfigKeyRefreshPhaseSet(k1, NetworkKey.USE_NEW_KEYS)
     val e2 =
         nodes.traverseEither {
             bearer.setConfigKeyRefreshPhase(
@@ -109,7 +109,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey): Either<Any, Any> = either {
     Timber.d("======== revokeOldKey: ${k2.info()}")
 
     val revokeOldKeysMessage =
-        ConfigKeyRefreshPhaseSet(k2, no.nordicsemi.android.mesh.NetworkKey.REVOKE_OLD_KEYS)
+        ConfigKeyRefreshPhaseSet(k2, NetworkKey.REVOKE_OLD_KEYS)
     val e3 =
         nodes.traverseEither {
             bearer.setConfigKeyRefreshPhase(
@@ -157,7 +157,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey, appKey: AppKey): Either<Any,
         Timber.d("======== switchToNewKey: ${k1.info()}")
 
         val useNewKeyMessage =
-            ConfigKeyRefreshPhaseSet(k1, no.nordicsemi.android.mesh.NetworkKey.USE_NEW_KEYS)
+            ConfigKeyRefreshPhaseSet(k1, NetworkKey.USE_NEW_KEYS)
         val e2 =
             nodes.traverseEither {
                 bearer.setConfigKeyRefreshPhase(
@@ -172,7 +172,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey, appKey: AppKey): Either<Any,
         Timber.d("======== revokeOldKey: ${k2.info()}")
 
         val revokeOldKeysMessage =
-            ConfigKeyRefreshPhaseSet(k2, no.nordicsemi.android.mesh.NetworkKey.REVOKE_OLD_KEYS)
+            ConfigKeyRefreshPhaseSet(k2, NetworkKey.REVOKE_OLD_KEYS)
         val e3 =
             nodes.traverseEither {
                 bearer.setConfigKeyRefreshPhase(

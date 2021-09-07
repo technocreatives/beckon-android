@@ -28,4 +28,10 @@ class MeshSerializationTest : StringSpec({
             }
     }
 
+    "Default mesh encode & decode" {
+        val mesh = Mesh.generateMesh("New Mesh", "Provisioner")
+        val json = format.encodeToString(mesh)
+        val anotherMesh = format.decodeFromString<Mesh>(json)
+        mesh shouldBe anotherMesh
+    }
 })

@@ -5,6 +5,8 @@ import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
 import com.technocreatives.beckon.mesh.data.serializer.NetKeySecuritySerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import no.nordicsemi.android.mesh.NetworkKey
+import java.time.Instant
 
 @Serializable
 @JvmInline
@@ -20,12 +22,12 @@ data class NetKey(
     val index: NetKeyIndex,
     @Serializable(with = KeySerializer::class)
     val key: Key,
-    val phase: Int,
+    val phase: Int = NetworkKey.NORMAL_OPERATION,
     @SerialName("minSecurity")
     @Serializable(with = NetKeySecuritySerializer::class)
-    val isSecurity: Boolean,
+    val isSecurity: Boolean = false,
     @Serializable(with = OffsetDateTimeSerializer::class)
-    val timestamp: Long,
+    val timestamp: Long = Instant.now().toEpochMilli(),
 )
 
 @Serializable
