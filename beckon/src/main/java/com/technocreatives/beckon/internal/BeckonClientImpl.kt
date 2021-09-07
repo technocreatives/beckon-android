@@ -5,34 +5,16 @@ import android.content.Context
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.fx.coroutines.parTraverseEither
-import com.technocreatives.beckon.BeckonClient
-import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.BeckonDeviceError
-import com.technocreatives.beckon.BeckonError
-import com.technocreatives.beckon.BluetoothState
-import com.technocreatives.beckon.Change
-import com.technocreatives.beckon.ConnectionError
-import com.technocreatives.beckon.Descriptor
-import com.technocreatives.beckon.DeviceDetail
-import com.technocreatives.beckon.FoundCharacteristic
-import com.technocreatives.beckon.MacAddress
-import com.technocreatives.beckon.Metadata
-import com.technocreatives.beckon.SavedMetadata
-import com.technocreatives.beckon.ScanError
-import com.technocreatives.beckon.ScanResult
-import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.checkRequirements
+import com.technocreatives.beckon.*
 import com.technocreatives.beckon.data.DeviceRepository
 import com.technocreatives.beckon.redux.BeckonAction
 import com.technocreatives.beckon.redux.BeckonStore
 import com.technocreatives.beckon.util.*
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
@@ -229,30 +211,34 @@ internal class BeckonClientImpl(
                 bluetoothReceiver.register(context)
 
                 // do scan to check if bluetooth turn on from off state
-                beckonStore.states()
-                    .map { it.bluetoothState }
-                    .distinctUntilChanged()
-                    .filter { it == BluetoothState.ON }
-                    .map { deviceRepository.currentDevices() }
-                    .collect { reconnectSavedDevices(it) }
+                launch {
+                    beckonStore.states()
+                        .map { it.bluetoothState }
+                        .distinctUntilChanged()
+                        .filter { it == BluetoothState.ON }
+                        .map { deviceRepository.currentDevices() }
+                        .collect { reconnectSavedDevices(it) }
+                }
 
-                beckonStore.states()
-                    .map { it.bluetoothState }
-                    .distinctUntilChanged()
-                    .filter { it == BluetoothState.OFF }
-                    .collect {
-                        beckonStore.currentState().connectedDevices.onEach {
-                            it.disconnect().fold(
-                                {
-                                    Timber.d("Disconnect after BT_OFF success")
-                                },
-                                {
-                                    Timber.w("Disconnect after BT_OFF failed $it")
-                                }
-                            )
+                launch {
+                    beckonStore.states()
+                        .map { it.bluetoothState }
+                        .distinctUntilChanged()
+                        .filter { it == BluetoothState.OFF }
+                        .collect {
+                            beckonStore.currentState().connectedDevices.onEach {
+                                it.disconnect().fold(
+                                    {
+                                        Timber.d("Disconnect after BT_OFF success")
+                                    },
+                                    {
+                                        Timber.w("Disconnect after BT_OFF failed $it")
+                                    }
+                                )
+                            }
+                            beckonStore.dispatch(BeckonAction.RemoveAllConnectedDevices)
                         }
-                        beckonStore.dispatch(BeckonAction.RemoveAllConnectedDevices)
-                    }
+                }
             }
     }
 
