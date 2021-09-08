@@ -7,6 +7,7 @@ import com.technocreatives.beckon.mesh.withTimeout
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
+import no.nordicsemi.android.mesh.utils.MeshAddress
 
 class MessageBearer(val processor: MessageProcessor) {
 
@@ -114,11 +115,28 @@ class MessageBearer(val processor: MessageProcessor) {
         ).map { it as ConfigAppKeyStatus }
 
     suspend fun addProxyConfigAddressToFilter(
-        address: UnicastAddress,
         message: ProxyConfigAddAddressToFilter
     ) =
         sendAckMessage(
-            address.value,
+            MeshAddress.UNASSIGNED_ADDRESS,
+            message,
+            ProxyConfigMessageOpCodes.FILTER_STATUS
+        ).map { it as ProxyConfigFilterStatus }
+
+    suspend fun removeProxyConfigAddressFromFilter(
+        message: ProxyConfigRemoveAddressFromFilter
+    ) =
+        sendAckMessage(
+            MeshAddress.UNASSIGNED_ADDRESS,
+            message,
+            ProxyConfigMessageOpCodes.FILTER_STATUS
+        ).map { it as ProxyConfigFilterStatus }
+
+    suspend fun setProxyConfigFilterType(
+        message: ProxyConfigSetFilterType
+    ) =
+        sendAckMessage(
+            MeshAddress.UNASSIGNED_ADDRESS,
             message,
             ProxyConfigMessageOpCodes.FILTER_STATUS
         ).map { it as ProxyConfigFilterStatus }
