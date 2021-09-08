@@ -54,7 +54,7 @@ class BeckonMeshClient(
      * */
     suspend fun loadOrImport(id: UUID): Either<MeshLoadError, BeckonMesh> = either {
         if (id == currentMeshID()) {
-            loadCurrentMesh().bind()
+            load().bind()
         } else {
             val mesh = repository.find(id).rightIfNotNull { MeshIdNotFound(id) }.bind()
             import(mesh).bind().also {
