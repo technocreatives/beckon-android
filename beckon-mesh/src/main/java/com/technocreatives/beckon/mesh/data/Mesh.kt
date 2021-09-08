@@ -1,9 +1,15 @@
 package com.technocreatives.beckon.mesh.data
 
+import arrow.core.Either
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import no.nordicsemi.android.mesh.models.SigModelParser
 import no.nordicsemi.android.mesh.transport.MeshModel
 import no.nordicsemi.android.mesh.utils.SecureUtils
@@ -37,6 +43,13 @@ data class Mesh(
         val ID =
             "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#"
         val VERSION = "1.0.0"
+
+        private val format by lazy { Json { encodeDefaults = true; explicitNulls = false } }
+        fun fromJson(json: String) =
+            Either.catch { format.decodeFromString<Mesh>(json) }
+
+        fun toJson(mesh: Mesh): String =
+            format.encodeToString(mesh)
 
         internal fun generateMesh(meshName: String, provisionerName: String): Mesh {
             val uuid = UUID.randomUUID()

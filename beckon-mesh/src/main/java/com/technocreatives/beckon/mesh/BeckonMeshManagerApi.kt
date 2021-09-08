@@ -22,6 +22,7 @@ import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.utils.tap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.serialization.json.Json
 import no.nordicsemi.android.mesh.MeshManagerApi
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.MeshMessage
@@ -31,7 +32,8 @@ import kotlin.coroutines.CoroutineContext
 
 class BeckonMeshManagerApi(
     context: Context,
-) : MeshManagerApi(context), CoroutineScope {
+    private val repository: MeshRepository,
+    ) : MeshManagerApi(context), CoroutineScope {
 
     private val job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
@@ -50,6 +52,8 @@ class BeckonMeshManagerApi(
 
     suspend fun updateNetwork() {
         val mesh = meshNetwork().transform()
+        Timber.d("Update Network ${mesh.nodes.map { it.name }}")
+        repository.save(MeshData(mesh.meshUuid, Mesh.toJson(mesh)))
         meshSubject.emit(mesh)
     }
 

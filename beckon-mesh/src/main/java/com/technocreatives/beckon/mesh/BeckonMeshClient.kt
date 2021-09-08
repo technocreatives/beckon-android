@@ -18,7 +18,7 @@ class BeckonMeshClient(
     private val beckonClient: BeckonClient,
     private val repository: MeshRepository
 ) {
-    private val meshApi = BeckonMeshManagerApi(context)
+    private val meshApi = BeckonMeshManagerApi(context, repository)
 
     private var currentMesh: BeckonMesh? = null
 
@@ -34,13 +34,13 @@ class BeckonMeshClient(
         disconnect().bind()
         val mesh = repository.currentMesh().rightIfNotNull { NoCurrentMeshFound }.bind()
         meshApi.load(mesh.id).bind()
-        BeckonMesh(context, beckonClient, meshApi)
+        BeckonMesh(context, beckonClient, meshApi, repository)
     }
 
     suspend fun load(): Either<MeshLoadError, BeckonMesh> = either {
         disconnect().bind()
         meshApi.load().bind()
-        BeckonMesh(context, beckonClient, meshApi)
+        BeckonMesh(context, beckonClient, meshApi, repository)
     }
 
     suspend fun import(id: UUID): Either<MeshLoadError, BeckonMesh> = either {
@@ -64,28 +64,19 @@ class BeckonMeshClient(
     }
 
     private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> =
-        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi) }
+        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, repository) }
 
     fun generateMesh(meshName: String, provisionerName: String): Mesh =
         Mesh.generateMesh(meshName, provisionerName)
 
-    private val format by lazy { Json { encodeDefaults = true; explicitNulls = false } }
-
-//    suspend fun createMesh(meshName: String, provisionerName: String) = either {
-//        disconnect().bind()
-//        val mesh = Mesh.generateMesh(meshName, provisionerName)
-//        val json = toJson(mesh)
-//        BeckonMesh(context, beckonClient, meshApi)
-//    }
-
     suspend fun fromJson(json: String) =
         withContext(Dispatchers.IO) {
-            Either.catch { format.decodeFromString<Mesh>(json) }
+            Mesh.fromJson(json)
         }
 
     suspend fun toJson(mesh: Mesh) =
         withContext(Dispatchers.IO) {
-            format.encodeToString(mesh)
+            Mesh.toJson(mesh)
         }
 
     private val sharedPreferences by lazy {

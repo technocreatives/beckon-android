@@ -34,7 +34,8 @@ import kotlin.coroutines.CoroutineContext
 class BeckonMesh(
     private val context: Context,
     private val beckonClient: BeckonClient,
-    private val meshApi: BeckonMeshManagerApi
+    private val meshApi: BeckonMeshManagerApi,
+    private val repository: MeshRepository,
 ) : CoroutineScope {
 
     private val job = Job()
