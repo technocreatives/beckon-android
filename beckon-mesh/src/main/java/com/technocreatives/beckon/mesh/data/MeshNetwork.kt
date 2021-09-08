@@ -17,8 +17,8 @@ import no.nordicsemi.android.mesh.Features as NrfFeatures
 import no.nordicsemi.android.mesh.Group as NrfGroup
 
 fun MeshNetwork.transform() = Mesh(
-    "",
-    "",
+    Mesh.SCHEMA,
+    Mesh.ID,
     version,
     UUID.fromString(meshUUID),
     meshName,

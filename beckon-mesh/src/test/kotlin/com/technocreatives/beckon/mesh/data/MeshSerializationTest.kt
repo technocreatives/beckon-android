@@ -34,4 +34,11 @@ class MeshSerializationTest : StringSpec({
         val anotherMesh = format.decodeFromString<Mesh>(json)
         mesh shouldBe anotherMesh
     }
+
+    "Default mesh with Nrf tool" {
+        val mesh = Mesh.generateMesh("nRF Mesh Network", "nRF Mesh Provisioner")
+        val json = format.encodeToString(mesh)
+        val nrfEmptyJson = this.javaClass.stringFrom("/mesh/empty.json")
+        json shouldBe nrfEmptyJson
+    }
 })

@@ -1,9 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.data.serializer.HexToIntSerializer
-import com.technocreatives.beckon.mesh.data.serializer.ModelSerializer
-import com.technocreatives.beckon.mesh.data.serializer.SubscriptionAddressSerializer
-import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
+import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.Serializable
 import no.nordicsemi.android.mesh.models.SigModelParser
 import no.nordicsemi.android.mesh.utils.CompanyIdentifiers
@@ -76,9 +73,16 @@ data class ModelData(
 fun List<AppKeyIndex>.toAppKeys(allKeys: List<AppKey>) =
     mapNotNull { index -> allKeys.find { it.index == index } }
 
-@Serializable
+@Serializable(with = ModelIdSerializer::class)
 @JvmInline
-value class ModelId(@Serializable(with = HexToIntSerializer::class) val value: Int)
+value class ModelId(val value: Int) {
+    fun isVendorModel() = value < Short.MIN_VALUE || value > Short.MAX_VALUE
+    fun format() = if (isVendorModel()) {
+        String.format(Locale.US, "%08X", value)
+    } else {
+        String.format(Locale.US, "%04X", value)
+    }
+}
 
 @Serializable
 data class Publish(

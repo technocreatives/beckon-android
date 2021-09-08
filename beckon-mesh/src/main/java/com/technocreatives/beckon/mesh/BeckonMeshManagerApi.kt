@@ -120,7 +120,7 @@ class BeckonMeshManagerApi(
                     networkLoadingEmitter.complete(
                         NetworkImportedFailedError(
                             mesh.id,
-                            "Cannot import mesh ${mesh.id}"
+                            "Cannot import mesh ${mesh.id} - $error"
                         ).left()
                     )
                 }
@@ -129,7 +129,6 @@ class BeckonMeshManagerApi(
                     networkLoadingEmitter.complete(Unit.right())
                 }
             })
-
             importMeshNetworkJson(mesh.data)
             networkLoadingEmitter.await().tap { updateNetwork() }
         }

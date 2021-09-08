@@ -33,12 +33,12 @@ data class Mesh(
 ) {
     companion object {
 
-        private val SCHEMA = "http://json-schema.org/draft-04/schema#"
-        private val ID =
+        val SCHEMA = "http://json-schema.org/draft-04/schema#"
+        val ID =
             "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#"
-        private val VERSION = "1.0.0"
+        val VERSION = "1.0.0"
 
-        fun generateMesh(meshName: String, provisionerName: String): Mesh {
+        internal fun generateMesh(meshName: String, provisionerName: String): Mesh {
             val uuid = UUID.randomUUID()
             val appKeys = generateAppKeys()
             val netKeys = generateNetKeys()
