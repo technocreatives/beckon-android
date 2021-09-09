@@ -9,7 +9,7 @@ import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
 import no.nordicsemi.android.mesh.utils.MeshAddress
 
-class MessageBearer(val processor: MessageProcessor) {
+class MessageBearer(private val processor: MessageProcessor) {
 
     suspend fun unbindConfigModelApp(
         unicastAddress: Int,
