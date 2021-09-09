@@ -6,8 +6,10 @@ import arrow.core.right
 import arrow.core.traverseEither
 import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.mesh.BleError
+import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.SendMessageError
 import com.technocreatives.beckon.mesh.extensions.info
+import com.technocreatives.beckon.mesh.withTimeout
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -83,7 +85,7 @@ data class AckEmitter(
     val emitter: CompletableDeferred<Either<SendMessageError, MeshMessage>>
 ) {
     override fun toString(): String {
-        return "OpCode $opCode, dst: $dst"
+        return "AckEmitter: OpCode=$opCode, dst=$dst"
     }
 }
 
@@ -107,9 +109,9 @@ private class MessageItem(
 
 }
 
-class MessageProcessor(private val pduSender: PduSender) {
+class MessageProcessor(private val pduSender: PduSender, val timeout: Long) {
 
-    internal val incomingAckMessageChannel = Channel<AckEmitter>()
+    private val incomingAckMessageChannel = Channel<AckEmitter>()
     private val receivedAckMessageChannel = Channel<MeshMessage>()
 
     private val incomingMessageChannel = Channel<CompletableMessage>()
@@ -121,6 +123,21 @@ class MessageProcessor(private val pduSender: PduSender) {
         dst: Int,
         mesh: MeshMessage,
         opCode: Int
+    ): Either<SendAckMessageError, MeshMessage> =
+        // todo timeout when the message is actually send
+        withTimeout(timeout) {
+            sendAckMessageP(
+                dst,
+                mesh,
+                opCode
+            )
+        }
+
+
+    private suspend inline fun sendAckMessageP(
+        dst: Int,
+        mesh: MeshMessage,
+        opCode: Int,
     ): Either<SendMessageError, MeshMessage> {
         val emitter = CompletableDeferred<Either<SendMessageError, MeshMessage>>()
         val ackEmitter = AckEmitter(dst, opCode, mesh, emitter)
@@ -145,7 +162,6 @@ class MessageProcessor(private val pduSender: PduSender) {
         incomingMessageChannel.send(Ack(dst, mesh, emitter, opCode))
         return emitter.await()
     }
-
 
     suspend fun sendPdu(pdu: Pdu) {
         Timber.d("SendPdu ${pdu.data.size}")
@@ -186,15 +202,7 @@ class MessageProcessor(private val pduSender: PduSender) {
                 }
 
                 incomingAckMessageChannel.onReceive {
-                    Timber.d("incomingAckMessageChannel.onReceive")
-//                    if(map[id] != null) {
                     map.add(it)
-//                        sendMessage(it.dst, it.mesh)
-//                        it.mesh
-//                    } else {
-//
-//                    }
-                    Timber.d("incomingAckMessageChannel.onReceive end")
                 }
             }
         }
@@ -233,7 +241,7 @@ class MessageProcessor(private val pduSender: PduSender) {
                                 .isNotEmpty()
                         }
 
-                        fun isOk(message: BeckonMessage): Boolean {
+                        fun shouldGoNext(message: BeckonMessage): Boolean {
                             val opCode = message.message.opCode()
                             return if (opCode == null) {
                                 true
@@ -242,11 +250,10 @@ class MessageProcessor(private val pduSender: PduSender) {
                             }
                         }
 
-                        val foundIndex = messagesQueue.indexOfFirst { isOk(it) }
+                        val foundIndex = messagesQueue.indexOfFirst { shouldGoNext(it) }
 
                         if (foundIndex != -1) {
                             val bm1 = messagesQueue.removeAt(foundIndex)
-//                             send next message on the queue
                             isProcessing = true
                             id += 1
                             processingMap[id] = bm1
@@ -255,20 +262,12 @@ class MessageProcessor(private val pduSender: PduSender) {
                             }
                         }
 
-
-//                        if (messagesQueue.isNotEmpty()) {
-//                            isProcessing = true
-//                            id += 1
-//                            val bm1 = messagesQueue[0]
-//                            processingMap[id] = bm1
-//                            launch {
-//                                bm1.item.sendMessage()
-//                            }
                         launch {
                             pduSenderResultChannel.send(IdResult(id, result))
                         }
                     }
                 }
+
                 incomingMessageChannel.onReceive {
                     Timber.d("incomingMessageChannel.onReceive $isProcessing ${messagesQueue.size}")
                     val bm = processMessage(it, id)

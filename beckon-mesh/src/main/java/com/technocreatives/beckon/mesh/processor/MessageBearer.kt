@@ -3,7 +3,6 @@ package com.technocreatives.beckon.mesh.processor
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.UnicastAddress
-import com.technocreatives.beckon.mesh.withTimeout
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
@@ -179,11 +178,9 @@ class MessageBearer(private val processor: MessageProcessor) {
         message: MeshMessage,
         opCode: Int
     ): Either<SendAckMessageError, MeshMessage> =
-        withTimeout(30000) {
-            processor.sendAckMessage(
-                address,
-                message,
-                opCode
-            )
-        }
+        processor.sendAckMessage(
+            address,
+            message,
+            opCode
+        )
 }

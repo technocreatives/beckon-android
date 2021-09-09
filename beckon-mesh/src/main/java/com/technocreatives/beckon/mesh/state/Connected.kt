@@ -38,7 +38,7 @@ class Connected(
             with(meshApi) {
                 beckonDevice.sendPdu(pdu.data, MeshConstants.proxyDataInCharacteristic)
             }
-    })
+    }, 30000) // todo timeout
 
     internal val bearer = MessageBearer(processor)
 
