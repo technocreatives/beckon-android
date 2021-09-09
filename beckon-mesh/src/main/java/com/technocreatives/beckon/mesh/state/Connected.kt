@@ -132,7 +132,7 @@ class ConnectedMessageStatusCallbacks(
 ) : AbstractMessageStatusCallbacks(meshApi) {
     override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
         super.onMeshMessageReceived(src, message)
-        Timber.d("onMeshMessageReceived - src: $src, dst: ${message.dst}, meshMessage: ${message.sequenceNumber()}")
+        Timber.d("onMeshMessageReceived - src: $src, dst: ${message.dst}, meshMessage: ${message.sequenceNumber()}, opCode ${message.opCode}")
         runBlocking {
             processor.messageReceived(message)
         }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import no.nordicsemi.android.mesh.transport.MeshMessage
+import no.nordicsemi.android.mesh.utils.MeshAddress
 import timber.log.Timber
 
 @JvmInline
@@ -120,7 +121,7 @@ class MessageProcessor(private val pduSender: PduSender) {
                 receivedMessageChannel.onReceive { message ->
                     Timber.d("receivedMessageChannel.onReceive")
                     map[message.opCode]?.let {
-                        if (it.dst == message.src) {
+                        if (it.dst == message.src || it.dst == MeshAddress.UNASSIGNED_ADDRESS) {
                             map.remove(message.opCode)?.emitter?.complete(message.right())
                         }
                     }
