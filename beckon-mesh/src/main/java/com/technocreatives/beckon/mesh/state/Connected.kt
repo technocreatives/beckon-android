@@ -28,19 +28,21 @@ class Connected(
     private val beckonDevice: BeckonDevice
 ) : MeshState(beckonMesh, meshApi) {
 
-    private val processor: MessageProcessor = MessageProcessor(object : PduSender {
-        override fun createPdu(
-            dst: Int,
-            meshMessage: MeshMessage
-        ) = meshApi.createPdu(dst, meshMessage)
+    private val processor by lazy {
+        MessageProcessor(object : PduSender {
+            override fun createPdu(
+                dst: Int,
+                meshMessage: MeshMessage
+            ) = meshApi.createPdu(dst, meshMessage)
 
-        override suspend fun sendPdu(pdu: Pdu): PduSenderResult =
-            with(meshApi) {
-                beckonDevice.sendPdu(pdu.data, MeshConstants.proxyDataInCharacteristic)
-            }
-    }, 30000) // todo timeout
+            override suspend fun sendPdu(pdu: Pdu): PduSenderResult =
+                with(meshApi) {
+                    beckonDevice.sendPdu(pdu.data, MeshConstants.proxyDataInCharacteristic)
+                }
+        }, 30000) // todo timeout
+    }
 
-    internal val bearer = MessageBearer(processor)
+    internal val bearer by lazy { MessageBearer(processor) }
 
     private var disconnectJob: Job? = null
 
@@ -77,7 +79,6 @@ class Connected(
         beckonMesh.updateState(loaded)
         loaded
     }
-
 }
 
 
