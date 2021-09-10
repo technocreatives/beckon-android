@@ -1,9 +1,13 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.data.serializer.*
+import com.technocreatives.beckon.mesh.data.serializer.ModelIdSerializer
+import com.technocreatives.beckon.mesh.data.serializer.ModelSerializer
+import com.technocreatives.beckon.mesh.data.serializer.SubscriptionAddressSerializer
+import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
 import kotlinx.serialization.Serializable
 import no.nordicsemi.android.mesh.models.SigModelParser
 import no.nordicsemi.android.mesh.utils.CompanyIdentifiers
+import no.nordicsemi.android.mesh.utils.MeshAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -86,8 +90,8 @@ value class ModelId(val value: Int) {
 
 @Serializable
 data class Publish(
-    val address: UnicastAddress, // TODO ???
-    val index: Int, // TODO what index?
+    val address: Addressable, // TODO ???
+    val index: Int, // AppKeyIndex
     val period: Period,
     val credentials: Int,
     val ttl: Int,
@@ -106,8 +110,21 @@ data class Period(
     val resolution: Int,
 )
 
+sealed interface Addressable
+
+fun Addressable.value(): Int = when (this) {
+    is GroupAddress -> value
+    is VirtualAddress -> throw RuntimeException("Virtual address not supported yet")
+    Unassigned -> Unassigned.value
+    is UnicastAddress -> value
+}
+
+object Unassigned : Addressable {
+    const val value = MeshAddress.UNASSIGNED_ADDRESS
+}
+
 @Serializable(with = SubscriptionAddressSerializer::class)
-sealed interface SubscriptionAddress
+sealed interface SubscriptionAddress : Addressable
 
 @Serializable
 @JvmInline

@@ -15,21 +15,16 @@ data class SendVendorModelMessage(
 )
 
 suspend fun Connected.sendVendorModelMessage(
-    unicast: UnicastAddress,
+    nodeAddress: UnicastAddress,
     message: SendVendorModelMessage
-): Either<SendAckMessageError, Unit> {
-
-    return sendVendorModelMessage(unicast.value, message)
-}
+): Either<SendAckMessageError, Unit> =
+    sendVendorModelMessage(nodeAddress.value, message)
 
 suspend fun Connected.sendVendorModelMessage(
-    unicast: GroupAddress,
+    nodeAddress: GroupAddress,
     message: SendVendorModelMessage
-): Either<SendAckMessageError, Unit> {
-
-    return sendVendorModelMessage(unicast.value, message)
-
-}
+): Either<SendAckMessageError, Unit> =
+    sendVendorModelMessage(nodeAddress.value, message)
 
 private suspend fun Connected.sendVendorModelMessage(
     address: Int,
@@ -45,5 +40,4 @@ private suspend fun Connected.sendVendorModelMessage(
     )
 
     return bearer.sendVendorModelMessage(address, meshMessage)
-
 }

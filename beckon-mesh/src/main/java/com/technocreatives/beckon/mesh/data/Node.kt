@@ -48,7 +48,7 @@ value class NodeId(
 value class UnicastAddress(
     @Serializable(with = HexToIntSerializer::class)
     val value: Int
-)
+): Addressable
 
 @Serializable
 data class NodeNetKey(

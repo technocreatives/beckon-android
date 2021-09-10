@@ -79,6 +79,26 @@ class MessageBearer(private val processor: MessageProcessor) {
             ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
         ).map { it as ConfigModelSubscriptionStatus }
 
+    suspend fun getConfigModelPublication(
+        unicastAddress: Int,
+        message: ConfigModelPublicationGet
+    ): Either<SendAckMessageError, ConfigModelPublicationStatus> =
+        sendAckMessage(
+            unicastAddress,
+            message,
+            ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS
+        ).map { it as ConfigModelPublicationStatus }
+
+    suspend fun setConfigModelPublication(
+        unicastAddress: Int,
+        message: ConfigModelPublicationSet
+    ): Either<SendAckMessageError, ConfigModelPublicationStatus> =
+        sendAckMessage(
+            unicastAddress,
+            message,
+            ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS
+        ).map { it as ConfigModelPublicationStatus }
+
     suspend fun getConfigCompositionData(address: UnicastAddress): Either<SendAckMessageError, ConfigCompositionDataStatus> =
         sendAckMessage(
             address.value,

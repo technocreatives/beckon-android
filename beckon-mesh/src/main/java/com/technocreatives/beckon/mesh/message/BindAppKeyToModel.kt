@@ -16,7 +16,7 @@ data class BindAppKeyToModel(
 )
 
 suspend fun Connected.bindAppKeyToModel(
-    unicast: UnicastAddress,
+    nodeAddress: UnicastAddress,
     message: BindAppKeyToModel
 ): Either<SendAckMessageError, ConfigMessageStatus> {
 
@@ -26,13 +26,13 @@ suspend fun Connected.bindAppKeyToModel(
         message.appKeyIndex.value
     )
 
-    return bearer.bindConfigModelApp(unicast.value, meshMessage)
+    return bearer.bindConfigModelApp(nodeAddress.value, meshMessage)
         .map { it.transform() }
 
 }
 
 suspend fun Connected.unbindAppKeyToModel(
-    unicast: UnicastAddress,
+    nodeAddress: UnicastAddress,
     message: BindAppKeyToModel
 ): Either<SendAckMessageError, ConfigMessageStatus> {
 
@@ -42,7 +42,7 @@ suspend fun Connected.unbindAppKeyToModel(
         message.appKeyIndex.value
     )
 
-    return bearer.unbindConfigModelApp(unicast.value, meshMessage)
+    return bearer.unbindConfigModelApp(nodeAddress.value, meshMessage)
         .map { it.transform() }
 
 }

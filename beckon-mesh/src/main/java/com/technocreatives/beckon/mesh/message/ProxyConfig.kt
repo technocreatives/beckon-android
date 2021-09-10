@@ -29,18 +29,18 @@ suspend fun Connected.setAddressesToProxy(
         filterType.transform()
     )
 
-
     val filterTypeResult = bearer.setProxyConfigFilterType(filterTypeMessage).bind()
 
-    if(addresses.isNotEmpty()) {
+    val listSize = if(addresses.isNotEmpty()) {
         val addAddressesMessage = ProxyConfigAddAddressToFilter(
             addresses.map { it.toAddressArray() }
         )
-        val result = bearer.addProxyConfigAddressToFilter(addAddressesMessage).bind()
-        ProxyConfigStatus(filterTypeResult.filterType.transform(), result.listSize)
+        bearer.addProxyConfigAddressToFilter(addAddressesMessage).bind().listSize
     } else {
-        ProxyConfigStatus(filterTypeResult.filterType.transform(), 0)
+        0
     }
+
+    ProxyConfigStatus(filterTypeResult.filterType.transform(), listSize)
 }
 
 private fun FilterType.transform() = when (this) {
