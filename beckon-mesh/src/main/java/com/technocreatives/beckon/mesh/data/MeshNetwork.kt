@@ -7,6 +7,7 @@ import no.nordicsemi.android.mesh.NetworkKey
 import no.nordicsemi.android.mesh.NodeKey
 import no.nordicsemi.android.mesh.Provisioner as NrfProvisioner
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
+import no.nordicsemi.android.mesh.transport.PublicationSettings
 import no.nordicsemi.android.mesh.utils.CompositionDataParser
 import no.nordicsemi.android.mesh.utils.MeshAddress
 import no.nordicsemi.android.mesh.utils.NetworkTransmitSettings
@@ -57,8 +58,24 @@ fun NrfMeshModel.transform(): Model =
     ModelData(
         ModelId(modelId),
         bind = boundAppKeyIndexes.map { AppKeyIndex(it) },
-        subscribe = subscribedAddresses.map { it.toSubscriptionAddress(this) }
+        subscribe = subscribedAddresses.map { it.toSubscriptionAddress(this) },
+        publish = publicationSettings?.transform()
     ).toModel()
+
+fun PublicationSettings.transform() = Publish(
+    GroupAddress(publishAddress),
+    AppKeyIndex(appKeyIndex),
+    Period(
+        publicationSteps,
+        publicationResolution
+    ),
+    0, // TODO Boolean vs Int?!
+    publishTtl,
+    Retransmit(
+        publishRetransmitCount,
+        retransmissionInterval
+    )
+)
 
 fun NrfElement.transform(index: ElementIndex) = Element(
     UnicastAddress(elementAddress),

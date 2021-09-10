@@ -10,7 +10,7 @@ import no.nordicsemi.android.mesh.transport.ConfigModelPublicationSet
 data class ConfigModelPublication(
     val publishAddress: Addressable, // TODO Can also be unicast or virtual address?
     val elementAddress: UnicastAddress,
-    val appKeyIndex: Int,
+    val appKeyIndex: AppKeyIndex,
     val credentialFlag: Boolean,
     val publishTtl: Int,
     val publicationSteps: Int,
@@ -27,7 +27,7 @@ suspend fun Connected.setConfigModelPublication(
     val meshMessage = ConfigModelPublicationSet(
         message.elementAddress.value,
         message.publishAddress.value(),
-        message.appKeyIndex,
+        message.appKeyIndex.value,
         message.credentialFlag,
         message.publishTtl,
         message.publicationSteps,

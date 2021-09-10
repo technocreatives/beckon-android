@@ -90,10 +90,10 @@ value class ModelId(val value: Int) {
 
 @Serializable
 data class Publish(
-    val address: Addressable, // TODO ???
-    val index: Int, // AppKeyIndex
+    val address: GroupAddress, // TODO Addressable
+    val index: AppKeyIndex,
     val period: Period,
-    val credentials: Int,
+    val credentialsFlag: Int,
     val ttl: Int,
     val retransmit: Retransmit
 )
