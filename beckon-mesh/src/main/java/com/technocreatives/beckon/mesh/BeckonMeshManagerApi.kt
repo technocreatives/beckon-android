@@ -33,7 +33,7 @@ import kotlin.coroutines.CoroutineContext
 class BeckonMeshManagerApi(
     context: Context,
     private val repository: MeshRepository,
-    ) : MeshManagerApi(context), CoroutineScope {
+) : MeshManagerApi(context), CoroutineScope {
 
     private val job = Job()
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job

@@ -18,7 +18,9 @@ class BeckonMeshClient(
     private val beckonClient: BeckonClient,
     private val repository: MeshRepository
 ) {
-    private val meshApi = BeckonMeshManagerApi(context, repository)
+    private val meshApi by lazy {
+        BeckonMeshManagerApi(context, repository)
+    }
 
     private var currentMesh: BeckonMesh? = null
 
@@ -95,5 +97,6 @@ class BeckonMeshClient(
         sharedPreferences.edit(commit = true) {
             this.putString("mesh_uuid", id.toString())
         }
+}
 
 }
