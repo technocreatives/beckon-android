@@ -8,7 +8,7 @@ import com.technocreatives.beckon.mesh.data.findAppKey
 import com.technocreatives.beckon.mesh.state.Connected
 import no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes
 import no.nordicsemi.android.mesh.transport.GenericOnOffSet as NrfGenericOnOffSet
-import no.nordicsemi.android.mesh.transport.GenericOnOffStatus
+import no.nordicsemi.android.mesh.transport.GenericOnOffStatus as NrfGenericOnOffStatus
 
 data class GenericOnOffSet(
     val appKeyIndex: AppKeyIndex,
@@ -17,6 +17,13 @@ data class GenericOnOffSet(
     val transitionSteps: Int? = null,
     val transitionResolution: Int? = null,
     val delay: Int? = null,
+)
+
+data class GenericOnOffStatus(
+    val presentState: Boolean,
+    val targetState: Boolean,
+    val transitionResolution: Int,
+    val transitionSteps: Int,
 )
 
 suspend fun Connected.sendGenericOnOffSet(
@@ -38,5 +45,14 @@ suspend fun Connected.sendGenericOnOffSet(
         meshMessage,
         ApplicationMessageOpCodes.GENERIC_ON_OFF_STATUS
     )
-        .map { it as GenericOnOffStatus }
+        .map { it as NrfGenericOnOffStatus }
+        .map { it.transform() }
 }
+
+private fun NrfGenericOnOffStatus.transform() =
+    GenericOnOffStatus(
+        presentState,
+        targetState,
+        transitionResolution,
+        transitionSteps
+    )
