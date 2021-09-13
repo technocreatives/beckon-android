@@ -89,19 +89,23 @@ suspend fun Connected.setUpAppKey(
     appKey: AppKey,
 ): Either<Any, Unit> = either {
 
-    bearer.getConfigCompositionData(nodeAddress).bind()
+    val compositionStatus = bearer.getConfigCompositionData(nodeAddress).bind()
+    Timber.d("getConfigCompositionData Status $compositionStatus")
 
-    bearer.getConfigDefaultTtl(nodeAddress).bind()
+    val defaultTtlStatus = bearer.getConfigDefaultTtl(nodeAddress).bind()
+    Timber.d("getConfigDefaultTtl Status $defaultTtlStatus")
 
     val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
 
-    bearer.setConfigNetworkTransmit(nodeAddress, networkTransmitSet).bind()
+    val networkTransmit = bearer.setConfigNetworkTransmit(nodeAddress, networkTransmitSet).bind()
+    Timber.d("setConfigNetworkTransmit Status $networkTransmit")
 
     val networkKey = beckonMesh.netKey(netKey.index)!!
     val applicationKey = beckonMesh.appKey(appKey.index)!!
     val configAppKeyAdd = ConfigAppKeyAdd(networkKey, applicationKey)
 
-    bearer.addConfigAppKey(nodeAddress, configAppKeyAdd).bind()
+    val appKeyAddStatus = bearer.addConfigAppKey(nodeAddress, configAppKeyAdd).bind()
+    Timber.d("addConfigAppKey Status $appKeyAddStatus")
 }
 
 class ConnectedMeshManagerCallbacks(
