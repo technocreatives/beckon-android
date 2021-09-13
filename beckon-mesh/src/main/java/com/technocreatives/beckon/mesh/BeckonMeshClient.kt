@@ -18,10 +18,12 @@ class BeckonMeshClient(
     private val beckonClient: BeckonClient,
     private val repository: MeshRepository
 ) {
-    private val meshApi by lazy {
-        BeckonMeshManagerApi(context, repository)
-    }
+//    private val meshApi by lazy {
+//        BeckonMeshManagerApi(context, repository)
+//    }
 
+    private val meshApi =
+        BeckonMeshManagerApi(context, repository)
     private var currentMesh: BeckonMesh? = null
 
     private suspend fun disconnect(): Either<MeshLoadError, Unit> {
@@ -97,6 +99,4 @@ class BeckonMeshClient(
         sharedPreferences.edit(commit = true) {
             this.putString("mesh_uuid", id.toString())
         }
-}
-
 }

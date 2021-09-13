@@ -76,9 +76,7 @@ class Provisioning(
             data: ByteArray?
         ) {
             Timber.d("onProvisioningCompleted: ${meshNode.nodeName} - $state - ${accumulatedStates.size} - ${accumulatedStates.map { it.name }}")
-            provisioningEmitter.complete(
-                meshNode.right()
-            )
+            provisioningEmitter.complete(meshNode.right());
             beckonMesh.execute {
                 meshApi.updateNetwork()
             }
@@ -126,6 +124,7 @@ class Provisioning(
                 return beckonDevice.getMaximumPacketSize()
             }
         })
+
         disconnectJob = beckonMesh.execute {
             beckonDevice.onDisconnect {
                 beckonMesh.updateState(Loaded(beckonMesh, meshApi))
