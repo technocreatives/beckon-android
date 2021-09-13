@@ -12,6 +12,7 @@ import com.technocreatives.beckon.mesh.data.NetKey
 import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
+import com.technocreatives.beckon.mesh.message.MessageBearer
 import com.technocreatives.beckon.mesh.processor.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
@@ -35,7 +36,7 @@ class Connected(
                 meshMessage: MeshMessage
             ) = meshApi.createPdu(dst, meshMessage)
 
-            override suspend fun sendPdu(pdu: Pdu): PduSenderResult =
+            override suspend fun sendPdu(pdu: Pdu) =
                 with(meshApi) {
                     beckonDevice.sendPdu(pdu.data, MeshConstants.proxyDataInCharacteristic)
                 }

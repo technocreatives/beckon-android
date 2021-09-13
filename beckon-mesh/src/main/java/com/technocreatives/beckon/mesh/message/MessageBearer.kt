@@ -1,8 +1,9 @@
-package com.technocreatives.beckon.mesh.processor
+package com.technocreatives.beckon.mesh.message
 
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.UnicastAddress
+import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*

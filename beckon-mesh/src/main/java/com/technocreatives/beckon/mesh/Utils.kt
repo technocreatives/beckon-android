@@ -68,9 +68,10 @@ fun ByteArray.toInt(): Int {
 fun ByteArray.info(): String {
     return map { it.toString() }.foldRight("") { a, b -> "$a $b" }
 }
+
 private val HEX_CHARS = "0123456789ABCDEF".toCharArray()
 
-fun ByteArray.toHex() : String{
+fun ByteArray.toHex(): String {
     val result = StringBuffer()
     forEach {
         val octet = it.toInt()
@@ -82,7 +83,8 @@ fun ByteArray.toHex() : String{
 
     return result.toString()
 }
-fun String.hexStringToByteArray() : ByteArray {
+
+fun String.hexStringToByteArray(): ByteArray {
     val result = ByteArray(length / 2)
 
     for (i in 0 until length step 2) {
@@ -96,8 +98,9 @@ fun String.hexStringToByteArray() : ByteArray {
     return result
 }
 
-suspend fun withTimeout(
+suspend fun <E> withTimeout(
     timeMillis: Long,
-    block: suspend CoroutineScope.() -> Either<SendMessageError, MeshMessage>
-): Either<SendAckMessageError, MeshMessage> =
-    withTimeoutOrNull(timeMillis, block) ?: TimeoutError.left()
+    block: suspend CoroutineScope.() -> Either<E, MeshMessage>,
+    error: () -> E
+): Either<E, MeshMessage> =
+    withTimeoutOrNull(timeMillis, block) ?: error().left()

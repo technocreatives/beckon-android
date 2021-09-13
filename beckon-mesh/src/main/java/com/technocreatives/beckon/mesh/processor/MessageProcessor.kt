@@ -11,74 +11,8 @@ import no.nordicsemi.android.mesh.transport.MeshMessage
 import no.nordicsemi.android.mesh.utils.MeshAddress
 import timber.log.Timber
 
-@JvmInline
-value class Pdu(val data: ByteArray)
 
-typealias PduSenderResult = Either<BeckonActionError, Unit>
-
-interface PduSender {
-    fun createPdu(dst: Int, meshMessage: MeshMessage): Either<SendMessageError, Unit>
-    suspend fun sendPdu(pdu: Pdu): PduSenderResult
-}
-
-private data class IdMessage(val id: Int, val message: MeshMessage)
-private data class IdResult(val id: Int, val result: PduSenderResult)
-
-private sealed class CompletableMessage {
-    abstract val dst: Int
-    abstract val message: MeshMessage
-    abstract val emitter: CompletableDeferred<Either<SendMessageError, Unit>>
-    abstract fun isAck(): Boolean
-    abstract fun opCode(): Int?
-    abstract fun id(): Long?
-}
-
-private data class UnAck(
-    override val dst: Int,
-    override val message: MeshMessage,
-    override val emitter: CompletableDeferred<Either<SendMessageError, Unit>>
-) : CompletableMessage() {
-    override fun toString(): String {
-        return "UnAck: ${message.info()}"
-    }
-
-    override fun id(): Long? = null
-    override fun isAck() = false
-    override fun opCode(): Int? = null
-}
-
-private data class TimeOutData(
-    val id: Long,
-    val dst: Int,
-    val opCode: Int,
-)
-
-private data class Ack(
-    val id: Long,
-    override val dst: Int,
-    override val message: MeshMessage,
-    override val emitter: CompletableDeferred<Either<SendMessageError, Unit>>,
-    val opCode: Int,
-) : CompletableMessage() {
-    override fun toString(): String {
-        return "Ack $opCode - ${message.info()}"
-    }
-
-    override fun isAck() = true
-    override fun opCode(): Int = opCode
-    override fun id() = id
-}
-
-
-private data class BeckonMessage(
-    val id: Int,
-    val message: CompletableMessage,
-    val item: MessageItem
-) {
-    override fun toString(): String {
-        return "BeckonMessage: isAck=${message.isAck()} $id ${message.message.info()}"
-    }
-}
+private data class PduSenderResult(val id: Long, val result: Either<BeckonActionError, Unit>)
 
 data class AckEmitter(
     val id: Long,
@@ -88,29 +22,29 @@ data class AckEmitter(
     val emitter: CompletableDeferred<Either<SendAckMessageError, MeshMessage>>
 ) {
     override fun toString(): String {
-        return "AckEmitter: OpCode=$opCode, dst=$dst, ${mesh.javaClass.simpleName}"
+        return "AckEmitter: Id=$id, OpCode=$opCode, dst=$dst, ${mesh.javaClass.simpleName}"
     }
 
     fun isMatching(dst: Int, opCode: Int) =
         (this.dst == dst || this.dst == MeshAddress.UNASSIGNED_ADDRESS) && this.opCode == opCode
 }
 
-private class MessageItem(
+internal class MessageSender(
     private val dst: Int,
-    private val idMessage: IdMessage,
+    private val message: MeshMessage,
     private val sender: PduSender,
 ) {
 
-    private val emitter = CompletableDeferred<Either<SendMessageError, IdMessage>>()
+    private val emitter = CompletableDeferred<Either<SendMessageError, Unit>>()
 
-    suspend fun sendMessage(): Either<SendMessageError, IdMessage> {
+    suspend fun sendMessage(): Either<SendMessageError, Unit> {
         Timber.d("MessageProcessor MessageItem sendMessage")
-        return sender.createPdu(dst, idMessage.message)
+        return sender.createPdu(dst, message)
             .flatMap { emitter.await() }
     }
 
-    fun onMessageProcessed(message: MeshMessage) {
-        emitter.complete(idMessage.copy(message = message).right())
+    fun sendMessageCompleted() {
+        emitter.complete(Unit.right())
     }
 
 }
@@ -123,9 +57,10 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
     private val onMessageBeingSentAckMessageChannel = Channel<Long>()
 
     private val incomingMessageChannel = Channel<CompletableMessage>()
-    private val pduSenderResultChannel = Channel<IdResult>()
+    private val pduSenderResultChannel = Channel<PduSenderResult>()
     private val pduChannel = Channel<Pdu>()
     private val processedMessageChannel = Channel<MeshMessage>()
+    private val onAckMessageFinishChannel = Channel<Long>()
 
     private var ackId: Long = 0
 
@@ -195,6 +130,9 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
                         Timber.d("receivedAckMessageChannel found message $ackEmitter, queue size after: ${ackMessageQueue.size}")
                         timeOutMap[ackEmitter.id]?.cancel()
                         ackEmitter.emitter.complete(message.right())
+                        launch {
+                            onAckMessageFinishChannel.send(ackEmitter.id)
+                        }
                     } else {
                         Timber.w("No message found")
                     }
@@ -209,6 +147,9 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
                         val ackEmitter = ackMessageQueue.removeAt(foundIndex)
                         Timber.d("timeoutAckMessageChannel found message $ackEmitter, queue size after: ${ackMessageQueue.size}")
                         ackEmitter.emitter.complete(TimeoutError.left())
+                        launch {
+                            onAckMessageFinishChannel.send(ackEmitter.id)
+                        }
                     } else {
                         Timber.w("No message found for $data")
                     }
@@ -237,80 +178,149 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
         }
     }
 
+    private class MessageQueue(
+        private var id: Long = 0,
+        private val processingMap: MutableMap<Long, BeckonMessage> = mutableMapOf(),
+        private val messagesQueue: MutableList<BeckonMessage> = mutableListOf(),
+        private val pdus: MutableList<Pdu> = mutableListOf(),
+        private var isSendingPdu: Boolean = false,
+    ) {
+
+        fun id() = id
+        fun isProcessing() = isSendingPdu
+
+        fun removeProcessingMessage(messageId: Long): BeckonMessage? {
+            return processingMap.remove(messageId)
+        }
+
+        fun getProcessingMessage(messageId: Long): BeckonMessage? {
+            return processingMap[messageId]
+        }
+
+        fun getProcessingMessageByAckId(ackId: Long): BeckonMessage? {
+            return processingMap.values.find { it.message.id() == ackId }
+        }
+
+        fun getCurrentProcessingMessage(): BeckonMessage? {
+            return processingMap[id]
+        }
+
+        fun nextMessage(): BeckonMessage? {
+            val foundIndex = messagesQueue.indexOfFirst { shouldGoNext(it) }
+            return if (foundIndex != -1) messagesQueue.removeAt(foundIndex)
+            else null
+        }
+
+        fun clearProcessing() {
+            isSendingPdu = false
+            pdus.clear()
+        }
+
+        fun addPdu(pdu: Pdu) {
+            pdus.add(pdu)
+        }
+
+        fun pdus() = pdus.toList()
+
+        fun shouldSendMessageImmediately(beckonMessage: BeckonMessage): Boolean {
+            return !isSendingPdu && (messagesQueue.isEmpty() || shouldGoNext(beckonMessage))
+        }
+
+        fun process(message: BeckonMessage) {
+            isSendingPdu = true
+            id += 1
+            processingMap[id] = message
+        }
+
+        fun queue(message: BeckonMessage): Boolean {
+            return messagesQueue.add(message)
+        }
+
+        private fun isDuplicatedAck(dst: Int, opCode: Int): Boolean {
+            return processingMap.filterValues { it.message.dst == dst && it.message.opCode() == opCode }
+                .isNotEmpty()
+        }
+
+        private fun shouldGoNext(message: BeckonMessage): Boolean {
+            val opCode = message.message.opCode()
+            return if (opCode == null) {
+                true
+            } else {
+                !isDuplicatedAck(message.message.dst, opCode)
+            }
+        }
+
+        override fun toString(): String {
+            return "MessageQueue(id=$id, processingMap=$processingMap, messagesQueue=$messagesQueue, pdus=$pdus, isProcessing=$isSendingPdu)"
+        }
+
+    }
+
     private fun CoroutineScope.process() = launch {
-        var id = 0
-        val processingMap: MutableMap<Int, BeckonMessage> = mutableMapOf()
-        val messagesQueue: MutableList<BeckonMessage> = mutableListOf()
-        val pdus = mutableListOf<Pdu>()
-        var isProcessing = false
+        val queue = MessageQueue()
         while (true) {
             select<Unit> {
                 pduSenderResultChannel.onReceive { result ->
-                    Timber.d("resultChannel.onReceive")
-                    val message = processingMap.remove(result.id)
-                    message?.message?.emitter?.complete(result.result.mapLeft {
-                        BleError(it)
-                    }) ?: run {
-                        Timber.d("there is no message with id ${result.id}")
-                    }
-                    Timber.d("travel result $result")
-                    fun isDuplicatedAck(dst: Int, opCode: Int): Boolean {
-                        return processingMap.filterValues { it.message.dst == dst && it.message.opCode() == opCode }
-                            .isNotEmpty()
-                    }
-
-                    fun shouldGoNext(message: BeckonMessage): Boolean {
-                        val opCode = message.message.opCode()
-                        return if (opCode == null) {
-                            true
-                        } else {
-                            !isDuplicatedAck(message.message.dst, opCode)
+                    Timber.d("resultChannel.onReceive- travel result $result")
+                    // todo remove if message is unack
+                    // ack message needs to wait to timeout or get the response
+                    val message = queue.getProcessingMessage(result.id)
+                    if (message != null) {
+                        if (!message.message.isAck()) {
+                            queue.removeProcessingMessage(result.id)
                         }
+                        message.complete(result.result)
+                    } else {
+                        Timber.w("there is no message with id ${result.id}")
                     }
-
-                    val foundIndex = messagesQueue.indexOfFirst { shouldGoNext(it) }
-
-                    if (foundIndex != -1) {
-                        val bm1 = messagesQueue.removeAt(foundIndex)
-                        isProcessing = true
-                        id += 1
-                        processingMap[id] = bm1
-                        sendBeckonMessage(bm1)
+                    queue.nextMessage()?.let { bm ->
+                        queue.process(bm)
+                        sendBeckonMessage(bm)
                     }
                 }
+
                 processedMessageChannel.onReceive { message ->
                     Timber.d("processedMessageChannel.onReceive ${message.info()}")
-                    val bm = processingMap[id]
+                    val bm = queue.getCurrentProcessingMessage()
                     bm?.let { bk ->
-                        bk.item.onMessageProcessed(message)
-                        val result = pdus.traverseEither { pduSender.sendPdu(it) }.map { }
-                        pdus.clear()
-                        isProcessing = false
-
+                        bk.sender.sendMessageCompleted()
+                        val result = queue.pdus().traverseEither { pduSender.sendPdu(it) }.map { }
+                        queue.clearProcessing()
                         launch {
-                            pduSenderResultChannel.send(IdResult(id, result))
+                            pduSenderResultChannel.send(PduSenderResult(queue.id(), result))
                         }
                     }
                 }
 
                 incomingMessageChannel.onReceive {
-                    Timber.d("incomingMessageChannel.onReceive isProcessing = $isProcessing, messageQueue.size = ${messagesQueue.size}")
-                    val bm = processMessage(it, id)
-                    if (!isProcessing && messagesQueue.isEmpty()) {
+                    Timber.d("incomingMessageChannel.onReceive $queue")
+                    val bm = processMessage(it, queue.id())
+                    if (queue.shouldSendMessageImmediately(bm)) {
                         Timber.d("incomingMessageChannel Sending message")
-                        isProcessing = true
-                        id += 1
-                        processingMap[id] = bm
+                        queue.process(bm)
                         sendBeckonMessage(bm)
                     } else {
                         Timber.d(" incomingMessageChannel add to queue")
-                        messagesQueue.add(bm)
+                        queue.queue(bm)
                     }
                 }
+
+                onAckMessageFinishChannel.onReceive { ackId ->
+                    val message = queue.getProcessingMessageByAckId(ackId)
+                    if (message != null) {
+                        Timber.d("onAckMessageFinishChannel $message")
+                        queue.removeProcessingMessage(message.id)
+                    }
+                    queue.nextMessage()?.let { bm ->
+                        queue.process(bm)
+                        sendBeckonMessage(bm)
+                    }
+                }
+
                 pduChannel.onReceive {
                     Timber.d("pduChannel.onReceive")
-                    if (isProcessing) {
-                        pdus.add(it)
+                    if (queue.isProcessing()) {
+                        queue.addPdu(it)
                     } else {
                         pduSender.sendPdu(it)
                     }
@@ -322,7 +332,7 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
 
     private fun CoroutineScope.sendBeckonMessage(beckonMessage: BeckonMessage) =
         launch {
-            beckonMessage.item.sendMessage()
+            beckonMessage.sender.sendMessage()
             beckonMessage.message.id()?.let {
                 onMessageBeingSentAckMessageChannel.send(it)
             }
@@ -330,15 +340,14 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
 
     private fun processMessage(
         message: CompletableMessage,
-        messageId: Int,
+        messageId: Long,
     ): BeckonMessage {
         Timber.d("processMessage $messageId $message")
-        val processor = MessageItem(
+        val processor = MessageSender(
             message.dst,
-            IdMessage(messageId, message.message),
+            message.message,
             pduSender,
         )
         return BeckonMessage(messageId, message, processor)
     }
 }
-
