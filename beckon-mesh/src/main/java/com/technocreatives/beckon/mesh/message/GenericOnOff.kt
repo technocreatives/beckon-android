@@ -21,9 +21,9 @@ data class GenericOnOffSet(
 
 data class GenericOnOffStatus(
     val presentState: Boolean,
-    val targetState: Boolean,
-    val transitionResolution: Int,
-    val transitionSteps: Int,
+    val targetState: Boolean?,
+    val transitionResolution: Int?,
+    val transitionSteps: Int?,
 )
 
 suspend fun Connected.sendGenericOnOffSet(
