@@ -194,7 +194,7 @@ class MessageBearer(private val processor: MessageProcessor) {
             address, ConfigNodeReset(), ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS
         ).map { it as ConfigNodeResetStatus }
 
-    private suspend fun sendAckMessage(
+    internal suspend fun sendAckMessage(
         address: Int,
         message: MeshMessage,
         opCode: Int
