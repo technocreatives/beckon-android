@@ -8,6 +8,7 @@ import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.data.AppKey
+import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.data.NetKey
 import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
@@ -15,7 +16,9 @@ import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.message.MessageBearer
 import com.technocreatives.beckon.mesh.processor.*
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.descriptors.PrimitiveKind
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.ConfigAppKeyAdd
 import no.nordicsemi.android.mesh.transport.ConfigNetworkTransmitSet
@@ -26,7 +29,8 @@ import timber.log.Timber
 class Connected(
     beckonMesh: BeckonMesh,
     meshApi: BeckonMeshManagerApi,
-    private val beckonDevice: BeckonDevice
+    private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
+    private val beckonDevice: BeckonDevice,
 ) : MeshState(beckonMesh, meshApi) {
 
     private val processor by lazy {
@@ -58,7 +62,8 @@ class Connected(
         meshApi.setMeshStatusCallbacks(
             ConnectedMessageStatusCallbacks(
                 meshApi,
-                processor
+                processor,
+                filteredSubject
             )
         )
         with(processor) {
@@ -134,12 +139,15 @@ class ConnectedMeshManagerCallbacks(
 
 class ConnectedMessageStatusCallbacks(
     meshApi: BeckonMeshManagerApi,
-    private val processor: MessageProcessor
+    private val processor: MessageProcessor,
+    private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
 ) : AbstractMessageStatusCallbacks(meshApi) {
     override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
         super.onMeshMessageReceived(src, message)
         Timber.d("onMeshMessageReceived - src: $src, dst: ${message.dst}, meshMessage: ${message.sequenceNumber()}, opCode ${message.opCode}")
+        val filteredMessage = BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
         runBlocking {
+            filteredSubject.emit(filteredMessage)
             processor.messageReceived(message)
         }
     }

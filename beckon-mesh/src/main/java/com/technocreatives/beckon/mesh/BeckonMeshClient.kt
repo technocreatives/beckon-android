@@ -8,9 +8,6 @@ import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.mesh.data.Mesh
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import java.util.*
 
 class BeckonMeshClient(
@@ -38,13 +35,13 @@ class BeckonMeshClient(
         disconnect().bind()
         val mesh = repository.currentMesh().rightIfNotNull { NoCurrentMeshFound }.bind()
         meshApi.load(mesh.id).bind()
-        BeckonMesh(context, beckonClient, meshApi, repository)
+        BeckonMesh(context, beckonClient, meshApi)
     }
 
     suspend fun load(): Either<MeshLoadError, BeckonMesh> = either {
         disconnect().bind()
         meshApi.load().bind()
-        BeckonMesh(context, beckonClient, meshApi, repository)
+        BeckonMesh(context, beckonClient, meshApi)
     }
 
     suspend fun import(id: UUID): Either<MeshLoadError, BeckonMesh> = either {
@@ -68,7 +65,7 @@ class BeckonMeshClient(
     }
 
     private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> =
-        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, repository) }
+        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi) }
 
     fun generateMesh(meshName: String, provisionerName: String): Mesh =
         Mesh.generateMesh(meshName, provisionerName)

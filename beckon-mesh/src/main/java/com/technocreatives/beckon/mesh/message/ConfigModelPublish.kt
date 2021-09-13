@@ -8,7 +8,7 @@ import no.nordicsemi.android.mesh.transport.ConfigModelPublicationGet
 import no.nordicsemi.android.mesh.transport.ConfigModelPublicationSet
 
 data class ConfigModelPublication(
-    val publishAddress: Addressable, // TODO Can also be unicast or virtual address?
+    val publishAddress: PublishableAddress, // TODO Can also be unicast or virtual address?
     val elementAddress: UnicastAddress,
     val appKeyIndex: AppKeyIndex,
     val credentialFlag: Boolean,

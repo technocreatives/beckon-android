@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.NetworkKey
+import no.nordicsemi.android.mesh.transport.MeshMessage
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import timber.log.Timber
 import java.util.*
@@ -35,7 +36,6 @@ class BeckonMesh(
     private val context: Context,
     private val beckonClient: BeckonClient,
     private val meshApi: BeckonMeshManagerApi,
-    private val repository: MeshRepository,
 ) : CoroutineScope {
 
     private val job = Job()
@@ -44,6 +44,10 @@ class BeckonMesh(
     // TODO Do we really need currentState? We can use stateSubject.value? Do we want Atomic?
     private lateinit var stateSubject: MutableStateFlow<MeshState>
     private lateinit var currentState: Atomic<MeshState>
+
+    private val filteredMessages by lazy {
+        MutableSharedFlow<ProxyFilterMessage>()
+    }
 
     private suspend fun initState() {
         val initialState = Loaded(this, meshApi)
@@ -77,6 +81,11 @@ class BeckonMesh(
 
     fun meshes(): StateFlow<Mesh> =
         meshApi.meshes()
+
+    data class ProxyFilterMessage(val address: GroupAddress, val message: MeshMessage)
+
+    fun proxyFilterMessages(): Flow<ProxyFilterMessage> =
+        filteredMessages.asSharedFlow()
 
     // todo fix error
     fun createGroup(name: String, address: Int): Either<Throwable, Group> {
@@ -112,7 +121,6 @@ class BeckonMesh(
         }
     }
 
-
     suspend fun startConnectedState(beckonDevice: BeckonDevice): Either<IllegalMeshStateError, Connected> {
         val state = currentState.get()
         return if (state is Loaded) {
@@ -135,6 +143,8 @@ class BeckonMesh(
         return currentState.get() is T
     }
 
+    fun createConnectedState(beckonDevice: BeckonDevice): Connected =
+        Connected(this, meshApi, filteredMessages, beckonDevice)
 
     suspend fun connectedState(): Either<IllegalMeshStateError, Connected> {
         val state = currentState.get()

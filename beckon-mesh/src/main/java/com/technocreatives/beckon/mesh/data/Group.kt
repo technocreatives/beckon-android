@@ -13,4 +13,4 @@ data class Group(
 
 @Serializable
 @JvmInline
-value class GroupAddress(@Serializable(with = HexToIntSerializer::class) val value: Int): SubscriptionAddress
+value class GroupAddress(@Serializable(with = HexToIntSerializer::class) val value: Int): SubscriptionAddress, PublishableAddress

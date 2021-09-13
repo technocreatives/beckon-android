@@ -32,13 +32,13 @@ class Loaded(beckonMesh: BeckonMesh, meshApi: BeckonMeshManagerApi) :
 
     suspend fun connect(macAddress: MacAddress): Either<Any, Connected> = either {
         val beckonDevice = beckonMesh.connectForProxy(macAddress).bind()
-        val connected = Connected(beckonMesh, meshApi, beckonDevice)
+        val connected = beckonMesh.createConnectedState(beckonDevice)
         beckonMesh.updateState(connected)
         connected
     }
 
     suspend fun connect(beckonDevice: BeckonDevice): Connected {
-        val connected = Connected(beckonMesh, meshApi, beckonDevice)
+        val connected = beckonMesh.createConnectedState(beckonDevice)
         beckonMesh.updateState(connected)
         return connected
     }

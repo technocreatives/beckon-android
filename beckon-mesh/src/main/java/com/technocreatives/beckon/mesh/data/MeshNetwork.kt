@@ -69,7 +69,7 @@ fun PublicationSettings.transform() = Publish(
         publicationSteps,
         publicationResolution
     ),
-    0, // TODO Boolean vs Int?!
+    credentialFlag,
     publishTtl,
     Retransmit(
         publishRetransmitCount,

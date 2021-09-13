@@ -15,6 +15,14 @@ enum class FilterType {
     EXCLUSION
 }
 
+data class AddressBytes(val first: Byte, val second: Byte) {
+    fun transform() = AddressArray(first, second)
+}
+
+fun AddressArray.transform(): AddressBytes {
+    return AddressBytes(address[0], address[1])
+}
+
 data class ProxyConfigStatus(
     val filterType: FilterType,
     val size: Int
@@ -31,7 +39,7 @@ suspend fun Connected.setAddressesToProxy(
 
     val filterTypeResult = bearer.setProxyConfigFilterType(filterTypeMessage).bind()
 
-    val listSize = if(addresses.isNotEmpty()) {
+    val listSize = if (addresses.isNotEmpty()) {
         val addAddressesMessage = ProxyConfigAddAddressToFilter(
             addresses.map { it.toAddressArray() }
         )
