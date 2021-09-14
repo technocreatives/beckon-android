@@ -29,7 +29,7 @@ internal sealed class CompletableMessage {
     abstract val emitter: CompletableDeferred<Either<SendMessageError, Unit>>
     abstract fun isAck(): Boolean
     abstract fun opCode(): Int?
-    abstract fun id(): Long?
+    abstract fun ackId(): Long?
 }
 
 internal data class UnAck(
@@ -41,13 +41,13 @@ internal data class UnAck(
         return "UnAck: ${message.info()}"
     }
 
-    override fun id(): Long? = null
+    override fun ackId(): Long? = null
     override fun isAck() = false
     override fun opCode(): Int? = null
 }
 
 internal data class Ack(
-    val id: Long,
+    val ackId: Long,
     override val dst: Int,
     override val message: MeshMessage,
     override val emitter: CompletableDeferred<Either<SendMessageError, Unit>>,
@@ -59,5 +59,5 @@ internal data class Ack(
 
     override fun isAck() = true
     override fun opCode(): Int = opCode
-    override fun id() = id
+    override fun ackId() = ackId
 }

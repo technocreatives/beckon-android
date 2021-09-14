@@ -1,15 +1,21 @@
 package com.technocreatives.beckon.mesh.processor
 
+import com.technocreatives.beckon.mesh.extensions.info
+
 internal class MessageQueue(
     private var id: Long = 0,
     private val processingMap: MutableMap<Long, BeckonMessage> = mutableMapOf(),
     private val messagesQueue: MutableList<BeckonMessage> = mutableListOf(),
     private val pdus: MutableList<Pdu> = mutableListOf(),
-    private var isSendingPdu: Boolean = false,
+    private var sendingId: Long? = null,
 ) {
 
-    fun id() = id
-    fun isSendingPdu() = isSendingPdu
+    fun nextId(): Long {
+        id += 1
+        return id
+    }
+
+    fun isSendingPdu() = sendingId != null
 
     fun removeProcessingMessage(messageId: Long): BeckonMessage? {
         return processingMap.remove(messageId)
@@ -20,11 +26,11 @@ internal class MessageQueue(
     }
 
     fun getProcessingMessageByAckId(ackId: Long): BeckonMessage? {
-        return processingMap.values.find { it.message.id() == ackId }
+        return processingMap.values.find { it.message.ackId() == ackId }
     }
 
     fun getCurrentProcessingMessage(): BeckonMessage? {
-        return processingMap[id]
+        return sendingId?.let { processingMap[it] }
     }
 
     fun nextMessage(): BeckonMessage? {
@@ -34,7 +40,7 @@ internal class MessageQueue(
     }
 
     fun clearProcessing() {
-        isSendingPdu = false
+        sendingId = null
         pdus.clear()
     }
 
@@ -45,13 +51,12 @@ internal class MessageQueue(
     fun pdus() = pdus.toList()
 
     fun shouldSendMessageImmediately(beckonMessage: BeckonMessage): Boolean {
-        return !isSendingPdu && (messagesQueue.isEmpty() || shouldGoNext(beckonMessage))
+        return sendingId == null && (messagesQueue.isEmpty() || shouldGoNext(beckonMessage))
     }
 
     fun process(message: BeckonMessage) {
-        isSendingPdu = true
-        id += 1
-        processingMap[id] = message
+        sendingId = message.id
+        processingMap[message.id] = message
     }
 
     fun queue(message: BeckonMessage): Boolean {
@@ -73,7 +78,9 @@ internal class MessageQueue(
     }
 
     override fun toString(): String {
-        return "MessageQueue(id=$id, processingMap=$processingMap, messagesQueue=$messagesQueue, isSendingPdu=$isSendingPdu)"
+        val pm = processingMap.map { "[${it.key}] - ${it.value.message.message.info()}" }
+            .joinToString(";")
+        return "MessageQueue(id=$id, processingMapSize=${processingMap.size}, messagesQueueSize=${messagesQueue.size}, isSendingPdu=$sendingId, {$pm})"
     }
 
 
