@@ -183,12 +183,19 @@ class BeckonMesh(
         scanForProxy()
             .mapZ {
                 it.firstOrNull {
-                    // TODO what if device is not proxy device? We do not need to connect to the current device.
+//                     TODO what if device is not proxy device? We do not need to connect to the current device.
                     meshApi.isProxyDevice(it.scanRecord!!, node) { stopScan() }
                 }
             }.filterZ { it != null }
             .mapEither { connectForProxy(it!!.macAddress) }
             .first()
+
+//    suspend fun scanForProvisioning(filter: (BluetoothDevice) -> Boolean): Either<BeckonError, BeckonDevice> =
+//        scanForProxy(filter)
+//            .mapZ { it.firstOrNull() }
+//            .filterZ { it != null }
+//            .mapEither { connectForProxy(it!!.macAddress) }
+//            .first()
 
     private suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
         scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))

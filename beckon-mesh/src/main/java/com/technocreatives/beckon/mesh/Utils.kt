@@ -98,9 +98,9 @@ fun String.hexStringToByteArray(): ByteArray {
     return result
 }
 
-suspend fun <E> withTimeout(
+suspend fun <E, T> withTimeout(
     timeMillis: Long,
-    block: suspend CoroutineScope.() -> Either<E, MeshMessage>,
+    block: suspend CoroutineScope.() -> Either<E, T>,
     error: () -> E
-): Either<E, MeshMessage> =
+): Either<E, T> =
     withTimeoutOrNull(timeMillis, block) ?: error().left()

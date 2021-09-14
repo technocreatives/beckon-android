@@ -49,10 +49,13 @@ fun MeshManagerApi.isNodeInTheMesh(
 ): Boolean {
     Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
     val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
-    val networkIdMatches = networkIdMatches(serviceData) && isAdvertisingWithNetworkIdentity(serviceData)
-    Timber.d("isNodeInTheMesh: $networkIdMatches")
-    return networkIdMatches
+    val networkIdMatches = networkIdMatches(serviceData)
+    val isAdvertisingWithNetworkIdentity = isAdvertisingWithNetworkIdentity(serviceData)
+//    val isAdvertisedWithNodeIdentity = isAdvertisedWithNodeIdentity(serviceData)
+    Timber.d("${scanRecord.deviceName} -> networkIdMatches=$networkIdMatches, isAdvertisingWithNetworkIdentity=$isAdvertisingWithNetworkIdentity")
+    return networkIdMatches && isAdvertisingWithNetworkIdentity
 }
+
 
 // TODO Look into the expected behaviour of a node after provisioning
 suspend fun MeshManagerApi.isProxyDevice(
@@ -67,8 +70,9 @@ suspend fun MeshManagerApi.isProxyDevice(
         Timber.d("isAdvertisedWithNodeIdentity: $isAdvertisedWithNodeIdentity")
         if (isAdvertisedWithNodeIdentity) {
             val nodeIdentityMatches = nodeIdentityMatches(meshNode, serviceData)
-            Timber.d("nodeIdentityMatches: $isAdvertisedWithNodeIdentity")
-            if (nodeIdentityMatches) {
+            val isAdvertisingWithNetworkIdentity = isAdvertisingWithNetworkIdentity(serviceData)
+            Timber.d("${scanRecord.deviceName} -> isAdvertisingWithNetworkIdentity=$isAdvertisingWithNetworkIdentity, nodeIdentityMatches=$nodeIdentityMatches")
+            if (nodeIdentityMatches || isAdvertisingWithNetworkIdentity) {
                 onFound()
                 return true
             }
