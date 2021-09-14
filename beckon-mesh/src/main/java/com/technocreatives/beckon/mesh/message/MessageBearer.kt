@@ -33,12 +33,13 @@ class MessageBearer(private val processor: MessageProcessor) {
 
     suspend fun sendVendorModelMessageAck(
         unicastAddress: Int,
-        message: VendorModelMessageAcked
+        message: VendorModelMessageAcked,
+        opCode: Int,
     ): Either<SendAckMessageError, VendorModelMessageStatus> =
         sendAckMessage(
             unicastAddress,
             message,
-            message.opCode
+            opCode,
         ).map { it as VendorModelMessageStatus }
 
     suspend fun sendVendorModelMessage(
