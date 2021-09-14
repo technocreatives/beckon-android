@@ -26,7 +26,7 @@ fun MeshMessage.info(): String {
 }
 
 fun ControlMessage.info(): String =
-    "src: $src, dst: $dst, sequenceNumber: ${sequenceNumber.toInt()}, pdu size: ${networkLayerPdu.size()}, segmented: $isSegmented, opcode: $opCode, parameters: $parameters"
+    "src: $src, dst: $dst, sequenceNumber: ${sequenceNumber.toInt()}, pdu size: ${networkLayerPdu.size()}, segmented: $isSegmented, opcode: $opCode, parameters:  ${parameters?.toHex()}"
 
 fun AccessMessage.info(): String =
-    "src: $src, dst: $dst, sequenceNumber: ${sequenceNumber.toInt()}, pdu size: ${networkLayerPdu.size()}, segmented: $isSegmented, opcode: $opCode, parameters: $parameters"
+    "src: $src, dst: $dst, sequenceNumber: ${sequenceNumber.toInt()}, pdu size: ${networkLayerPdu.size()}, segmented: $isSegmented, opcode: $opCode, parameters: ${parameters?.toHex()}, accessPdu: ${accessPdu?.toHex()}"
