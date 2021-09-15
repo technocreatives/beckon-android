@@ -148,7 +148,10 @@ class ConnectedMessageStatusCallbacks(
 
     private fun verifySequenceNumber(src: Int, sequenceNumber: Int): Boolean =
         if (sequenceNumber <= sequenceNumberMap[src] ?: 0) false
-        else sequenceNumberMap[src] == sequenceNumber
+        else {
+            sequenceNumberMap[src] = sequenceNumber
+            true
+        }
 
     override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
         super.onMeshMessageReceived(src, message)
