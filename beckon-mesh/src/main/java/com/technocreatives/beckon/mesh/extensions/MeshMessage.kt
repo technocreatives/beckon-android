@@ -6,12 +6,12 @@ import no.nordicsemi.android.mesh.transport.ConfigCompositionDataStatus
 import no.nordicsemi.android.mesh.transport.ControlMessage
 import no.nordicsemi.android.mesh.transport.MeshMessage
 
-fun MeshMessage.sequenceNumber(): String {
+fun MeshMessage.sequenceNumber(): Int? {
     val mess = message
     return (mess as? AccessMessage)?.let {
-        "${mess.sequenceNumber.toInt()}"
+        mess.sequenceNumber.toInt()
     } ?: run {
-        "${(mess as? ControlMessage)?.sequenceNumber?.toInt()}"
+        (mess as? ControlMessage)?.sequenceNumber?.toInt()
     }
 }
 
