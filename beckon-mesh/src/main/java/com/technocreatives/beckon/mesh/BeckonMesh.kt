@@ -103,6 +103,13 @@ class BeckonMesh(
         }
     }
 
+    fun deleteNode(nodeId: NodeId): Boolean {
+        val network = meshApi.meshNetwork()
+        return network.findNode(nodeId)?.let {
+            network.deleteNode(it)
+        } ?: false
+    }
+
     suspend fun updateState(state: MeshState) {
         Timber.d("updateState $state")
         currentState.update { state }

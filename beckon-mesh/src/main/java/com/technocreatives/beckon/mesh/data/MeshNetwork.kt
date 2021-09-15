@@ -1,6 +1,7 @@
 package com.technocreatives.beckon.mesh.data
 
 import android.annotation.SuppressLint
+import arrow.core.valid
 import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.NetworkKey
@@ -30,7 +31,7 @@ fun MeshNetwork.transform() = Mesh(
     provisioners.map { it.transform() },
     nodes.map { it.transform() },
     groups.map { it.transform() },
-    emptyList(), // TODO support scense
+    emptyList(), // TODO support scene
     emptyList() // TODO support NetworkExclusion
 )
 
@@ -39,6 +40,9 @@ fun MeshNetwork.findAppKey(index: AppKeyIndex) =
 
 fun MeshNetwork.findNetKey(index: NetKeyIndex) =
     netKeys.find { index.value == it.keyIndex }
+
+fun MeshNetwork.findNode(id: NodeId) =
+    nodes.find { it.uuid == id.uuid.toString() }
 
 fun MeshNetwork.appKeys() =
     appKeys.map { it.transform() }
