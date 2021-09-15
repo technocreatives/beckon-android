@@ -11,6 +11,7 @@ import com.technocreatives.beckon.mesh.data.AppKey
 import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.data.NetKey
 import com.technocreatives.beckon.mesh.data.UnicastAddress
+import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.message.MessageBearer
@@ -142,13 +143,24 @@ class ConnectedMessageStatusCallbacks(
     private val processor: MessageProcessor,
     private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
 ) : AbstractMessageStatusCallbacks(meshApi) {
+
+    private val sequenceNumberMap = mutableMapOf<Int, Int>()
+
+    private fun verifySequenceNumber(src: Int, sequenceNumber: Int): Boolean =
+        if (sequenceNumber <= sequenceNumberMap[src] ?: 0) false
+        else sequenceNumberMap[src] == sequenceNumber
+
     override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
         super.onMeshMessageReceived(src, message)
-        Timber.d("onMeshMessageReceived - src: $src, dst: ${message.dst}, meshMessage: ${message.sequenceNumber()}, opCode ${message.opCode}")
-        val filteredMessage = BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
-        runBlocking {
-            filteredSubject.emit(filteredMessage)
-            processor.messageReceived(message)
+        Timber.d("onMeshMessageReceived ${message.info()}")
+        if (verifySequenceNumber(src, message.sequenceNumber() ?: 0)) {
+            val filteredMessage = BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
+            runBlocking {
+                filteredSubject.emit(filteredMessage)
+                processor.messageReceived(message)
+            }
+        } else {
+            Timber.w("Duplicated sequence number ${message.info()}")
         }
     }
 
