@@ -110,14 +110,6 @@ data class Period(
     val resolution: Int,
 )
 
-sealed interface PublishableAddress
-
-fun PublishableAddress.value(): Int = when (this) {
-    is GroupAddress -> value
-    is VirtualAddress -> throw RuntimeException("Virtual address not supported yet")
-    Unassigned -> Unassigned.value
-    is UnicastAddress -> value
-}
 
 object Unassigned : PublishableAddress {
     const val value = MeshAddress.UNASSIGNED_ADDRESS
@@ -129,4 +121,4 @@ sealed interface SubscriptionAddress
 @Serializable
 @JvmInline
 value class VirtualAddress(@Serializable(with = UuidSerializer::class) val value: UUID) :
-    SubscriptionAddress, PublishableAddress
+    SubscriptionAddress

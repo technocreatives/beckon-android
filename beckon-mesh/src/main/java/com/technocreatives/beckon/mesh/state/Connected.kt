@@ -163,7 +163,7 @@ class ConnectedMessageStatusCallbacks(
                 processor.messageReceived(message)
             }
         } else {
-            Timber.w("Duplicated sequence number ${message.info()}")
+            Timber.w("onMeshMessageReceived Duplicated sequence number ${message.info()}")
         }
     }
 

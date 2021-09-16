@@ -135,9 +135,7 @@ class MessageBearer(private val processor: MessageProcessor) {
             ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
         ).map { it as ConfigAppKeyStatus }
 
-    suspend fun addProxyConfigAddressToFilter(
-        message: ProxyConfigAddAddressToFilter
-    ) =
+    suspend fun addProxyConfigAddressToFilter(message: ProxyConfigAddAddressToFilter) =
         sendAckMessage(
             MeshAddress.UNASSIGNED_ADDRESS,
             message,

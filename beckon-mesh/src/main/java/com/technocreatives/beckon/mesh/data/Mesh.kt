@@ -3,15 +3,9 @@ package com.technocreatives.beckon.mesh.data
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
+import kotlinx.serialization.*
 import kotlinx.serialization.json.Json
 import no.nordicsemi.android.mesh.models.SigModelParser
-import no.nordicsemi.android.mesh.transport.MeshModel
 import no.nordicsemi.android.mesh.utils.SecureUtils
 import java.time.Instant
 import java.util.*
@@ -35,7 +29,7 @@ data class Mesh(
     val nodes: List<Node> = emptyList(),
     val groups: List<Group> = emptyList(),
     val scenes: List<Scene> = emptyList(),
-    val networkExclusions: List<NetworkExclusion> = emptyList()
+    val networkExclusions: List<NetworkExclusion> = emptyList(),
 ) {
     companion object {
 

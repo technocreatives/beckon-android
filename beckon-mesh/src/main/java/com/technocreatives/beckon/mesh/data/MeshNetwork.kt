@@ -167,3 +167,6 @@ fun Int.toSubscriptionAddress(model: NrfMeshModel): SubscriptionAddress =
     } else {
         GroupAddress(this)
     }
+
+fun MeshNetwork.proxyFilter(): ProxyFilter? =
+    proxyFilter?.transform()

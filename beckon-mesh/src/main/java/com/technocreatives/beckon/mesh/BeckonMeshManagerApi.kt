@@ -13,23 +13,17 @@ import com.technocreatives.beckon.SplitPackage
 import com.technocreatives.beckon.extensions.changes
 import com.technocreatives.beckon.extensions.writeSplit
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
-import com.technocreatives.beckon.mesh.data.Mesh
-import com.technocreatives.beckon.mesh.data.NetKey
-import com.technocreatives.beckon.mesh.data.Node
-import com.technocreatives.beckon.mesh.data.transform
+import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.utils.clog
 import com.technocreatives.beckon.mesh.utils.tap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.serialization.json.Json
 import no.nordicsemi.android.mesh.MeshManagerApi
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
 import java.util.*
-import kotlin.coroutines.CoroutineContext
 
 class BeckonMeshManagerApi(
     context: Context,
@@ -51,6 +45,9 @@ class BeckonMeshManagerApi(
             val mesh = meshNetwork().transform()
             mesh.nodes.filter { it.netKeys.any { it.index == key.index } }
         }
+
+    fun proxyFilter(): ProxyFilter? =
+        meshNetwork().proxyFilter?.transform()
 
     suspend fun updateNetwork() {
         val mesh = meshNetwork().transform()

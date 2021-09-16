@@ -7,6 +7,8 @@ import com.technocreatives.beckon.mesh.state.Connected
 import no.nordicsemi.android.mesh.transport.ConfigModelPublicationGet
 import no.nordicsemi.android.mesh.transport.ConfigModelPublicationSet
 
+// TODO we have different message for virtual address:
+// ConfigModelPublicationVirtualAddressSet
 data class ConfigModelPublication(
     val publishAddress: PublishableAddress, // TODO Can also be unicast or virtual address?
     val elementAddress: UnicastAddress,
@@ -19,6 +21,7 @@ data class ConfigModelPublication(
     val retransmitIntervalSteps: Int,
     val modelId: ModelId
 )
+
 
 suspend fun Connected.setConfigModelPublication(
     nodeAddress: UnicastAddress,

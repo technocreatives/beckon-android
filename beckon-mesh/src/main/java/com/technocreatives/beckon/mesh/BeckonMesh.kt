@@ -82,6 +82,9 @@ class BeckonMesh(
     fun meshes(): StateFlow<Mesh> =
         meshApi.meshes()
 
+    fun proxyFilter(): ProxyFilter? =
+        meshApi.proxyFilter()
+
     data class ProxyFilterMessage(val address: GroupAddress, val message: MeshMessage)
 
     fun proxyFilterMessages(): Flow<ProxyFilterMessage> =
