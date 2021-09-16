@@ -19,6 +19,7 @@ import com.technocreatives.beckon.mesh.data.Node
 import com.technocreatives.beckon.mesh.data.transform
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
+import com.technocreatives.beckon.mesh.utils.clog
 import com.technocreatives.beckon.mesh.utils.tap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -33,10 +34,11 @@ import kotlin.coroutines.CoroutineContext
 class BeckonMeshManagerApi(
     context: Context,
     private val repository: MeshRepository,
-) : MeshManagerApi(context), CoroutineScope {
+) : MeshManagerApi(context) {
 
-    private val job = Job()
-    override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
+    //    private val job = Job()
+    private var handleNotificationJob: Job? = null
+//    override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
     private val meshSubject by lazy {
         MutableStateFlow(meshNetwork().transform())
@@ -150,31 +152,44 @@ class BeckonMeshManagerApi(
             Timber.w("sendPdu pdu size: ${pdu.size}")
             val splitPackage = writeSplit(pdu, characteristic).bind()
             Timber.d("onDataSend: ${splitPackage.data.value?.size}")
-            handleWriteCallbacks(splitPackage)
+            coroutineScope {
+                handleWriteCallbacks(splitPackage)
+            }
         }
 
-    private fun handleWriteCallbacks(splitPackage: SplitPackage) =
+    private fun CoroutineScope.handleWriteCallbacks(splitPackage: SplitPackage) =
         launch {
             handleWriteCallbacks(splitPackage.mtu, splitPackage.data.value!!)
         }
 
-    fun BeckonDevice.handleNotifications(characteristic: Characteristic) =
-        launch {
-            changes(characteristic.uuid, ::identity)
+    fun CoroutineScope.handleNotifications(
+        beckonDevice: BeckonDevice,
+        characteristic: Characteristic
+    ) {
+        handleNotificationJob?.cancel()
+        handleNotificationJob = launch(Dispatchers.IO) {
+            Timber.d("BeckonDevice.handleNotification launch")
+            beckonDevice.changes(characteristic.uuid, ::identity)
                 .onEach {
                     Timber.w("Device changes $it")
                 }
                 .collect {
-                    Timber.d("OnDataReceived: ${metadata().macAddress} ${it.data.value?.size}")
+                    Timber.d("OnDataReceived: ${beckonDevice.metadata().macAddress} ${it.data.value?.size}")
                     handleNotifications(
-                        mtu().maximumPacketSize(),
+                        beckonDevice.mtu().maximumPacketSize(),
                         it.data.value!!
                     )
                 }
         }
+    }
 
     fun close() {
-        job.cancel()
+        handleNotificationJob?.let {
+            if (it.isCompleted) {
+                it.cancel()
+            }
+        }
+        handleNotificationJob = null
     }
 }
 

@@ -147,7 +147,7 @@ class ConnectedMessageStatusCallbacks(
     private val sequenceNumberMap = mutableMapOf<Int, Int>()
 
     private fun verifySequenceNumber(src: Int, sequenceNumber: Int): Boolean =
-        if (sequenceNumber <= sequenceNumberMap[src] ?: 0) false
+        if (sequenceNumber <= sequenceNumberMap[src] ?: -1) false
         else {
             sequenceNumberMap[src] = sequenceNumber
             true

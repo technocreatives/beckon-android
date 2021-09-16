@@ -99,7 +99,10 @@ internal class BeckonBleManager(
         return connect(request)
     }
 
-    suspend fun applyActions(actions: List<BleAction>, detail: DeviceDetail): Either<BeckonError, Unit> {
+    suspend fun applyActions(
+        actions: List<BleAction>,
+        detail: DeviceDetail
+    ): Either<BeckonError, Unit> {
         return actions.parTraverseEither { applyAction(it, detail) }.map { }
     }
 
@@ -173,6 +176,7 @@ internal class BeckonBleManager(
             read(list).bind()
         }
     }
+
     suspend fun read(
         reads: Characteristic,
         detail: DeviceDetail
@@ -267,6 +271,7 @@ internal class BeckonBleManager(
                     )
                 }
             }
+
             private val MTU_SIZE_DEFAULT = 23
 
             override fun onDeviceDisconnected() {
@@ -292,7 +297,7 @@ internal class BeckonBleManager(
             }
 
             private fun allCharacteristics(service: BluetoothGattService): List<FoundCharacteristic> {
-                Timber.w("All characteristics of ${service.uuid}: ${service.characteristics.map {"${it.uuid}-${it.properties}"}}")
+                Timber.w("All characteristics of ${service.uuid}: ${service.characteristics.map { "${it.uuid}-${it.properties}" }}")
                 return service.characteristics.flatMap {
                     allCharacteristics(service, it)
                 }
@@ -358,7 +363,8 @@ internal class BeckonBleManager(
 
             private fun Int.isWriteProperty(): Boolean {
                 val write = this and BluetoothGattCharacteristic.PROPERTY_WRITE != 0
-                val writeNoResponse = this and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
+                val writeNoResponse =
+                    this and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0
                 val writePermission = this and BluetoothGattCharacteristic.PERMISSION_WRITE != 0
 //                Timber.w("write: $write || writeNoResponse: $writeNoResponse || writePermission: $writePermission")
                 return (write || writeNoResponse || writePermission)
@@ -401,7 +407,11 @@ internal class BeckonBleManager(
         }
     }
 
-    suspend fun writeSplit(pdu: ByteArray, uuid: UUID, gatt: BluetoothGattCharacteristic): Either<WriteDataException, SplitPackage> {
+    suspend fun writeSplit(
+        pdu: ByteArray,
+        uuid: UUID,
+        gatt: BluetoothGattCharacteristic
+    ): Either<WriteDataException, SplitPackage> {
         return suspendCoroutine { cont ->
             // This callback will be called each time the data were sent.
             val callback = DataSentCallback { device, data ->

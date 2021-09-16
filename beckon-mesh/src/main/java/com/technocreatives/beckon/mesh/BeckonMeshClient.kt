@@ -27,6 +27,7 @@ class BeckonMeshClient(
         val result = currentMesh?.let {
             it.disconnect().mapLeft { BleDisconnectError(it.throwable) }.map { }
         } ?: Unit.right()
+        currentMesh?.unregister()
         currentMesh = null
         return result
     }

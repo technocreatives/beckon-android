@@ -171,12 +171,15 @@ class BeckonMesh(
             .mapZ { it.sortedBy { it.macAddress } }
     }
 
-    suspend fun disconnect(): Either<BleDisconnectError, Loaded> =
-        when (val state = currentState.get()) {
+    suspend fun disconnect(): Either<BleDisconnectError, Loaded> {
+        meshApi.close()
+        return when (
+            val state = currentState.get()) {
             is Loaded -> state.right()
             is Connected -> state.disconnect()
             is Provisioning -> state.cancel()
         }
+    }
 
     internal fun <T> execute(f: suspend () -> T) =
         launch { f() }
@@ -236,7 +239,7 @@ class BeckonMesh(
                 .fold({ Timber.w("RequestMtu failed $it") }, { Timber.d("RequestMtu success $it") })
             beckonDevice.subscribe(characteristic).bind()
             with(meshApi) {
-                beckonDevice.handleNotifications(characteristic)
+                handleNotifications(beckonDevice, characteristic)
             }
             beckonDevice
         }

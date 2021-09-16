@@ -8,6 +8,7 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
+import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
@@ -123,6 +124,9 @@ class Provisioning(
             override fun getMtu(): Int {
                 return beckonDevice.getMaximumPacketSize()
             }
+        })
+        meshApi.setMeshStatusCallbacks(object: AbstractMessageStatusCallbacks(meshApi){
+
         })
 
         disconnectJob = beckonMesh.execute {
