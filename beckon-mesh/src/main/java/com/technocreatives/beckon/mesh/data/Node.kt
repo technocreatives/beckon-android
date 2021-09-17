@@ -3,6 +3,8 @@ package com.technocreatives.beckon.mesh.data
 import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import no.nordicsemi.android.mesh.utils.NetworkTransmitSettings
+import no.nordicsemi.android.mesh.utils.RelaySettings
 import java.util.*
 
 @Serializable
@@ -82,14 +84,54 @@ data class Features(
     }
 }
 
-@Serializable
+@Serializable(with = NetworkTransmitSerializer::class)
 data class NetworkTransmit(
     val count: Int,
     val interval: Int
-)
+) {
+    fun toData() = TransmitData(count, interval)
+}
 
-@Serializable
+@Serializable(with = RelayRetransmitSerializer::class)
 data class RelayRetransmit(
     val count: Int,
     val interval: Int
-)
+) {
+    fun toData() = TransmitData(count, interval)
+}
+
+@Serializable
+data class TransmitData(
+    val count: Int,
+    val interval: Int
+) {
+    fun toNetworkTransmit(): NetworkTransmit? {
+        return if (count != 0 && interval != 0) {
+            // Some versions of nRF Mesh lib for Android were exporting interval
+            // as number of steps, not the interval, therefore we can try to fix that.
+            return if (interval % 10 != 0 && interval <= 32) {
+                // Interval that was exported as intervalSteps are imported as it is.
+                NetworkTransmit(count, interval)
+            } else if (interval % 10 == 0) {
+                // Interval that was exported as intervalSteps are decoded to intervalSteps.
+                val steps = NetworkTransmitSettings.decodeNetworkTransmissionInterval(interval)
+                NetworkTransmit(count, steps)
+            } else null
+        } else null
+    }
+
+    fun toRelayRetransmit(): RelayRetransmit? {
+        return if (count != 0 && interval != 0) {
+            // Some versions of nRF Mesh lib for Android were exporting interval
+            // as number of steps, not the interval, therefore we can try to fix that.
+            if (interval % 10 != 0 && interval <= 32) {
+                // Interval that was exported as intervalSteps are imported as it is.
+                RelayRetransmit(count, interval)
+            } else if (interval % 10 == 0) {
+                // Interval that was exported as intervalSteps are imported as it is.
+                val steps = RelaySettings.decodeRelayRetransmitInterval(interval)
+                RelayRetransmit(count, steps)
+            } else null
+        } else null
+    }
+}
