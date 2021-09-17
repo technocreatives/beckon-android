@@ -29,9 +29,9 @@ data class VendorModel(
 ) : Model {
 
     private val buffer by lazy {
-        val b = ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN)
-        b.putInt(modelId.value)
-        b
+        ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).apply {
+            putInt(modelId.value)
+        }
     }
 
     val companyIdentifier by lazy { buffer.getShort(0) }
@@ -46,7 +46,7 @@ data class SigModel(
     override val subscribe: List<SubscriptionAddress> = emptyList(),
     override val publish: Publish? = null
 ) : Model {
-    val name get() = SigModelParser.getSigModel(modelId.value).modelName
+    val name: String by lazy { SigModelParser.getSigModel(modelId.value).modelName }
 }
 
 @Serializable
@@ -56,8 +56,9 @@ data class ModelData(
     val subscribe: List<SubscriptionAddress> = emptyList(),
     val publish: Publish? = null
 ) {
+    private fun isVendorModel() = modelId.value < Short.MIN_VALUE || modelId.value > Short.MAX_VALUE
 
-    fun toModel() = if (modelId.value < Short.MIN_VALUE || modelId.value > Short.MAX_VALUE) {
+    fun toModel() = if (isVendorModel()) {
         toVendorModel()
     } else {
         toSigModel()
@@ -111,7 +112,7 @@ data class Period(
 )
 
 
-object Unassigned : PublishableAddress {
+object UnassignedAddress {
     const val value = MeshAddress.UNASSIGNED_ADDRESS
 }
 

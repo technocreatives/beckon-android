@@ -3,7 +3,7 @@ package com.technocreatives.beckon.mesh.processor
 import arrow.core.*
 import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.mesh.*
-import com.technocreatives.beckon.mesh.data.Unassigned
+import com.technocreatives.beckon.mesh.data.UnassignedAddress
 import com.technocreatives.beckon.mesh.extensions.info
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -29,7 +29,7 @@ data class AckEmitter(
     }
 
     fun isMatching(dst: Int, opCode: Int) =
-        (this.dst == dst || this.dst == Unassigned.value) && this.opCode == opCode
+        (this.dst == dst || this.dst == UnassignedAddress.value) && this.opCode == opCode
 }
 
 internal class MessageSender(

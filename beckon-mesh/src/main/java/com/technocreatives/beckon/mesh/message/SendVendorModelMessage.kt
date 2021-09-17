@@ -15,16 +15,10 @@ data class SendVendorModelMessage(
 )
 
 suspend fun Connected.sendVendorModelMessage(
-    nodeAddress: UnicastAddress,
+    nodeAddress: PublishableAddress,
     message: SendVendorModelMessage
 ): Either<SendAckMessageError, Unit> =
-    sendVendorModelMessage(nodeAddress.value, message)
-
-suspend fun Connected.sendVendorModelMessage(
-    nodeAddress: GroupAddress,
-    message: SendVendorModelMessage
-): Either<SendAckMessageError, Unit> =
-    sendVendorModelMessage(nodeAddress.value, message)
+    sendVendorModelMessage(nodeAddress.value(), message)
 
 private suspend fun Connected.sendVendorModelMessage(
     address: Int,

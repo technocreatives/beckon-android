@@ -6,7 +6,6 @@ sealed interface PublishableAddress
 
 fun PublishableAddress.value(): Int = when (this) {
     is GroupAddress -> value
-    Unassigned -> Unassigned.value
     is UnicastAddress -> value
 }
 
