@@ -4,6 +4,8 @@ import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.state.Connected
+import no.nordicsemi.android.mesh.transport.VendorModelMessageAcked
+import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus
 import no.nordicsemi.android.mesh.transport.VendorModelMessageUnacked
 
 data class SendVendorModelMessage(
@@ -34,4 +36,28 @@ private suspend fun Connected.sendVendorModelMessage(
     )
 
     return bearer.sendVendorModelMessage(address, meshMessage)
+}
+
+suspend fun Connected.sendVendorModelMessageAck(
+    nodeAddress: PublishableAddress,
+    message: SendVendorModelMessage,
+    opCode: Int
+): Either<SendAckMessageError, VendorModelMessageStatus> =
+    sendVendorModelMessageAck(nodeAddress.value(), message, opCode)
+
+private suspend fun Connected.sendVendorModelMessageAck(
+    address: Int,
+    message: SendVendorModelMessage,
+    opCode: Int
+): Either<SendAckMessageError, VendorModelMessageStatus> {
+
+    val meshMessage = VendorModelMessageAcked(
+        meshApi.meshNetwork().findAppKey(message.appKeyIndex)!!,
+        message.modelId.value,
+        message.companyIdentifier,
+        message.opCode,
+        message.parameters!!
+    )
+
+    return bearer.sendVendorModelMessageAck(address, meshMessage, opCode)
 }
