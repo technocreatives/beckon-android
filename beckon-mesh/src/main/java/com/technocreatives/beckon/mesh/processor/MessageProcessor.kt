@@ -70,13 +70,13 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
     internal suspend inline fun sendAckMessage(
         dst: Int,
         mesh: MeshMessage,
-        opCode: Int,
+        responseOpCode: Int,
     ): Either<SendAckMessageError, MeshMessage> {
         val emitter = CompletableDeferred<Either<SendAckMessageError, MeshMessage>>()
-        val ackEmitter = AckEmitter(ackId, dst, opCode, mesh, emitter)
+        val ackEmitter = AckEmitter(ackId, dst, responseOpCode, mesh, emitter)
         ackId += 1
         incomingAckMessageChannel.send(ackEmitter)
-        return sendMessage(ackEmitter.ackId, dst, mesh, opCode).flatMap { emitter.await() }
+        return sendMessage(ackEmitter.ackId, dst, mesh, responseOpCode).flatMap { emitter.await() }
     }
 
     suspend fun sendMessage(dst: Int, mesh: MeshMessage): Either<SendMessageError, Unit> {

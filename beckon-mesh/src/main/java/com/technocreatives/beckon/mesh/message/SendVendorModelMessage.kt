@@ -4,6 +4,7 @@ import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.state.Connected
+import com.technocreatives.beckon.mesh.toInt
 import no.nordicsemi.android.mesh.transport.VendorModelMessageAcked
 import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus
 import no.nordicsemi.android.mesh.transport.VendorModelMessageUnacked
@@ -41,14 +42,14 @@ private suspend fun Connected.sendVendorModelMessage(
 suspend fun Connected.sendVendorModelMessageAck(
     nodeAddress: PublishableAddress,
     message: SendVendorModelMessage,
-    opCode: Int
+    responseOpCode: Int
 ): Either<SendAckMessageError, VendorModelMessageStatus> =
-    sendVendorModelMessageAck(nodeAddress.value(), message, opCode)
+    sendVendorModelMessageAck(nodeAddress.value(), message, responseOpCode)
 
 private suspend fun Connected.sendVendorModelMessageAck(
     address: Int,
     message: SendVendorModelMessage,
-    opCode: Int
+    responseOpCode: Int
 ): Either<SendAckMessageError, VendorModelMessageStatus> {
 
     val meshMessage = VendorModelMessageAcked(
@@ -59,5 +60,12 @@ private suspend fun Connected.sendVendorModelMessageAck(
         message.parameters!!
     )
 
-    return bearer.sendVendorModelMessageAck(address, meshMessage, opCode)
+    return bearer.sendVendorModelMessageAck(address, meshMessage, fullOpCode(message.companyIdentifier, responseOpCode))
+}
+
+fun fullOpCode(companyIdentifier: Int, opCode: Int): Int {
+    val byte2 = companyIdentifier.toByte()
+    val byte1 = (companyIdentifier shr 8).toByte()
+    val byte0 = opCode.toByte()
+    return listOf(byte0, byte2, byte1).toByteArray().toInt()
 }
