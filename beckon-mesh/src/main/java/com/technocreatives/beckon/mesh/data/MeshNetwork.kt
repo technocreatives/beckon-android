@@ -1,7 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
 import android.annotation.SuppressLint
-import arrow.core.valid
 import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.NetworkKey
@@ -121,9 +120,9 @@ fun ProvisionedMeshNode.transform() = Node(
     UnicastAddress(unicastAddress),
     security,
     isConfigured,
-    cid = companyIdentifier?.let { CompositionDataParser.formatCompanyIdentifier(it, false) },
-    pid = productIdentifier?.let { CompositionDataParser.formatProductIdentifier(it, false) },
-    vid = versionIdentifier?.let { CompositionDataParser.formatVersionIdentifier(it, false) },
+    companyIdentifier = companyIdentifier,
+    productIdentifier = productIdentifier,
+    versionIdentifier = versionIdentifier,
     crpl = crpl,
     nodeFeatures?.transform(),
     ttl,
@@ -132,8 +131,7 @@ fun ProvisionedMeshNode.transform() = Node(
     addedNetKeys.map { it.toNetKey() },
     addedAppKeys.map { it.toAppKey() },
     elements.map { it.value.transform(ElementIndex(it.key)) },
-    sequenceNumber,
-    versionIdentifier
+    sequenceNumber
 )
 
 fun NetworkTransmitSettings.transform() = NetworkTransmit(

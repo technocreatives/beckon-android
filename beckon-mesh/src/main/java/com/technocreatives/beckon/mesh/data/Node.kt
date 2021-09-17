@@ -1,9 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.data.serializer.HexToIntSerializer
-import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
-import com.technocreatives.beckon.mesh.data.serializer.NodeSecuritySerializer
-import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
+import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.*
@@ -20,9 +17,15 @@ data class Node(
     val security: Int,
     @SerialName("configComplete")
     val isConfigured: Boolean,
-    val cid: String? = null,
-    val pid: String? = null,
-    val vid: String? = null,
+    @SerialName("cid")
+    @Serializable(with = VersionCompositionToIntSerializer::class)
+    val companyIdentifier: Int? = null,
+    @SerialName("pid")
+    @Serializable(with = VersionCompositionToIntSerializer::class)
+    val productIdentifier: Int? = null,
+    @SerialName("vid")
+    @Serializable(with = VersionCompositionToIntSerializer::class)
+    val versionIdentifier: Int? = null,
     val crpl: Int? = null,
     val features: Features? = null,
     val defaultTTL: Int,
@@ -33,7 +36,6 @@ data class Node(
     val appKeys: List<NodeAppKey> = emptyList(),
     val elements: List<Element> = emptyList(),
     @Transient val sequenceNumber: Int = 0,
-    @Transient val versionIdentifier: Int? = null,
 )
 
 @Serializable
@@ -48,7 +50,7 @@ value class NodeId(
 value class UnicastAddress(
     @Serializable(with = HexToIntSerializer::class)
     val value: Int
-): PublishableAddress
+) : PublishableAddress
 
 @Serializable
 data class NodeNetKey(
