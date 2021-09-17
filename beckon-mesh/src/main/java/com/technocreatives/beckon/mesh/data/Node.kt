@@ -105,6 +105,7 @@ data class TransmitData(
     val count: Int,
     val interval: Int
 ) {
+    // from Nrf Mesh library NodeDeserializer
     fun toNetworkTransmit(): NetworkTransmit? {
         return if (count != 0 && interval != 0) {
             // Some versions of nRF Mesh lib for Android were exporting interval
@@ -120,6 +121,7 @@ data class TransmitData(
         } else null
     }
 
+    // from Nrf Mesh library NodeDeserializer
     fun toRelayRetransmit(): RelayRetransmit? {
         return if (count != 0 && interval != 0) {
             // Some versions of nRF Mesh lib for Android were exporting interval
