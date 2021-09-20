@@ -65,7 +65,7 @@ internal class BeckonClientImpl(
         return beckonStore.currentState().connectedDevices
             .filter { it.metadata().macAddress !in currentSavedDevices }
             .map { disconnect(it) }
-            .parTraverseEither(::identity)
+            .parTraverseEither { it }
             .map { }
     }
 

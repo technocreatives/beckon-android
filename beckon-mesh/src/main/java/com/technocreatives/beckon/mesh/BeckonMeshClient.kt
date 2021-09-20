@@ -2,8 +2,10 @@ package com.technocreatives.beckon.mesh
 
 import android.content.Context
 import androidx.core.content.edit
-import arrow.core.*
+import arrow.core.Either
 import arrow.core.computations.either
+import arrow.core.right
+import arrow.core.rightIfNotNull
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.mesh.data.Mesh
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +36,10 @@ class BeckonMeshClient(
 
     suspend fun loadCurrentMesh(): Either<MeshLoadError, BeckonMesh> = either {
         disconnect().bind()
-        val mesh = repository.currentMesh().rightIfNotNull { NoCurrentMeshFound }.bind()
+        val meshOrNull = repository.currentMesh()
+            .mapLeft { DatabaseError(it) }
+            .bind()
+        val mesh = meshOrNull.rightIfNotNull { NoCurrentMeshFound }.bind()
         meshApi.load(mesh.id).bind()
         BeckonMesh(context, beckonClient, meshApi)
     }
@@ -47,8 +52,16 @@ class BeckonMeshClient(
 
     suspend fun import(id: UUID): Either<MeshLoadError, BeckonMesh> = either {
         disconnect().bind()
-        val mesh = repository.find(id).rightIfNotNull { MeshIdNotFound(id) }.bind()
+        val mesh = findMeshById(id).bind()
         import(mesh).bind()
+    }
+
+    suspend fun findMeshById(id: UUID): Either<MeshLoadError, MeshData> = either {
+        disconnect().bind()
+        val meshOrNull = repository.find(id)
+            .mapLeft { DatabaseError(it) }
+            .bind()
+        meshOrNull.rightIfNotNull { MeshIdNotFound(id) }.bind()
     }
 
     /**
@@ -58,7 +71,7 @@ class BeckonMeshClient(
         if (id == currentMeshID()) {
             load().bind()
         } else {
-            val mesh = repository.find(id).rightIfNotNull { MeshIdNotFound(id) }.bind()
+            val mesh = findMeshById(id).bind()
             import(mesh).bind().also {
                 setCurrentMeshId(id)
             }

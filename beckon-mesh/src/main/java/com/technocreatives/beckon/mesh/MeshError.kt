@@ -18,6 +18,7 @@ data class CreateNetworkFailedError(val error: String) : MeshLoadError
 data class NetworkImportedFailedError(val id: UUID, val error: String) : MeshLoadError
 data class MeshIdNotFound(val id: UUID) : MeshLoadError
 object NoCurrentMeshFound : MeshLoadError
+data class DatabaseError(val throwable: Throwable) : MeshLoadError
 
 sealed interface ProvisioningError : MeshError
 
