@@ -7,10 +7,7 @@ import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
-import com.technocreatives.beckon.mesh.data.AppKey
-import com.technocreatives.beckon.mesh.data.GroupAddress
-import com.technocreatives.beckon.mesh.data.NetKey
-import com.technocreatives.beckon.mesh.data.UnicastAddress
+import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
@@ -144,6 +141,7 @@ class ConnectedMessageStatusCallbacks(
     private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
 ) : AbstractMessageStatusCallbacks(meshApi) {
 
+    private val provisionerAddress = meshApi.meshNetwork().provisionerAddress!!
     private val sequenceNumberMap = mutableMapOf<Int, Int>()
 
     private fun verifySequenceNumber(src: Int, sequenceNumber: Int): Boolean =
@@ -160,7 +158,12 @@ class ConnectedMessageStatusCallbacks(
             val filteredMessage = BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
             runBlocking {
                 filteredSubject.emit(filteredMessage)
-                processor.messageReceived(message)
+                val dst = filteredMessage.message.dst
+                if(dst == provisionerAddress || dst == UnassignedAddress.value) {
+                    processor.messageReceived(message)
+                } else {
+                    Timber.w("onMeshMessageReceived, filtered message from processor with dst: $dst")
+                }
             }
         } else {
             Timber.w("onMeshMessageReceived Duplicated sequence number ${message.info()}")
