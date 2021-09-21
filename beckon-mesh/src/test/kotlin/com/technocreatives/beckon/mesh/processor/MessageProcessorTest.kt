@@ -12,7 +12,7 @@ import no.nordicsemi.android.mesh.transport.MeshMessage
 
 class MessageProcessorTest : StringSpec({
     val pduSender = mockk<PduSender>()
-    val timeout = 30000L
+    val timeout = 1000L
     val processor = MessageProcessor(pduSender, timeout)
 
     fun createMockMeshMessage(): MeshMessage {
@@ -67,6 +67,29 @@ class MessageProcessorTest : StringSpec({
         val result = processor.sendAckMessage(dst, message, 73)
         println("processor sendMessage result: $result")
         result.isRight() shouldBe true
+        inputJob.cancel()
+        processorJob.cancel()
+    }
+
+    "simple ack message timeout" {
+        val message = createMockMeshMessage()
+        val byteArray = ByteArray(0)
+        val dst = 2
+        every { pduSender.createPdu(dst, message) } returns Unit.right()
+        coEvery { pduSender.sendPdu(Pdu(byteArray)) } returns Unit.right()
+        val processorJob = launch {
+            with(processor) {
+                execute()
+            }
+        }
+        val inputJob = launch {
+            delay(10)
+            processor.sendPdu(Pdu(byteArray))
+            processor.messageProcessed(message)
+        }
+        val result = processor.sendAckMessage(dst, message, 73)
+        println("processor sendMessage result: $result")
+        result.isLeft() shouldBe true
         inputJob.cancel()
         processorJob.cancel()
     }
