@@ -11,12 +11,18 @@ import kotlinx.coroutines.selects.select
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
 
-private data class PduSenderResult(val messageId: Long, val result: Either<BeckonActionError, Unit>) {
+private data class PduSenderResult(
+    val messageId: Long,
+    val result: Either<BeckonActionError, Unit>
+) {
     override fun toString(): String {
         return "PduSenderResult(messageId=$messageId, result=${result.isRight()})"
     }
 }
 
+/**
+ * All data about an Ack message
+ */
 data class AckEmitter(
     val ackId: Long,
     val dst: Int,
@@ -29,7 +35,7 @@ data class AckEmitter(
     }
 
     fun isMatching(dst: Int, opCode: Int) =
-        (this.dst == dst || this.dst == UnassignedAddress.value) && this.opCode == opCode
+        this.opCode == opCode && (this.dst == dst || this.dst == UnassignedAddress.value)
 }
 
 internal class MessageSender(
@@ -64,6 +70,18 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
     private val pduChannel = Channel<Pdu>()
     private val processedMessageChannel = Channel<MeshMessage>()
     private val onAckMessageFinishChannel = Channel<Long>()
+
+    fun close() {
+        incomingMessageChannel.close()
+        timeoutAckMessageChannel.close()
+        receivedAckMessageChannel.close()
+        onMessageBeingSentAckMessageChannel.close()
+        incomingMessageChannel.close()
+        pduSenderResultChannel.close()
+        pduChannel.close()
+        processedMessageChannel.close()
+        onAckMessageFinishChannel.close()
+    }
 
     private var ackId: Long = 0
 
@@ -276,11 +294,12 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
         messageId: Long,
     ): BeckonMessage {
         Timber.d("processMessage $messageId $message")
-        val processor = MessageSender(
+        val sender = MessageSender(
             message.dst,
             message.message,
             pduSender,
         )
-        return BeckonMessage(messageId, message, processor)
+        return BeckonMessage(messageId, message, sender)
     }
+
 }

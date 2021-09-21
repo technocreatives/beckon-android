@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
+import com.technocreatives.beckon.mesh.stringFrom
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.decodeFromString

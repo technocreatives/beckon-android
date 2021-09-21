@@ -19,7 +19,7 @@ internal data class BeckonMessage(
     }
 
     override fun toString(): String {
-        return "BeckonMessage: isAck=${message.isAck()} $id ${message.message.info()}"
+        return "BeckonMessage: isAck=${message.isAck()}, id=$id info=${message.message.info()}"
     }
 }
 

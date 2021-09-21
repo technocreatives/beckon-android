@@ -12,11 +12,12 @@ import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
 import com.technocreatives.beckon.mesh.message.MessageBearer
-import com.technocreatives.beckon.mesh.processor.*
+import com.technocreatives.beckon.mesh.processor.MessageProcessor
+import com.technocreatives.beckon.mesh.processor.Pdu
+import com.technocreatives.beckon.mesh.processor.PduSender
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.descriptors.PrimitiveKind
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.ConfigAppKeyAdd
 import no.nordicsemi.android.mesh.transport.ConfigNetworkTransmitSet
@@ -27,7 +28,7 @@ import timber.log.Timber
 class Connected(
     beckonMesh: BeckonMesh,
     meshApi: BeckonMeshManagerApi,
-    private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
+    filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
     private val beckonDevice: BeckonDevice,
 ) : MeshState(beckonMesh, meshApi) {
 
@@ -82,6 +83,10 @@ class Connected(
         val loaded = Loaded(beckonMesh, meshApi)
         beckonMesh.updateState(loaded)
         loaded
+    }
+
+    fun close() {
+        processor.close()
     }
 }
 
