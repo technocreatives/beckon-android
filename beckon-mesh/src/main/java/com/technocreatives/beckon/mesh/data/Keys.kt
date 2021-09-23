@@ -1,10 +1,12 @@
 package com.technocreatives.beckon.mesh.data
 
+import android.annotation.SuppressLint
 import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
 import com.technocreatives.beckon.mesh.data.serializer.NetKeySecuritySerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.NetworkKey
 import java.time.Instant
 
@@ -28,7 +30,10 @@ data class NetKey(
     val isSecurity: Boolean = false,
     @Serializable(with = OffsetDateTimeSerializer::class)
     val timestamp: Long = Instant.now().toEpochMilli(),
-)
+) {
+    @SuppressLint("RestrictedApi")
+    fun transform(): NetworkKey = NetworkKey(index.value, key.value)
+}
 
 @Serializable
 data class AppKey(
@@ -38,7 +43,10 @@ data class AppKey(
 
     @Serializable(with = KeySerializer::class)
     val key: Key,
-)
+){
+    @SuppressLint("RestrictedApi")
+    fun transform(): ApplicationKey = ApplicationKey(index.value, key.value)
+}
 
 @Serializable
 data class Key(val value: ByteArray) {

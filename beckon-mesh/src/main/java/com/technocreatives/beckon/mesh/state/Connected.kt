@@ -11,7 +11,7 @@ import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.message.MessageBearer
+import com.technocreatives.beckon.mesh.message.*
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
@@ -32,7 +32,7 @@ class Connected(
     private val beckonDevice: BeckonDevice,
 ) : MeshState(beckonMesh, meshApi) {
 
-    private val processor by lazy {
+    private val processor =
         MessageProcessor(object : PduSender {
             override fun createPdu(
                 dst: Int,
@@ -44,13 +44,16 @@ class Connected(
                     beckonDevice.sendPdu(pdu.data, MeshConstants.proxyDataInCharacteristic)
                 }
         }, 30000) // todo timeout
-    }
 
-    internal val bearer by lazy { MessageBearer(processor) }
+    internal val bearer = MessageBearer(processor)
 
     private var disconnectJob: Job? = null
 
     init {
+        with(processor) {
+            beckonMesh.execute()
+        }
+
         meshApi.setMeshManagerCallbacks(
             ConnectedMeshManagerCallbacks(
                 beckonDevice,
@@ -65,9 +68,7 @@ class Connected(
                 filteredSubject
             )
         )
-        with(processor) {
-            beckonMesh.execute()
-        }
+
         disconnectJob = beckonMesh.execute {
             beckonDevice.onDisconnect {
                 beckonMesh.updateState(Loaded(beckonMesh, meshApi))
@@ -79,15 +80,16 @@ class Connected(
 
     suspend fun disconnect(): Either<BleDisconnectError, Loaded> = either {
         disconnectJob?.cancel()
+//        processor.close()
         beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
         val loaded = Loaded(beckonMesh, meshApi)
         beckonMesh.updateState(loaded)
         loaded
     }
 
-    fun close() {
-        processor.close()
-    }
+//    fun close() {
+//        processor.close()
+//    }
 }
 
 
@@ -97,22 +99,29 @@ suspend fun Connected.setUpAppKey(
     appKey: AppKey,
 ): Either<Any, Unit> = either {
 
-    val compositionStatus = bearer.getConfigCompositionData(nodeAddress).bind()
+//    val compositionStatus = bearer.getConfigCompositionData(nodeAddress).bind()
+    val getCompositionData = GetCompositionData(nodeAddress.value)
+    val compositionStatus = bearer.sendBeckonMessage(getCompositionData).bind()
     Timber.d("getConfigCompositionData Status $compositionStatus")
 
-    val defaultTtlStatus = bearer.getConfigDefaultTtl(nodeAddress).bind()
+//    val defaultTtlStatus = bearer.getConfigDefaultTtl(nodeAddress).bind()
+    val getDefaultTtl = GetDefaultTtl(nodeAddress.value)
+    val defaultTtlStatus = bearer.sendBeckonMessage(getDefaultTtl).bind()
     Timber.d("getConfigDefaultTtl Status $defaultTtlStatus")
 
-    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
-
-    val networkTransmit = bearer.setConfigNetworkTransmit(nodeAddress, networkTransmitSet).bind()
+//    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
+//    val networkTransmit = bearer.setConfigNetworkTransmit(nodeAddress, networkTransmitSet).bind()
+    val networkTransmitSet = SetConfigNetworkTransmit(nodeAddress.value, 2, 1)
+    val networkTransmit = bearer.sendBeckonMessage(networkTransmitSet).bind()
     Timber.d("setConfigNetworkTransmit Status $networkTransmit")
 
-    val networkKey = beckonMesh.netKey(netKey.index)!!
-    val applicationKey = beckonMesh.appKey(appKey.index)!!
-    val configAppKeyAdd = ConfigAppKeyAdd(networkKey, applicationKey)
+//    val networkKey = beckonMesh.netKey(netKey.index)!!
+//    val applicationKey = beckonMesh.appKey(appKey.index)!!
+//    val configAppKeyAdd = ConfigAppKeyAdd(networkKey, applicationKey)
+//    val appKeyAddStatus = bearer.addConfigAppKey(nodeAddress, configAppKeyAdd).bind()
+    val configAppKeyAdd = AddConfigAppKey(nodeAddress.value, netKey, appKey)
 
-    val appKeyAddStatus = bearer.addConfigAppKey(nodeAddress, configAppKeyAdd).bind()
+    val appKeyAddStatus = bearer.sendBeckonMessage(configAppKeyAdd).bind()
     Timber.d("addConfigAppKey Status $appKeyAddStatus")
 }
 
@@ -164,7 +173,7 @@ class ConnectedMessageStatusCallbacks(
             runBlocking {
                 filteredSubject.emit(filteredMessage)
                 val dst = filteredMessage.message.dst
-                if(dst == provisionerAddress || dst == UnassignedAddress.value) {
+                if (dst == provisionerAddress || dst == UnassignedAddress.value) {
                     processor.messageReceived(message)
                 } else {
                     Timber.w("onMeshMessageReceived, filtered message from processor with dst: $dst")

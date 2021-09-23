@@ -228,8 +228,10 @@ class BeckonMesh(
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
         meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic)
 
-    suspend fun connectForProxy(macAddress: MacAddress): Either<BeckonError, BeckonDevice> =
-        meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic)
+    suspend fun connectForProxy(macAddress: MacAddress): Either<BeckonError, BeckonDevice> {
+        Timber.d("execute Connect for proxy $macAddress")
+        return meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic)
+    }
 
     private suspend fun meshConnect(
         macAddress: MacAddress,

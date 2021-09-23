@@ -181,6 +181,7 @@ class BeckonMeshManagerApi(
     }
 
     fun close() {
+        Timber.w("Close BeckonMeshApi ${handleNotificationJob?.isActive}")
         handleNotificationJob?.let {
             if (it.isCompleted) {
                 it.cancel()

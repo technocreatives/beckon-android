@@ -101,9 +101,11 @@ class BeckonMeshClient(
         )
     }
 
-    private fun currentMeshID(): UUID? =
-        sharedPreferences.getString("mesh_uuid", null)?.let {
-            UUID.fromString(it)
+    private suspend fun currentMeshID(): UUID? =
+        withContext(Dispatchers.IO) {
+            sharedPreferences.getString("mesh_uuid", null)?.let {
+                UUID.fromString(it)
+            }
         }
 
     private fun setCurrentMeshId(id: UUID) =

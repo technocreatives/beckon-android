@@ -118,6 +118,11 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
 
     suspend fun sendPdu(pdu: Pdu) {
         Timber.d("SendPdu ${pdu.data.size}")
+//        coroutineScope {
+//            launch {
+//                pduChannel.send(pdu)
+//            }
+//        }
         pduChannel.send(pdu)
     }
 

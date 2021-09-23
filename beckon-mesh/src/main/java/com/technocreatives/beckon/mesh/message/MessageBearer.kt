@@ -2,12 +2,12 @@ package com.technocreatives.beckon.mesh.message
 
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
-import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
 import no.nordicsemi.android.mesh.utils.MeshAddress
+import timber.log.Timber
 
 class MessageBearer(private val processor: MessageProcessor) {
 
@@ -101,40 +101,6 @@ class MessageBearer(private val processor: MessageProcessor) {
             ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS
         ).map { it as ConfigModelPublicationStatus }
 
-    suspend fun getConfigCompositionData(address: UnicastAddress): Either<SendAckMessageError, ConfigCompositionDataStatus> =
-        sendAckMessage(
-            address.value,
-            ConfigCompositionDataGet(),
-            ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
-        ).map { it as ConfigCompositionDataStatus }
-
-    suspend fun getConfigDefaultTtl(address: UnicastAddress): Either<SendAckMessageError, ConfigDefaultTtlStatus> =
-        sendAckMessage(
-            address.value,
-            ConfigDefaultTtlGet(),
-            ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS
-        ).map { it as ConfigDefaultTtlStatus }
-
-    suspend fun setConfigNetworkTransmit(
-        address: UnicastAddress,
-        message: ConfigNetworkTransmitSet
-    ): Either<SendAckMessageError, ConfigNetworkTransmitStatus> =
-        sendAckMessage(
-            address.value,
-            message,
-            ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS
-        ).map { it as ConfigNetworkTransmitStatus }
-
-    suspend fun addConfigAppKey(
-        address: UnicastAddress,
-        message: ConfigAppKeyAdd
-    ): Either<SendAckMessageError, ConfigAppKeyStatus> =
-        sendAckMessage(
-            address.value,
-            message,
-            ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
-        ).map { it as ConfigAppKeyStatus }
-
     suspend fun addProxyConfigAddressToFilter(message: ProxyConfigAddAddressToFilter) =
         sendAckMessage(
             MeshAddress.UNASSIGNED_ADDRESS,
@@ -203,4 +169,13 @@ class MessageBearer(private val processor: MessageProcessor) {
             message,
             responseOpCode
         )
+
+    suspend fun sendBeckonMessage(message: AckBeckonMessage): Either<SendAckMessageError, BeckonResponseMessage> {
+        Timber.d("Send $message")
+        val response = sendAckMessage(message.dst, message.toMeshMessage(), message.responseOpCode)
+            .map { BeckonResponseMessage.from(it) }
+        Timber.d("Received $response")
+        return response
+    }
+
 }

@@ -88,6 +88,9 @@ fun NrfElement.transform(index: ElementIndex) = Element(
     meshModels.map { it.value.transform() }
 )
 
+fun Map<Int, NrfElement>.transform(): List<Element> =
+    this.map { it.value.transform(ElementIndex(it.key)) }
+
 @SuppressLint("RestrictedApi")
 fun NrfProvisioner.transform() = Provisioner(
     provisionerName,
@@ -130,8 +133,8 @@ fun ProvisionedMeshNode.transform() = Node(
     networkTransmitSettings?.transform(),
     addedNetKeys.map { it.toNetKey() },
     addedAppKeys.map { it.toAppKey() },
-    elements.map { it.value.transform(ElementIndex(it.key)) },
-    sequenceNumber
+    elements.transform(),
+    sequenceNumber,
 )
 
 fun NetworkTransmitSettings.transform() = NetworkTransmit(

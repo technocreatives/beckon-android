@@ -36,23 +36,23 @@ object MeshConstants {
     val MESH_PROXY_DATA_OUT: UUID = UUID.fromString("00002ADE-0000-1000-8000-00805F9B34FB")
 
     val provisioningDataOutCharacteristic = Characteristic(
-        MeshConstants.MESH_PROVISIONING_DATA_OUT,
-        MeshConstants.MESH_PROVISIONING_SERVICE_UUID
+        MESH_PROVISIONING_DATA_OUT,
+        MESH_PROVISIONING_SERVICE_UUID
     )
 
     val provisioningDataInCharacteristic = Characteristic(
-        MeshConstants.MESH_PROVISIONING_DATA_IN,
-        MeshConstants.MESH_PROVISIONING_SERVICE_UUID
+        MESH_PROVISIONING_DATA_IN,
+        MESH_PROVISIONING_SERVICE_UUID
     )
 
     val proxyDataInCharacteristic = Characteristic(
-        MeshConstants.MESH_PROXY_DATA_IN,
-        MeshConstants.MESH_PROXY_SERVICE_UUID
+        MESH_PROXY_DATA_IN,
+        MESH_PROXY_SERVICE_UUID
     )
 
     val proxyDataOutCharacteristic = Characteristic(
-        MeshConstants.MESH_PROXY_DATA_OUT,
-        MeshConstants.MESH_PROXY_SERVICE_UUID
+        MESH_PROXY_DATA_OUT,
+        MESH_PROXY_SERVICE_UUID
     )
 
     val maxMtu = Mtu(517)
