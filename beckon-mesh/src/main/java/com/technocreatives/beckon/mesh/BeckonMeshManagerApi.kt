@@ -30,9 +30,7 @@ class BeckonMeshManagerApi(
     private val repository: MeshRepository,
 ) : MeshManagerApi(context) {
 
-    //    private val job = Job()
     private var handleNotificationJob: Job? = null
-//    override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
     private val meshSubject by lazy {
         MutableStateFlow(meshNetwork().transform())
@@ -63,6 +61,7 @@ class BeckonMeshManagerApi(
         return try {
             createMeshPdu(dst, meshMessage).right()
         } catch (ex: IllegalArgumentException) {
+            Timber.e("createMeshPdu $dst $ex")
             ex.createMeshPduError(dst).left()
         }
     }

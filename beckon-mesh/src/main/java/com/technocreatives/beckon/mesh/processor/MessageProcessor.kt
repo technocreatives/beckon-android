@@ -47,9 +47,12 @@ internal class MessageSender(
     private val emitter = CompletableDeferred<Either<SendMessageError, Unit>>()
 
     suspend fun sendMessage(): Either<SendMessageError, Unit> {
-        Timber.d("MessageProcessor MessageItem sendMessage")
+        Timber.d("MessageSender sendMessage $dst ${message.info()}")
         return sender.createPdu(dst, message)
-            .flatMap { emitter.await() }
+            .flatMap {
+                Timber.d("MeshPdu created")
+                emitter.await()
+            }
     }
 
     fun sendMessageCompleted() {
@@ -59,29 +62,29 @@ internal class MessageSender(
 }
 
 class MessageProcessor(private val pduSender: PduSender, private val timeout: Long) {
+    private val buffer = 10
+    private val incomingAckMessageChannel = Channel<AckEmitter>(buffer)
+    private val timeoutAckMessageChannel = Channel<Long>(buffer)
+    private val receivedAckMessageChannel = Channel<MeshMessage>(buffer)
+    private val onMessageBeingSentAckMessageChannel = Channel<Long>(buffer)
 
-    private val incomingAckMessageChannel = Channel<AckEmitter>()
-    private val timeoutAckMessageChannel = Channel<Long>()
-    private val receivedAckMessageChannel = Channel<MeshMessage>()
-    private val onMessageBeingSentAckMessageChannel = Channel<Long>()
+    private val incomingMessageChannel = Channel<CompletableMessage>(buffer)
+    private val pduSenderResultChannel = Channel<PduSenderResult>(buffer)
+    private val pduChannel = Channel<Pdu>(buffer)
+    private val processedMessageChannel = Channel<MeshMessage>(buffer)
+    private val onAckMessageFinishChannel = Channel<Long>(buffer)
 
-    private val incomingMessageChannel = Channel<CompletableMessage>()
-    private val pduSenderResultChannel = Channel<PduSenderResult>()
-    private val pduChannel = Channel<Pdu>()
-    private val processedMessageChannel = Channel<MeshMessage>()
-    private val onAckMessageFinishChannel = Channel<Long>()
-
-    fun close() {
-        incomingMessageChannel.close()
-        timeoutAckMessageChannel.close()
-        receivedAckMessageChannel.close()
-        onMessageBeingSentAckMessageChannel.close()
-        incomingMessageChannel.close()
-        pduSenderResultChannel.close()
-        pduChannel.close()
-        processedMessageChannel.close()
-        onAckMessageFinishChannel.close()
-    }
+//    fun close() {
+//        incomingMessageChannel.close()
+//        timeoutAckMessageChannel.close()
+//        receivedAckMessageChannel.close()
+//        onMessageBeingSentAckMessageChannel.close()
+//        incomingMessageChannel.close()
+//        pduSenderResultChannel.close()
+//        pduChannel.close()
+//        processedMessageChannel.close()
+//        onAckMessageFinishChannel.close()
+//    }
 
     private var ackId: Long = 0
 
@@ -90,6 +93,7 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
         mesh: MeshMessage,
         responseOpCode: Int,
     ): Either<SendAckMessageError, MeshMessage> {
+        Timber.d("sendAckMessage $dst, $responseOpCode, ${mesh.info()}")
         val emitter = CompletableDeferred<Either<SendAckMessageError, MeshMessage>>()
         val ackEmitter = AckEmitter(ackId, dst, responseOpCode, mesh, emitter)
         ackId += 1
@@ -123,17 +127,20 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
 //                pduChannel.send(pdu)
 //            }
 //        }
-        pduChannel.send(pdu)
+        val r = pduChannel.send(pdu)
+        Timber.d("pduChannel.send(pdu) $r")
     }
 
     suspend fun messageReceived(message: MeshMessage) {
         Timber.d("messageReceived ${message.info()}")
-        receivedAckMessageChannel.send(message)
+        val r = receivedAckMessageChannel.send(message)
+        Timber.d("receivedAckMessageChannel.send(message): $r")
     }
 
     suspend fun messageProcessed(message: MeshMessage) {
         Timber.d("messageProcessed ${message.info()}")
-        processedMessageChannel.send(message)
+        val r = processedMessageChannel.send(message)
+        Timber.d("processedMessageChannel.send(message): $r")
     }
 
     fun CoroutineScope.execute() {
@@ -288,7 +295,9 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
 
     private fun CoroutineScope.sendBeckonMessage(beckonMessage: BeckonMessage) =
         launch {
-            beckonMessage.sender.sendMessage()
+            // todo what if this failed?
+            val r = beckonMessage.sender.sendMessage()
+            Timber.d("sendBeckonMessage done $r $beckonMessage")
             beckonMessage.message.ackId()?.let {
                 onMessageBeingSentAckMessageChannel.send(it)
             }

@@ -49,38 +49,69 @@ object Disconnect : Step {
     }
 }
 
+data class Delay(val time: Long) : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> {
+        delay(time)
+        return Unit.right()
+    }
+}
+
 // connect to what ever
-data class Connect(val address: MacAddress) : Step {
+data class Connect(val addresses: List<MacAddress>) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        delay(1000)
-        val beckonDevice = scanForProxy { it.address == address }
-            .mapZ { it.firstOrNull { it.macAddress == address } }
+        val beckonDevice = scanForProxy { false }
+            .mapZ { it.firstOrNull() }
             .filterZ { it != null }
             .mapZ { it!! }
-            .mapEither { connectForProxy(it.macAddress) }
+            .mapEither {
+                Timber.d("Scenario execute try to connect to $it")
+                stopScan()
+                connectForProxy(it.macAddress)
+            }
             .first().bind()
-        stopScan()
         startConnectedState(beckonDevice).bind()
     }
 }
 
+//object AutoConnect : Step {
+//    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+//        val beckonDevice = scanForProxy { it.address == address }
+//            .mapZ { it.firstOrNull { it.macAddress == address } }
+//            .filterZ { it != null }
+//            .mapZ { it!! }
+//            .mapEither {
+//                stopScan()
+//                connectForProxy(it.macAddress)
+//            }
+//            .first().bind()
+//        startConnectedState(beckonDevice).bind()
+//    }
+//}
+
 data class Scenario(val steps: List<Step>) {
     suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        Timber.d("Scenario execute start: ${steps.size}")
+        Timber.d("Scenario execute start with ${steps.size} steps")
         disconnect().bind()
-        val results = steps.traverseStep { with(it) { execute() } }
+        val results = steps.traverseStep { with(it) { execute() } }.bind()
         Timber.d("Scenario execute end: $results")
         disconnect().bind()
-        Unit
     }
 
 
     companion object {
-        fun simpleCase(macAddress: MacAddress, nodeAddress: Int, netKey: NetKey, appKey: AppKey) =
+        fun simpleCase(
+            macAddress: MacAddress,
+            nodeAddress: Int,
+            netKey: NetKey,
+            appKey: AppKey,
+            addresses: List<MacAddress>
+        ) =
             Scenario(
                 listOf(
+                    Delay(2000),
                     Provision(macAddress),
-                    Connect(macAddress),
+                    Delay(2000),
+                    Connect(addresses),
                     Message(GetCompositionData(nodeAddress)),
                     Message(GetDefaultTtl(nodeAddress)),
                     Message(SetConfigNetworkTransmit(nodeAddress, 2, 1)),
