@@ -15,7 +15,8 @@ import java.util.*
 class BeckonMeshClient(
     private val context: Context,
     private val beckonClient: BeckonClient,
-    private val repository: MeshRepository
+    private val repository: MeshRepository,
+    private val config: BeckonMeshClientConfig,
 ) {
 //    private val meshApi by lazy {
 //        BeckonMeshManagerApi(context, repository)
@@ -41,13 +42,13 @@ class BeckonMeshClient(
             .bind()
         val mesh = meshOrNull.rightIfNotNull { NoCurrentMeshFound }.bind()
         meshApi.load(mesh.id).bind()
-        BeckonMesh(context, beckonClient, meshApi)
+        BeckonMesh(context, beckonClient, meshApi, config)
     }
 
     suspend fun load(): Either<MeshLoadError, BeckonMesh> = either {
         disconnect().bind()
         meshApi.load().bind()
-        BeckonMesh(context, beckonClient, meshApi)
+        BeckonMesh(context, beckonClient, meshApi, config)
     }
 
     suspend fun import(id: UUID): Either<MeshLoadError, BeckonMesh> = either {
@@ -79,7 +80,7 @@ class BeckonMeshClient(
     }
 
     private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> =
-        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi) }
+        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, config) }
 
     fun generateMesh(meshName: String, provisionerName: String): Mesh =
         Mesh.generateMesh(meshName, provisionerName)

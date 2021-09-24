@@ -36,6 +36,7 @@ class BeckonMesh(
     private val context: Context,
     private val beckonClient: BeckonClient,
     private val meshApi: BeckonMeshManagerApi,
+    internal val config: BeckonMeshClientConfig,
 ) : CoroutineScope {
 
     private val job = Job()

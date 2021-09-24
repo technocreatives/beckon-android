@@ -14,7 +14,6 @@ sealed interface ConfigMessage {
     val responseOpCode: Int
     val dst: Int
     fun toMeshMessage(): MeshMessage
-//    fun <T : Any> get(clazz: KClass<T>) : KClass<T>
 }
 
 object EmptyConfigMessage :
