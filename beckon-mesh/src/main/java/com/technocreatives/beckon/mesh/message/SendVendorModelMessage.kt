@@ -36,7 +36,7 @@ private suspend fun Connected.sendVendorModelMessage(
         message.parameters
     )
 
-    return bearer.sendVendorModelMessage(address, meshMessage)
+    return bearer.sendMessage(address, meshMessage)
 }
 
 suspend fun Connected.sendVendorModelMessageAck(

@@ -2,7 +2,10 @@ package com.technocreatives.beckon.mesh.message
 
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
-import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.data.AppKeyIndex
+import com.technocreatives.beckon.mesh.data.PublishableAddress
+import com.technocreatives.beckon.mesh.data.findAppKey
+import com.technocreatives.beckon.mesh.data.value
 import com.technocreatives.beckon.mesh.state.Connected
 import no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes
 import no.nordicsemi.android.mesh.transport.GenericOnOffSet as NrfGenericOnOffSet
@@ -24,7 +27,7 @@ data class GenericOnOffStatus(
     val transitionSteps: Int?,
 )
 
-suspend fun Connected.sendGenericOnOffSet(
+suspend fun Connected.sendGenericOnOffSetAck(
     publishableAddress: PublishableAddress,
     message: GenericOnOffSet
 ): Either<SendAckMessageError, GenericOnOffStatus> {
@@ -45,6 +48,26 @@ suspend fun Connected.sendGenericOnOffSet(
     )
         .map { it as NrfGenericOnOffStatus }
         .map { it.transform() }
+}
+
+suspend fun Connected.sendGenericOnOffSet(
+    publishableAddress: PublishableAddress,
+    message: GenericOnOffSet
+): Either<SendAckMessageError, Unit> {
+    val meshMessage = with(meshApi.meshNetwork()) {
+        NrfGenericOnOffSet(
+            findAppKey(message.appKeyIndex)!!,
+            message.state,
+            message.transactionId,
+            message.transitionSteps,
+            message.transitionResolution,
+            message.delay
+        )
+    }
+    return bearer.sendMessage(
+        publishableAddress.value(),
+        meshMessage
+    )
 }
 
 private fun NrfGenericOnOffStatus.transform() =

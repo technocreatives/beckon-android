@@ -42,15 +42,6 @@ class MessageBearer(private val processor: MessageProcessor) {
             responseOpCode,
         ).map { it as VendorModelMessageStatus }
 
-    suspend fun sendVendorModelMessage(
-        unicastAddress: Int,
-        message: VendorModelMessageUnacked
-    ): Either<SendAckMessageError, Unit> =
-        processor.sendMessage(
-            unicastAddress,
-            message
-        )
-
     suspend fun addConfigModelSubscriptionVirtualAddress(
         unicastAddress: Int,
         message: ConfigModelSubscriptionVirtualAddressAdd
@@ -168,6 +159,15 @@ class MessageBearer(private val processor: MessageProcessor) {
             address,
             message,
             responseOpCode
+        )
+
+    internal suspend fun sendMessage(
+        address: Int,
+        message: MeshMessage
+    ): Either<SendAckMessageError, Unit> =
+        processor.sendMessage(
+            address,
+            message
         )
 
     suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, ConfigStatusMessage> {
