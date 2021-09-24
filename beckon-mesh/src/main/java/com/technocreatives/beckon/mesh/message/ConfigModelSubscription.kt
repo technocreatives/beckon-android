@@ -6,7 +6,6 @@ import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.data.ModelId
 import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.state.Connected
-import no.nordicsemi.android.mesh.transport.ConfigModelSubscriptionAdd
 import no.nordicsemi.android.mesh.transport.ConfigModelSubscriptionDelete
 
 data class ConfigModelSubscription(
@@ -15,34 +14,36 @@ data class ConfigModelSubscription(
     val modelId: ModelId,
 )
 
+suspend fun Connected.configSubscribeModelToGroup(
+    unicast: UnicastAddress,
+    message: ConfigModelSubscription,
+    subscribe: Boolean
+): Either<SendAckMessageError, ConfigModelSubscriptionResponse> {
+
+    val configMessage = if(subscribe) {
+        AddConfigModelSubscription(
+            unicast.value,
+            message.elementAddress.value,
+            message.groupAddress.value,
+            message.modelId.value)
+    } else {
+        RemoveConfigModelSubscription(
+            unicast.value,
+            message.elementAddress.value,
+            message.groupAddress.value,
+            message.modelId.value
+        )
+    }
+
+    return bearer.sendConfigMessage(configMessage).map { it as ConfigModelSubscriptionResponse }
+}
+
 suspend fun Connected.subscribeModelToGroup(
     unicast: UnicastAddress,
-    message: ConfigModelSubscription
-): Either<SendAckMessageError, ConfigMessageStatus> {
-
-    val meshMessage = ConfigModelSubscriptionAdd(
-        message.elementAddress.value,
-        message.groupAddress.value,
-        message.modelId.value
-    )
-
-    return bearer.addConfigModelSubscription(unicast.value, meshMessage)
-        .map { it.transform() }
-
-}
+    message: ConfigModelSubscription,
+): Either<SendAckMessageError, ConfigModelSubscriptionResponse> = configSubscribeModelToGroup(unicast, message, true)
 
 suspend fun Connected.unsubscribeModelToGroup(
     unicast: UnicastAddress,
-    message: ConfigModelSubscription
-): Either<SendAckMessageError, ConfigMessageStatus> {
-
-    val meshMessage = ConfigModelSubscriptionDelete(
-        message.elementAddress.value,
-        message.groupAddress.value,
-        message.modelId.value
-    )
-
-    return bearer.deleteConfigModelSubscription(unicast.value, meshMessage)
-        .map { it.transform() }
-
-}
+    message: ConfigModelSubscription,
+): Either<SendAckMessageError, ConfigModelSubscriptionResponse> = configSubscribeModelToGroup(unicast, message, false)

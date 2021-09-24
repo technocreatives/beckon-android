@@ -65,7 +65,28 @@ data class DeleteConfigAppKey(
     override val responseOpCode = ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
     override fun toMeshMessage() = ConfigAppKeyDelete(netKey.transform(), appKey.transform())
     operator fun not() = AddConfigAppKey(dst, netKey, appKey)
+}
 
+data class AddConfigModelSubscription(
+    override val dst: Int,
+    val elementAddress: Int,
+    val subscriptionAddress: Int,
+    val modelId: Int,
+) : ConfigMessage {
+    override val responseOpCode = ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_ADD
+    override fun toMeshMessage() = ConfigModelSubscriptionAdd(elementAddress, subscriptionAddress, modelId)
+    operator fun not() = RemoveConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
+}
+
+data class RemoveConfigModelSubscription(
+    override val dst: Int,
+    val elementAddress: Int,
+    val subscriptionAddress: Int,
+    val modelId: Int,
+) : ConfigMessage {
+    override val responseOpCode = ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_DELETE
+    override fun toMeshMessage() = ConfigModelSubscriptionDelete(elementAddress, subscriptionAddress, modelId)
+    operator fun not() = AddConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
 }
 
 sealed interface ConfigStatusMessage {
@@ -80,6 +101,7 @@ sealed interface ConfigStatusMessage {
                 StatusOpCode.ConfigNetworkSet -> (message as ConfigNetworkTransmitStatus).transform()
                 StatusOpCode.ConfigAppKey -> (message as ConfigAppKeyStatus).transform()
                 StatusOpCode.ConfigModelApp -> (message as ConfigModelAppStatus).transform()
+                StatusOpCode.ConfigModelSubscription -> (message as ConfigModelSubscriptionStatus).transform()
             }
     }
 }
@@ -164,5 +186,26 @@ internal fun ConfigAppKeyStatus.transform() =
         NetKeyIndex(netKeyIndex),
         AppKeyIndex(appKeyIndex),
     )
+
+data class ConfigModelSubscriptionResponse(
+    override val dst: Int,
+    override val src: Int,
+    val statusCode: Int,
+    val elementAddress: Int,
+    val subscriptionAddress: Int,
+    val modelId: Int
+) : ConfigStatusMessage
+
+internal fun ConfigModelSubscriptionStatus.transform() =
+    ConfigModelSubscriptionResponse(
+        dst,
+        src,
+        statusCode,
+        elementAddress,
+        subscriptionAddress,
+        modelIdentifier
+    )
+
+
 
 private fun Boolean.toFeature() = if (this) 1 else 2

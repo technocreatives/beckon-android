@@ -8,6 +8,7 @@ enum class StatusOpCode(val value: Int) {
     ConfigNetworkSet(ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS),
     ConfigAppKey(ConfigMessageOpCodes.CONFIG_APPKEY_STATUS),
     ConfigModelApp(ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS),
+    ConfigModelSubscription(ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS),
     ;
 
     companion object {
