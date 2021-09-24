@@ -5,6 +5,7 @@ import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.data.UnassignedAddress
 import com.technocreatives.beckon.mesh.extensions.info
+import com.technocreatives.beckon.mesh.extensions.toHex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.select
@@ -73,18 +74,6 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
     private val pduChannel = Channel<Pdu>(buffer)
     private val processedMessageChannel = Channel<MeshMessage>(buffer)
     private val onAckMessageFinishChannel = Channel<Long>(buffer)
-
-//    fun close() {
-//        incomingMessageChannel.close()
-//        timeoutAckMessageChannel.close()
-//        receivedAckMessageChannel.close()
-//        onMessageBeingSentAckMessageChannel.close()
-//        incomingMessageChannel.close()
-//        pduSenderResultChannel.close()
-//        pduChannel.close()
-//        processedMessageChannel.close()
-//        onAckMessageFinishChannel.close()
-//    }
 
     private var ackId: Long = 0
 
@@ -233,6 +222,7 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
                         queue.process(bm)
                         sendBeckonMessage(bm)
                     }
+                    Timber.d("resultChannel.onReceive after: $queue")
                 }
 
                 onAckMessageFinishChannel.onReceive { ackId ->
@@ -268,7 +258,7 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
                 }
 
                 pduChannel.onReceive {
-                    Timber.d("pduChannel.onReceive")
+                    Timber.d("pduChannel.onReceive ${it.data.toHex()}")
                     if (queue.isSendingPdu()) {
                         queue.addPdu(it)
                     } else {

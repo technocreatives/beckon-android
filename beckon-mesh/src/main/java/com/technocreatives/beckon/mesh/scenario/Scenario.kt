@@ -56,8 +56,8 @@ data class Delay(val time: Long) : Step {
     }
 }
 
-// connect to what ever
-data class Connect(val addresses: List<MacAddress>) : Step {
+// connect to what ever in the mesh
+object AutoConnect : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
         val beckonDevice = scanForProxy { false }
             .mapZ { it.firstOrNull() }
@@ -73,20 +73,21 @@ data class Connect(val addresses: List<MacAddress>) : Step {
     }
 }
 
-//object AutoConnect : Step {
-//    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-//        val beckonDevice = scanForProxy { it.address == address }
-//            .mapZ { it.firstOrNull { it.macAddress == address } }
-//            .filterZ { it != null }
-//            .mapZ { it!! }
-//            .mapEither {
-//                stopScan()
-//                connectForProxy(it.macAddress)
-//            }
-//            .first().bind()
-//        startConnectedState(beckonDevice).bind()
-//    }
-//}
+data class Connect(val address: MacAddress) : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        val beckonDevice = scanForProxy { false }
+            .mapZ { it.firstOrNull { it.macAddress == address } }
+            .filterZ { it != null }
+            .mapZ { it!! }
+            .mapEither {
+                Timber.d("Scenario execute try to connect to $it")
+                stopScan()
+                connectForProxy(it.macAddress)
+            }
+            .first().bind()
+        startConnectedState(beckonDevice).bind()
+    }
+}
 
 data class Scenario(val steps: List<Step>) {
     suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
@@ -103,15 +104,15 @@ data class Scenario(val steps: List<Step>) {
             macAddress: MacAddress,
             nodeAddress: Int,
             netKey: NetKey,
-            appKey: AppKey,
-            addresses: List<MacAddress>
+            appKey: AppKey
         ) =
             Scenario(
                 listOf(
-                    Delay(2000),
+                    Delay(1000),
                     Provision(macAddress),
-                    Delay(2000),
-                    Connect(addresses),
+                    Delay(1000),
+                    Connect(macAddress),
+                    Delay(1000),
                     Message(GetCompositionData(nodeAddress)),
                     Message(GetDefaultTtl(nodeAddress)),
                     Message(SetConfigNetworkTransmit(nodeAddress, 2, 1)),

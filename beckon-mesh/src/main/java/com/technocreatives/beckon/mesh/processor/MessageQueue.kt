@@ -78,7 +78,7 @@ internal class MessageQueue(
     }
 
     override fun toString(): String {
-        val pm = processingMap.map { "[${it.key}] - ${it.value.message.message.info()}" }
+        val pm = processingMap.map { "[${it.key}] => ${it.value.message.message.info()}" }
             .joinToString(";")
         return "MessageQueue(id=$id, processingMapSize=${processingMap.size}, messagesQueueSize=${messagesQueue.size}, isSendingPdu=$sendingId, {$pm})"
     }
