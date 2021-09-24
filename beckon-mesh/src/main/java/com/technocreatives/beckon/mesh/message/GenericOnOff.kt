@@ -8,6 +8,7 @@ import com.technocreatives.beckon.mesh.data.findAppKey
 import com.technocreatives.beckon.mesh.data.value
 import com.technocreatives.beckon.mesh.state.Connected
 import no.nordicsemi.android.mesh.opcodes.ApplicationMessageOpCodes
+import no.nordicsemi.android.mesh.transport.GenericOnOffSetUnacknowledged
 import no.nordicsemi.android.mesh.transport.GenericOnOffSet as NrfGenericOnOffSet
 import no.nordicsemi.android.mesh.transport.GenericOnOffStatus as NrfGenericOnOffStatus
 
@@ -55,7 +56,7 @@ suspend fun Connected.sendGenericOnOffSet(
     message: GenericOnOffSet
 ): Either<SendAckMessageError, Unit> {
     val meshMessage = with(meshApi.meshNetwork()) {
-        NrfGenericOnOffSet(
+        GenericOnOffSetUnacknowledged(
             findAppKey(message.appKeyIndex)!!,
             message.state,
             message.transactionId,
