@@ -10,14 +10,15 @@ import no.nordicsemi.android.mesh.transport.*
 //    fun toMeshMessage(): MeshMessage
 //}
 
-sealed interface AckBeckonMessage {
+sealed interface ConfigMessage {
     val responseOpCode: Int
     val dst: Int
     fun toMeshMessage(): MeshMessage
 //    fun <T : Any> get(clazz: KClass<T>) : KClass<T>
 }
 
-object EmptyAckBeckonMessage : AckBeckonMessage {
+object EmptyConfigMessage :
+    ConfigMessage {
     override val responseOpCode: Int = 0
     override val dst: Int = 0
     override fun toMeshMessage(): MeshMessage {
@@ -25,20 +26,22 @@ object EmptyAckBeckonMessage : AckBeckonMessage {
     }
 }
 
-data class GetCompositionData(override val dst: Int) : AckBeckonMessage {
+data class GetCompositionData(override val dst: Int) :
+    ConfigMessage {
     override fun toMeshMessage() = ConfigCompositionDataGet()
 
     override val responseOpCode = ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
 
 }
 
-data class GetDefaultTtl(override val dst: Int) : AckBeckonMessage {
+data class GetDefaultTtl(override val dst: Int) :
+    ConfigMessage {
     override fun toMeshMessage() = ConfigDefaultTtlGet()
     override val responseOpCode = ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS
 }
 
 data class SetConfigNetworkTransmit(override val dst: Int, val count: Int, val steps: Int) :
-    AckBeckonMessage {
+    ConfigMessage {
     override val responseOpCode = ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS
     override fun toMeshMessage() = ConfigNetworkTransmitSet(count, steps)
 }
@@ -47,7 +50,7 @@ data class AddConfigAppKey(
     override val dst: Int,
     val netKey: NetKey,
     val appKey: AppKey,
-) : AckBeckonMessage {
+) : ConfigMessage {
     override val responseOpCode = ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
     override fun toMeshMessage() = ConfigAppKeyAdd(netKey.transform(), appKey.transform())
 
@@ -59,24 +62,25 @@ data class DeleteConfigAppKey(
     override val dst: Int,
     val netKey: NetKey,
     val appKey: AppKey,
-) : AckBeckonMessage {
+) : ConfigMessage {
     override val responseOpCode = ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
     override fun toMeshMessage() = ConfigAppKeyDelete(netKey.transform(), appKey.transform())
     operator fun not() = AddConfigAppKey(dst, netKey, appKey)
 
 }
 
-sealed interface BeckonResponseMessage {
+sealed interface ConfigStatusMessage {
     val dst: Int
     val src: Int
 
     companion object {
-        fun from(message: MeshMessage): BeckonResponseMessage =
+        fun from(message: MeshMessage): ConfigStatusMessage =
             when (StatusOpCode.from(message.opCode)) {
                 StatusOpCode.ConfigComposition -> (message as ConfigCompositionDataStatus).transform()
                 StatusOpCode.ConfigDefaultTtl -> (message as ConfigDefaultTtlStatus).transform()
                 StatusOpCode.ConfigNetworkSet -> (message as ConfigNetworkTransmitStatus).transform()
                 StatusOpCode.ConfigAppKey -> (message as ConfigAppKeyStatus).transform()
+                StatusOpCode.ConfigModelApp -> (message as ConfigModelAppStatus).transform()
             }
     }
 }
@@ -91,7 +95,7 @@ data class GetCompositionDataResponse(
     val companyIdentifier: Int?,
     val productIdentifier: Int?,
     val versionIdentifier: Int?,
-) : BeckonResponseMessage
+) : ConfigStatusMessage
 
 internal fun ConfigCompositionDataStatus.transform(): GetCompositionDataResponse {
     val features = Features(
@@ -119,7 +123,7 @@ data class ConfigDefaultTtlResponse(
     override val src: Int,
     val statusCode: Int,
     val ttl: Int,
-) : BeckonResponseMessage
+) : ConfigStatusMessage
 
 internal fun ConfigDefaultTtlStatus.transform() = ConfigDefaultTtlResponse(
     dst,
@@ -134,7 +138,7 @@ data class ConfigNetworkTransmitResponse(
     val statusCode: Int,
     val count: Int,
     val steps: Int,
-) : BeckonResponseMessage
+) : ConfigStatusMessage
 
 internal fun ConfigNetworkTransmitStatus.transform() =
     ConfigNetworkTransmitResponse(
@@ -151,7 +155,7 @@ data class ConfigAppKeyResponse(
     val statusCode: Int,
     val netKeyIndex: NetKeyIndex,
     val appKeyIndex: AppKeyIndex,
-) : BeckonResponseMessage
+) : ConfigStatusMessage
 
 internal fun ConfigAppKeyStatus.transform() =
     ConfigAppKeyResponse(

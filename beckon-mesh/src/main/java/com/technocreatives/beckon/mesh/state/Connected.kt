@@ -19,8 +19,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
-import no.nordicsemi.android.mesh.transport.ConfigAppKeyAdd
-import no.nordicsemi.android.mesh.transport.ConfigNetworkTransmitSet
 import no.nordicsemi.android.mesh.transport.ControlMessage
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
@@ -90,8 +88,10 @@ class Connected(
 //    fun close() {
 //        processor.close()
 //    }
-}
 
+    suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, ConfigStatusMessage> =
+        bearer.sendConfigMessage(message)
+}
 
 suspend fun Connected.setUpAppKey(
     nodeAddress: UnicastAddress,
@@ -101,18 +101,18 @@ suspend fun Connected.setUpAppKey(
 
 //    val compositionStatus = bearer.getConfigCompositionData(nodeAddress).bind()
     val getCompositionData = GetCompositionData(nodeAddress.value)
-    val compositionStatus = bearer.sendBeckonMessage(getCompositionData).bind()
+    val compositionStatus = bearer.sendConfigMessage(getCompositionData).bind()
     Timber.d("getConfigCompositionData Status $compositionStatus")
 
 //    val defaultTtlStatus = bearer.getConfigDefaultTtl(nodeAddress).bind()
     val getDefaultTtl = GetDefaultTtl(nodeAddress.value)
-    val defaultTtlStatus = bearer.sendBeckonMessage(getDefaultTtl).bind()
+    val defaultTtlStatus = bearer.sendConfigMessage(getDefaultTtl).bind()
     Timber.d("getConfigDefaultTtl Status $defaultTtlStatus")
 
 //    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
 //    val networkTransmit = bearer.setConfigNetworkTransmit(nodeAddress, networkTransmitSet).bind()
     val networkTransmitSet = SetConfigNetworkTransmit(nodeAddress.value, 2, 1)
-    val networkTransmit = bearer.sendBeckonMessage(networkTransmitSet).bind()
+    val networkTransmit = bearer.sendConfigMessage(networkTransmitSet).bind()
     Timber.d("setConfigNetworkTransmit Status $networkTransmit")
 
 //    val networkKey = beckonMesh.netKey(netKey.index)!!
@@ -121,7 +121,7 @@ suspend fun Connected.setUpAppKey(
 //    val appKeyAddStatus = bearer.addConfigAppKey(nodeAddress, configAppKeyAdd).bind()
     val configAppKeyAdd = AddConfigAppKey(nodeAddress.value, netKey, appKey)
 
-    val appKeyAddStatus = bearer.sendBeckonMessage(configAppKeyAdd).bind()
+    val appKeyAddStatus = bearer.sendConfigMessage(configAppKeyAdd).bind()
     Timber.d("addConfigAppKey Status $appKeyAddStatus")
 }
 
@@ -169,7 +169,8 @@ class ConnectedMessageStatusCallbacks(
         super.onMeshMessageReceived(src, message)
         Timber.d("onMeshMessageReceived ${message.info()}")
         if (verifySequenceNumber(src, message.sequenceNumber() ?: 0)) {
-            val filteredMessage = BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
+            val filteredMessage =
+                BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
             runBlocking {
                 filteredSubject.emit(filteredMessage)
                 val dst = filteredMessage.message.dst

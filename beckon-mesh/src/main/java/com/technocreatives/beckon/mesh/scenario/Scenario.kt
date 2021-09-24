@@ -34,10 +34,10 @@ data class Provision(val address: MacAddress) : Step {
     }
 }
 
-data class Message(val message: AckBeckonMessage) : Step {
+data class Message(val message: ConfigMessage) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
         val connected = connectedState().bind()
-        val response = connected.bearer.sendBeckonMessage(message).bind()
+        val response = connected.bearer.sendConfigMessage(message).bind()
         response
     }
 

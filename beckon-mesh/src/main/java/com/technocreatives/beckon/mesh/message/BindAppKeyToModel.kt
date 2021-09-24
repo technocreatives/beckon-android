@@ -1,48 +1,42 @@
 package com.technocreatives.beckon.mesh.message
 
-import arrow.core.Either
-import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.AppKeyIndex
 import com.technocreatives.beckon.mesh.data.ModelId
 import com.technocreatives.beckon.mesh.data.UnicastAddress
-import com.technocreatives.beckon.mesh.state.Connected
+import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.ConfigModelAppBind
 import no.nordicsemi.android.mesh.transport.ConfigModelAppUnbind
 
 data class BindAppKeyToModel(
+    override val dst: Int,
     val elementAddress: UnicastAddress,
     val modelId: ModelId,
     val appKeyIndex: AppKeyIndex,
-)
+) : ConfigMessage {
+    override val responseOpCode = ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS
 
-suspend fun Connected.bindAppKeyToModel(
-    nodeAddress: UnicastAddress,
-    message: BindAppKeyToModel
-): Either<SendAckMessageError, ConfigMessageStatus> {
-
-    val meshMessage = ConfigModelAppBind(
-        message.elementAddress.value,
-        message.modelId.value,
-        message.appKeyIndex.value
+    override fun toMeshMessage() = ConfigModelAppBind(
+        elementAddress.value,
+        modelId.value,
+        appKeyIndex.value
     )
 
-    return bearer.bindConfigModelApp(nodeAddress.value, meshMessage)
-        .map { it.transform() }
-
+    operator fun not() = UnbindAppKeyToModel(dst, elementAddress, modelId, appKeyIndex)
 }
 
-suspend fun Connected.unbindAppKeyToModel(
-    nodeAddress: UnicastAddress,
-    message: BindAppKeyToModel
-): Either<SendAckMessageError, ConfigMessageStatus> {
+data class UnbindAppKeyToModel(
+    override val dst: Int,
+    val elementAddress: UnicastAddress,
+    val modelId: ModelId,
+    val appKeyIndex: AppKeyIndex,
+) : ConfigMessage {
+    override val responseOpCode = ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS
 
-    val meshMessage = ConfigModelAppUnbind(
-        message.elementAddress.value,
-        message.modelId.value,
-        message.appKeyIndex.value
+    override fun toMeshMessage() = ConfigModelAppUnbind(
+        elementAddress.value,
+        modelId.value,
+        appKeyIndex.value
     )
 
-    return bearer.unbindConfigModelApp(nodeAddress.value, meshMessage)
-        .map { it.transform() }
-
+    operator fun not() = BindAppKeyToModel(dst, elementAddress, modelId, appKeyIndex)
 }
