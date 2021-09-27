@@ -143,7 +143,7 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
         while (true) {
             select<Unit> {
                 receivedAckMessageChannel.onReceive { message ->
-                    Timber.d("receivedAckMessageChannel.onReceive Map: ${ackMessageQueue.size}, opCode: ${message.opCode}, src = ${message.src}")
+                    Timber.d("receivedAckMessageChannel.onReceive Map: $ackMessageQueue, opCode: ${message.opCode}, src = ${message.src}")
                     val foundIndex =
                         ackMessageQueue.indexOfFirst { it.isMatching(message.src, message.opCode) }
                     Timber.d("receivedAckMessageChannel.onReceive foundIndex = $foundIndex")

@@ -7,8 +7,7 @@ data class ConfigMessageStatus(
     override val src: Int,
     val isSuccess: Boolean,
     val statusCode: Int,
-    val statusMessage: String
-) : com.technocreatives.beckon.mesh.message.ConfigStatusMessage
+) : BeckonStatusMessage
 
 internal fun ConfigStatusMessage.transform() =
-    ConfigMessageStatus(dst, src, statusCode == 0x00, statusCode, statusCodeName)
+    ConfigMessageStatus(dst, src, statusCode == 0x00, statusCode)

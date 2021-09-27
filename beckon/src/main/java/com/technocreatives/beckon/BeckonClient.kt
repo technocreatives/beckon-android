@@ -27,7 +27,7 @@ interface BeckonClient {
 
             if (beckonClient == null) {
                 beckonClient =
-                    BeckonClientImpl(context, beckonStore, deviceRepository, receiver, scanner)
+                    BeckonClientImpl(context, beckonStore, deviceRepository, receiver)
             }
             return beckonClient!!
         }

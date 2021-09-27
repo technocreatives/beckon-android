@@ -6,11 +6,13 @@ import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
+import com.technocreatives.beckon.util.mapZ
 import com.technocreatives.beckon.util.scanZ
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.runBlocking
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -38,7 +40,8 @@ suspend fun BeckonClient.scan(
 }
 
 suspend fun BeckonClient.scan(setting: ScannerSetting): Flow<Either<ScanError, List<ScanResult>>> {
-    return startScan(setting).scanZ(emptyList(), ::buildScanResult)
+//    return startScan(setting).scanZ(emptyList(), ::buildScanResult)
+    return startScan(setting).mapZ { listOf(it) }
 }
 
 fun buildScanResult(list: List<ScanResult>, result: ScanResult): List<ScanResult> {

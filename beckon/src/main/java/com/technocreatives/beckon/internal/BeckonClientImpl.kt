@@ -24,15 +24,16 @@ internal class BeckonClientImpl(
     private val beckonStore: BeckonStore,
     private val deviceRepository: DeviceRepository,
     private val bluetoothReceiver: Receiver,
-    private val scanner: Scanner
 ) : BeckonClient, CoroutineScope {
 
     private val job = Job()
     private lateinit var registerJob: Job
     override val coroutineContext: CoroutineContext get() = Dispatchers.IO + job
 
+    private var scanner: Scanner? = null
     override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
-        val originalScanStream = scanner.startScan(setting)
+        scanner = ScannerImpl()
+        val originalScanStream = scanner!!.startScan(setting)
         return if (setting.useFilter) {
             val connected =
                 beckonStore.currentState().connectedDevices.map { it.metadata().macAddress }
@@ -47,7 +48,8 @@ internal class BeckonClientImpl(
 
     override suspend fun stopScan() {
         if (beckonStore.currentState().bluetoothState == BluetoothState.ON) {
-            scanner.stopScan()
+            scanner?.stopScan()
+            scanner = null
         } else {
             // TODO Callback to application? Notify failure
             Timber.e("Stopped scan but adapter is not turned on!")

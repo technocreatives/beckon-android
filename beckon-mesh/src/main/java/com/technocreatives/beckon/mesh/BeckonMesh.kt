@@ -226,6 +226,13 @@ class BeckonMesh(
             .mapZ { connectedDevices + it }
     }
 
+    suspend fun scanForProxy(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
+        val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
+        return scan(scannerSetting)
+            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!, address) } }
+            .mapZ { it }
+    }
+
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
         meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic)
 

@@ -73,10 +73,28 @@ object AutoConnect : Step {
     }
 }
 
+data class ConnectAfterProvisioning(val address: Int) : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        val beckonDevice = scanForProxy(address)
+//            .mapZ { it.firstOrNull { it.macAddress == address } }
+            .mapZ { it.firstOrNull() }
+            .filterZ { it != null }
+            .mapZ { it!! }
+            .mapEither {
+                Timber.d("Scenario execute try to connect to $it")
+                stopScan()
+                connectForProxy(it.macAddress)
+            }
+            .first().bind()
+        startConnectedState(beckonDevice).bind()
+    }
+}
+
 data class Connect(val address: MacAddress) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val beckonDevice = scanForProxy { false }
+        val beckonDevice = scanForProxy { false}
             .mapZ { it.firstOrNull { it.macAddress == address } }
+//            .mapZ { it.firstOrNull() }
             .filterZ { it != null }
             .mapZ { it!! }
             .mapEither {
@@ -108,11 +126,11 @@ data class Scenario(val steps: List<Step>) {
         ) =
             Scenario(
                 listOf(
-                    Delay(1000),
+//                    Delay(1000),
                     Provision(macAddress),
                     Delay(1000),
-                    Connect(macAddress),
-                    Delay(1000),
+                    ConnectAfterProvisioning(nodeAddress),
+//                    Delay(1000),
                     Message(GetCompositionData(nodeAddress)),
                     Message(GetDefaultTtl(nodeAddress)),
                     Message(SetConfigNetworkTransmit(nodeAddress, 2, 1)),

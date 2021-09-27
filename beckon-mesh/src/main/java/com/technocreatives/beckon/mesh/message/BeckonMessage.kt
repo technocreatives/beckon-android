@@ -2,7 +2,6 @@ package com.technocreatives.beckon.mesh.message
 
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.data.Element
-import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
 
 //sealed interface BeckonMessage {
@@ -11,37 +10,28 @@ import no.nordicsemi.android.mesh.transport.*
 //}
 
 sealed interface ConfigMessage {
-    val responseOpCode: Int
+    val responseOpCode: StatusOpCode
     val dst: Int
     fun toMeshMessage(): MeshMessage
-}
-
-object EmptyConfigMessage :
-    ConfigMessage {
-    override val responseOpCode: Int = 0
-    override val dst: Int = 0
-    override fun toMeshMessage(): MeshMessage {
-        TODO("Never call this!!!!")
-    }
 }
 
 data class GetCompositionData(override val dst: Int) :
     ConfigMessage {
     override fun toMeshMessage() = ConfigCompositionDataGet()
 
-    override val responseOpCode = ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
+    override val responseOpCode = StatusOpCode.ConfigComposition
 
 }
 
 data class GetDefaultTtl(override val dst: Int) :
     ConfigMessage {
     override fun toMeshMessage() = ConfigDefaultTtlGet()
-    override val responseOpCode = ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS
+    override val responseOpCode = StatusOpCode.ConfigDefaultTtl
 }
 
 data class SetConfigNetworkTransmit(override val dst: Int, val count: Int, val steps: Int) :
     ConfigMessage {
-    override val responseOpCode = ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS
+    override val responseOpCode = StatusOpCode.ConfigNetworkSet
     override fun toMeshMessage() = ConfigNetworkTransmitSet(count, steps)
 }
 
@@ -50,7 +40,7 @@ data class AddConfigAppKey(
     val netKey: NetKey,
     val appKey: AppKey,
 ) : ConfigMessage {
-    override val responseOpCode = ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
+    override val responseOpCode = StatusOpCode.ConfigAppKey
     override fun toMeshMessage() = ConfigAppKeyAdd(netKey.transform(), appKey.transform())
 
     // send a andThen send not
@@ -62,7 +52,7 @@ data class DeleteConfigAppKey(
     val netKey: NetKey,
     val appKey: AppKey,
 ) : ConfigMessage {
-    override val responseOpCode = ConfigMessageOpCodes.CONFIG_APPKEY_STATUS
+    override val responseOpCode = StatusOpCode.ConfigAppKey
     override fun toMeshMessage() = ConfigAppKeyDelete(netKey.transform(), appKey.transform())
     operator fun not() = AddConfigAppKey(dst, netKey, appKey)
 }
@@ -73,7 +63,7 @@ data class AddConfigModelSubscription(
     val subscriptionAddress: Int,
     val modelId: Int,
 ) : ConfigMessage {
-    override val responseOpCode = ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_ADD
+    override val responseOpCode = StatusOpCode.ConfigModelSubscription
     override fun toMeshMessage() = ConfigModelSubscriptionAdd(elementAddress, subscriptionAddress, modelId)
     operator fun not() = RemoveConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
 }
@@ -84,26 +74,14 @@ data class RemoveConfigModelSubscription(
     val subscriptionAddress: Int,
     val modelId: Int,
 ) : ConfigMessage {
-    override val responseOpCode = ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_DELETE
+    override val responseOpCode = StatusOpCode.ConfigModelSubscription
     override fun toMeshMessage() = ConfigModelSubscriptionDelete(elementAddress, subscriptionAddress, modelId)
     operator fun not() = AddConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
 }
 
-sealed interface ConfigStatusMessage {
+sealed interface BeckonStatusMessage {
     val dst: Int
     val src: Int
-
-    companion object {
-        fun from(message: MeshMessage): ConfigStatusMessage =
-            when (StatusOpCode.from(message.opCode)) {
-                StatusOpCode.ConfigComposition -> (message as ConfigCompositionDataStatus).transform()
-                StatusOpCode.ConfigDefaultTtl -> (message as ConfigDefaultTtlStatus).transform()
-                StatusOpCode.ConfigNetworkSet -> (message as ConfigNetworkTransmitStatus).transform()
-                StatusOpCode.ConfigAppKey -> (message as ConfigAppKeyStatus).transform()
-                StatusOpCode.ConfigModelApp -> (message as ConfigModelAppStatus).transform()
-                StatusOpCode.ConfigModelSubscription -> (message as ConfigModelSubscriptionStatus).transform()
-            }
-    }
 }
 
 data class GetCompositionDataResponse(
@@ -116,7 +94,7 @@ data class GetCompositionDataResponse(
     val companyIdentifier: Int?,
     val productIdentifier: Int?,
     val versionIdentifier: Int?,
-) : ConfigStatusMessage
+) : BeckonStatusMessage
 
 internal fun ConfigCompositionDataStatus.transform(): GetCompositionDataResponse {
     val features = Features(
@@ -144,7 +122,7 @@ data class ConfigDefaultTtlResponse(
     override val src: Int,
     val statusCode: Int,
     val ttl: Int,
-) : ConfigStatusMessage
+) : BeckonStatusMessage
 
 internal fun ConfigDefaultTtlStatus.transform() = ConfigDefaultTtlResponse(
     dst,
@@ -159,7 +137,7 @@ data class ConfigNetworkTransmitResponse(
     val statusCode: Int,
     val count: Int,
     val steps: Int,
-) : ConfigStatusMessage
+) : BeckonStatusMessage
 
 internal fun ConfigNetworkTransmitStatus.transform() =
     ConfigNetworkTransmitResponse(
@@ -176,7 +154,7 @@ data class ConfigAppKeyResponse(
     val statusCode: Int,
     val netKeyIndex: NetKeyIndex,
     val appKeyIndex: AppKeyIndex,
-) : ConfigStatusMessage
+) : BeckonStatusMessage
 
 internal fun ConfigAppKeyStatus.transform() =
     ConfigAppKeyResponse(
@@ -194,7 +172,7 @@ data class ConfigModelSubscriptionResponse(
     val elementAddress: Int,
     val subscriptionAddress: Int,
     val modelId: Int
-) : ConfigStatusMessage
+) : BeckonStatusMessage
 
 internal fun ConfigModelSubscriptionStatus.transform() =
     ConfigModelSubscriptionResponse(
