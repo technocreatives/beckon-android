@@ -3,11 +3,13 @@ package com.technocreatives.beckon.mesh.scenario
 import arrow.core.Either
 import arrow.core.computations.either
 import arrow.core.right
+import arrow.core.traverseEither
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.data.AppKey
+import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.data.NetKey
 import com.technocreatives.beckon.mesh.message.*
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
@@ -41,6 +43,12 @@ data class Message(val message: ConfigMessage) : Step {
         response
     }
 
+}
+
+data class CreateGroup(val groupAddress: GroupAddress, val name: String) : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        createGroup(name, groupAddress.value).bind()
+    }
 }
 
 object Disconnect : Step {
@@ -92,7 +100,7 @@ data class ConnectAfterProvisioning(val address: Int) : Step {
 
 data class Connect(val address: MacAddress) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val beckonDevice = scanForProxy { false}
+        val beckonDevice = scanForProxy { false }
             .mapZ { it.firstOrNull { it.macAddress == address } }
 //            .mapZ { it.firstOrNull() }
             .filterZ { it != null }
@@ -107,30 +115,29 @@ data class Connect(val address: MacAddress) : Step {
     }
 }
 
-data class Scenario(val steps: List<Step>) {
+data class Process(val steps: List<Step>) {
     suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        Timber.d("Scenario execute start with ${steps.size} steps")
-        disconnect().bind()
+        Timber.d("Process start with ${steps.size} steps")
+        val start = System.nanoTime()
         val results = steps.traverseStep { with(it) { execute() } }.bind()
-        Timber.d("Scenario execute end: $results")
-        disconnect().bind()
+        val end = System.nanoTime()
+        Timber.d("Process end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
     }
 
 
     companion object {
-        fun simpleCase(
+        fun provisionCase(
             macAddress: MacAddress,
             nodeAddress: Int,
             netKey: NetKey,
             appKey: AppKey
         ) =
-            Scenario(
+            Process(
                 listOf(
                     Delay(1000),
                     Provision(macAddress),
                     Delay(1000),
                     ConnectAfterProvisioning(nodeAddress),
-//                    Delay(1000),
                     Message(GetCompositionData(nodeAddress)),
                     Message(GetDefaultTtl(nodeAddress)),
                     Message(SetConfigNetworkTransmit(nodeAddress, 2, 1)),
@@ -138,6 +145,17 @@ data class Scenario(val steps: List<Step>) {
                     Disconnect,
                 )
             )
+    }
+}
+
+data class Scenario(val processes: List<Process>) {
+    suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        Timber.d("Scenario execute start with ${processes.size} processes")
+        val start = System.nanoTime()
+        disconnect().bind()
+        val results = processes.traverseEither { with(it) { execute() } }.bind()
+        val end = System.nanoTime()
+        Timber.d("Scenario execute end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
     }
 }
 

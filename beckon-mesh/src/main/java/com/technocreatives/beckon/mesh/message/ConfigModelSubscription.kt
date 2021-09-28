@@ -37,13 +37,3 @@ suspend fun Connected.configSubscribeModelToGroup(
 
     return bearer.sendConfigMessage(configMessage).map { it as ConfigModelSubscriptionResponse }
 }
-
-suspend fun Connected.subscribeModelToGroup(
-    unicast: UnicastAddress,
-    message: ConfigModelSubscription,
-): Either<SendAckMessageError, ConfigModelSubscriptionResponse> = configSubscribeModelToGroup(unicast, message, true)
-
-suspend fun Connected.unsubscribeModelToGroup(
-    unicast: UnicastAddress,
-    message: ConfigModelSubscription,
-): Either<SendAckMessageError, ConfigModelSubscriptionResponse> = configSubscribeModelToGroup(unicast, message, false)
