@@ -13,7 +13,7 @@ data class BindAppKeyToModel(
     val modelId: ModelId,
     val appKeyIndex: AppKeyIndex,
 ) : ConfigMessage {
-    override val responseOpCode = StatusOpCode.ConfigModelSubscription
+    override val responseOpCode = StatusOpCode.ConfigModelApp
 
     override fun toMeshMessage() = ConfigModelAppBind(
         elementAddress.value,
@@ -30,7 +30,7 @@ data class UnbindAppKeyToModel(
     val modelId: ModelId,
     val appKeyIndex: AppKeyIndex,
 ) : ConfigMessage {
-    override val responseOpCode = StatusOpCode.ConfigModelSubscription
+    override val responseOpCode = StatusOpCode.ConfigModelApp
 
     override fun toMeshMessage() = ConfigModelAppUnbind(
         elementAddress.value,
