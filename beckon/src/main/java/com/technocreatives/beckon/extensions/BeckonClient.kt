@@ -40,8 +40,8 @@ suspend fun BeckonClient.scan(
 }
 
 suspend fun BeckonClient.scan(setting: ScannerSetting): Flow<Either<ScanError, List<ScanResult>>> {
-//    return startScan(setting).scanZ(emptyList(), ::buildScanResult)
-    return startScan(setting).mapZ { listOf(it) }
+    return startScan(setting).scanZ(emptyList(), ::buildScanResult)
+//    return startScan(setting).mapZ { listOf(it) }
 }
 
 fun buildScanResult(list: List<ScanResult>, result: ScanResult): List<ScanResult> {

@@ -110,6 +110,7 @@ fun MeshManagerApi.nodeIdentityMatches(serviceData: ByteArray?, unicastAddress: 
     val random: ByteArray = try {
         getAdvertisedRandom(serviceData) ?: return false
     } catch (ex: Exception) {
+        Timber.e(ex, "getAdvertisedRandom exception ${serviceData?.toHex()}")
         return false
     }
     for (key: NetworkKey in meshNetwork!!.netKeys) {

@@ -27,7 +27,7 @@ interface Scanner {
 }
 
 internal class ScannerImpl : Scanner {
-    private val scanner by lazy { BluetoothLeScannerCompat.getScanner() }
+    private val scanner = BluetoothLeScannerCompat.getScanner()
 
     private var callback: ScanCallback? = null
     private var scanSubject: MutableSharedFlow<Either<ScanError, ScanResult>>? = null

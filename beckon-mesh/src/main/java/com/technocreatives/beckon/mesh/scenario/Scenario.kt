@@ -126,7 +126,7 @@ data class Scenario(val steps: List<Step>) {
         ) =
             Scenario(
                 listOf(
-//                    Delay(1000),
+                    Delay(1000),
                     Provision(macAddress),
                     Delay(1000),
                     ConnectAfterProvisioning(nodeAddress),
