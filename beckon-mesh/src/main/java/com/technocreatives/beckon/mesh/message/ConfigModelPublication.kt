@@ -4,8 +4,7 @@ import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.state.Connected
-import no.nordicsemi.android.mesh.transport.ConfigModelPublicationGet
-import no.nordicsemi.android.mesh.transport.ConfigModelPublicationSet
+import no.nordicsemi.android.mesh.transport.ConfigModelPublicationStatus
 
 // TODO we have different message for virtual address:
 // ConfigModelPublicationVirtualAddressSet
@@ -26,8 +25,9 @@ data class ConfigModelPublication(
 suspend fun Connected.setConfigModelPublication(
     nodeAddress: UnicastAddress,
     message: ConfigModelPublication
-): Either<SendAckMessageError, ConfigMessageStatus> {
-    val meshMessage = ConfigModelPublicationSet(
+): Either<SendAckMessageError, ConfigModelPublicationStatus> {
+    val configMessage = SetConfigModelPublication(
+        nodeAddress.value,
         message.elementAddress.value,
         message.publishAddress.value(),
         message.appKeyIndex.value,
@@ -40,36 +40,47 @@ suspend fun Connected.setConfigModelPublication(
         message.modelId.value
     )
 
-    return bearer.setConfigModelPublication(nodeAddress.value, meshMessage)
-        .map { it.transform() }
+    return bearer.sendConfigMessage(
+        configMessage
+    ).map {
+        it as ConfigModelPublicationStatus
+    }
 }
 
-suspend fun Connected.removeConfigModelPublication(
+suspend fun Connected.clearConfigModelPublication(
     nodeAddress: UnicastAddress,
     elementAddress: UnicastAddress,
     modelId: ModelId
-): Either<SendAckMessageError, ConfigMessageStatus> {
+): Either<SendAckMessageError, ConfigModelPublicationStatus> {
 
-    val meshMessage = ConfigModelPublicationSet(
+    val configMessage = ClearConfigModelPublication(
+        nodeAddress.value,
         elementAddress.value,
         modelId.value,
     )
 
-    return bearer.setConfigModelPublication(nodeAddress.value, meshMessage)
-        .map { it.transform() }
+    return bearer.sendConfigMessage(
+        configMessage
+    ).map {
+        it as ConfigModelPublicationStatus
+    }
 }
 
 suspend fun Connected.getConfigModelPublication(
-    unicast: UnicastAddress,
+    nodeAddress: UnicastAddress,
     elementAddress: UnicastAddress,
-    publishAddress: UnicastAddress,
-): Either<SendAckMessageError, ConfigMessageStatus> {
+    modelId: ModelId,
+): Either<SendAckMessageError, ConfigModelPublicationStatus> {
 
-    val meshMessage = ConfigModelPublicationGet(
+    val configMessage = GetConfigModelPublication(
+        nodeAddress.value,
         elementAddress.value,
-        publishAddress.value,
+        modelId.value
     )
 
-    return bearer.getConfigModelPublication(unicast.value, meshMessage)
-        .map { it.transform() }
+    return bearer.sendConfigMessage(
+        configMessage
+    ).map {
+        it as ConfigModelPublicationStatus
+    }
 }

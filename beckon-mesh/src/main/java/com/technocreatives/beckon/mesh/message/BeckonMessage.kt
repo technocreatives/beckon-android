@@ -64,8 +64,11 @@ data class AddConfigModelSubscription(
     val modelId: Int,
 ) : ConfigMessage {
     override val responseOpCode = StatusOpCode.ConfigModelSubscription
-    override fun toMeshMessage() = ConfigModelSubscriptionAdd(elementAddress, subscriptionAddress, modelId)
-    operator fun not() = RemoveConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
+   override fun toMeshMessage() =
+        ConfigModelSubscriptionAdd(elementAddress, subscriptionAddress, modelId)
+
+    operator fun not() =
+        RemoveConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
 }
 
 data class RemoveConfigModelSubscription(
@@ -75,8 +78,61 @@ data class RemoveConfigModelSubscription(
     val modelId: Int,
 ) : ConfigMessage {
     override val responseOpCode = StatusOpCode.ConfigModelSubscription
-    override fun toMeshMessage() = ConfigModelSubscriptionDelete(elementAddress, subscriptionAddress, modelId)
-    operator fun not() = AddConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
+    override fun toMeshMessage() =
+        ConfigModelSubscriptionDelete(elementAddress, subscriptionAddress, modelId)
+
+    operator fun not() =
+        AddConfigModelSubscription(dst, elementAddress, subscriptionAddress, modelId)
+}
+
+data class GetConfigModelPublication(
+    override val dst: Int,
+    val elementAddress: Int,
+    val modelId: Int,
+) : ConfigMessage {
+    override val responseOpCode = StatusOpCode.ConfigModelPublication
+    override fun toMeshMessage() = ConfigModelPublicationGet(elementAddress, modelId)
+}
+
+data class SetConfigModelPublication(
+    override val dst: Int,
+    val elementAddress: Int,
+    val publishAddress: Int,
+    val appKeyIndex: Int,
+    val credentialFlag: Boolean,
+    val publishTtl: Int,
+    val publicationSteps: Int,
+    val publicationResolution: Int,
+    val retransmitCount: Int,
+    val retransmitIntervalSteps: Int,
+    val modelId: Int
+) : ConfigMessage {
+    override val responseOpCode = StatusOpCode.ConfigModelPublication
+    override fun toMeshMessage() = ConfigModelPublicationSet(
+        elementAddress,
+        publishAddress,
+        appKeyIndex,
+        credentialFlag,
+        publishTtl,
+        publicationSteps,
+        publicationResolution,
+        retransmitCount,
+        retransmitIntervalSteps,
+        modelId
+    )
+
+    operator fun not() =
+        ClearConfigModelPublication(dst, elementAddress, modelId)
+}
+
+
+data class ClearConfigModelPublication(
+    override val dst: Int,
+    val elementAddress: Int,
+    val modelId: Int,
+) : ConfigMessage {
+    override val responseOpCode = StatusOpCode.ConfigModelPublication
+    override fun toMeshMessage() = ConfigModelPublicationSet(elementAddress, modelId)
 }
 
 sealed interface BeckonStatusMessage {
@@ -183,7 +239,6 @@ internal fun ConfigModelSubscriptionStatus.transform() =
         subscriptionAddress,
         modelIdentifier
     )
-
 
 
 private fun Boolean.toFeature() = if (this) 1 else 2

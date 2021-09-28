@@ -10,6 +10,7 @@ enum class StatusOpCode(val value: Int) {
     ConfigAppKey(ConfigMessageOpCodes.CONFIG_APPKEY_STATUS),
     ConfigModelApp(ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS),
     ConfigModelSubscription(ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS),
+    ConfigModelPublication(ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS),
     ConfigNodeReset(ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS),
     ;
 
@@ -25,6 +26,7 @@ enum class StatusOpCode(val value: Int) {
             ConfigAppKey -> (message as ConfigAppKeyStatus).transform()
             ConfigModelApp -> (message as ConfigModelAppStatus).transform()
             ConfigModelSubscription -> (message as ConfigModelSubscriptionStatus).transform()
+            ConfigModelPublication -> (message as ConfigModelPublicationStatus).transform()
             ConfigNodeReset -> (message as ConfigNodeResetStatus).transform()
         }
 }

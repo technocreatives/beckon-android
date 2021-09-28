@@ -11,26 +11,6 @@ import timber.log.Timber
 
 class MessageBearer(private val processor: MessageProcessor) {
 
-    suspend fun unbindConfigModelApp(
-        unicastAddress: Int,
-        message: ConfigModelAppUnbind
-    ): Either<SendAckMessageError, ConfigModelAppStatus> =
-        sendAckMessage(
-            unicastAddress,
-            message,
-            ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS
-        ).map { it as ConfigModelAppStatus }
-
-    suspend fun bindConfigModelApp(
-        unicastAddress: Int,
-        message: ConfigModelAppBind
-    ): Either<SendAckMessageError, ConfigModelAppStatus> =
-        sendAckMessage(
-            unicastAddress,
-            message,
-            ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS
-        ).map { it as ConfigModelAppStatus }
-
     suspend fun sendVendorModelMessageAck(
         unicastAddress: Int,
         message: VendorModelMessageAcked,
@@ -41,56 +21,6 @@ class MessageBearer(private val processor: MessageProcessor) {
             message,
             responseOpCode,
         ).map { it as VendorModelMessageStatus }
-
-    suspend fun addConfigModelSubscriptionVirtualAddress(
-        unicastAddress: Int,
-        message: ConfigModelSubscriptionVirtualAddressAdd
-    ): Either<SendAckMessageError, ConfigModelSubscriptionStatus> =
-        sendAckMessage(
-            unicastAddress,
-            message,
-            ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
-        ).map { it as ConfigModelSubscriptionStatus }
-
-    suspend fun addConfigModelSubscription(
-        unicastAddress: Int,
-        message: ConfigModelSubscriptionAdd
-    ): Either<SendAckMessageError, ConfigModelSubscriptionStatus> =
-        sendAckMessage(
-            unicastAddress,
-            message,
-            ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
-        ).map { it as ConfigModelSubscriptionStatus }
-
-    suspend fun deleteConfigModelSubscription(
-        unicastAddress: Int,
-        message: ConfigModelSubscriptionDelete
-    ): Either<SendAckMessageError, ConfigModelSubscriptionStatus> =
-        sendAckMessage(
-            unicastAddress,
-            message,
-            ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS
-        ).map { it as ConfigModelSubscriptionStatus }
-
-    suspend fun getConfigModelPublication(
-        unicastAddress: Int,
-        message: ConfigModelPublicationGet
-    ): Either<SendAckMessageError, ConfigModelPublicationStatus> =
-        sendAckMessage(
-            unicastAddress,
-            message,
-            ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS
-        ).map { it as ConfigModelPublicationStatus }
-
-    suspend fun setConfigModelPublication(
-        unicastAddress: Int,
-        message: ConfigModelPublicationSet
-    ): Either<SendAckMessageError, ConfigModelPublicationStatus> =
-        sendAckMessage(
-            unicastAddress,
-            message,
-            ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS
-        ).map { it as ConfigModelPublicationStatus }
 
     suspend fun addProxyConfigAddressToFilter(message: ProxyConfigAddAddressToFilter) =
         sendAckMessage(
