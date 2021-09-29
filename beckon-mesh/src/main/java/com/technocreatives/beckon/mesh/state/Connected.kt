@@ -17,7 +17,6 @@ import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
 import com.technocreatives.beckon.mesh.utils.MeshAddress
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
@@ -28,7 +27,7 @@ import timber.log.Timber
 class Connected(
     beckonMesh: BeckonMesh,
     meshApi: BeckonMeshManagerApi,
-    filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
+    filteredSubject: MutableSharedFlow<ProxyFilterMessage>,
     private val beckonDevice: BeckonDevice,
 ) : MeshState(beckonMesh, meshApi) {
 
@@ -143,7 +142,7 @@ class ConnectedMeshManagerCallbacks(
 class ConnectedMessageStatusCallbacks(
     meshApi: BeckonMeshManagerApi,
     private val processor: MessageProcessor,
-    private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
+    private val filteredSubject: MutableSharedFlow<ProxyFilterMessage>,
 ) : AbstractMessageStatusCallbacks(meshApi) {
 
     private val provisionerAddress = meshApi.meshNetwork().provisionerAddress!!
@@ -161,8 +160,7 @@ class ConnectedMessageStatusCallbacks(
         Timber.d("onMeshMessageReceived ${message.info()}")
         if (verifySequenceNumber(src, message.sequenceNumber() ?: 0)) {
             runBlocking {
-                async { sendFilteredMessage(src, message) }.await()
-                async { sendToProcessor(message) }.await()
+                sendToProcessor(message)
             }
         } else {
             Timber.w("onMeshMessageReceived Duplicated sequence number ${message.info()}")
@@ -171,11 +169,7 @@ class ConnectedMessageStatusCallbacks(
     }
 
     private suspend fun sendFilteredMessage(src: Int, message: MeshMessage) {
-        if (MeshAddress.isValidGroupAddress(src)) {
-            val filteredMessage =
-                BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
-            filteredSubject.emit(filteredMessage)
-        }
+
     }
 
     private suspend fun sendToProcessor(message: MeshMessage) {
@@ -200,10 +194,18 @@ class ConnectedMessageStatusCallbacks(
 
     override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
         Timber.d("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
+
     }
 
     override fun onUnknownPduReceived(src: Int, accessPayload: ByteArray?) {
-        Timber.d("onUnknownPduReceived - src: $src, accessPayload $accessPayload")
+        Timber.d("onUnknownPduReceived - src: $src, accessPayload ${accessPayload?.toHex()}")
+        accessPayload?.let {
+            val filteredMessage = ProxyFilterMessage(UnicastAddress(src), it)
+            runBlocking {
+                filteredSubject.emit(filteredMessage)
+            }
+        }
+
     }
 
     override fun onMessageDecryptionFailed(meshLayer: String?, errorMessage: String?) {

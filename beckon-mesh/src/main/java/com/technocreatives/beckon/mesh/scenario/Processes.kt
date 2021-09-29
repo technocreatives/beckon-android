@@ -27,13 +27,13 @@ object Processes {
     ): Process =
         Process(
             listOf(
-                Delay(2000),
+                Delay(1000),
                 Provision(macAddress),
-                Delay(2000),
+                Delay(1000),
                 ConnectAfterProvisioning(nodeAddress.value),
                 Message(GetCompositionData(nodeAddress.value)),
                 Message(GetDefaultTtl(nodeAddress.value)),
-                Message(SetConfigNetworkTransmit(nodeAddress.value, 2, 1)),
+                Message(SetConfigNetworkTransmit(nodeAddress.value, 2, 2)),
                 Message(AddConfigAppKey(nodeAddress.value, netKey, appKey)),
                 Message(
                     BindAppKeyToModel(
@@ -107,4 +107,16 @@ object Processes {
             )
         }))
     }
+
+    fun connectWithProxyFilter(
+        filterType: FilterType,
+        addresses: List<PublishableAddress>
+    ) = Process(
+        listOf(
+            AutoConnect,
+            Message(SetProxyFilterType(filterType)),
+            Message(AddProxyConfigAddresses(addresses)),
+        )
+
+    )
 }

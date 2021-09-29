@@ -4,7 +4,6 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.Either
 import arrow.core.computations.either
-import arrow.core.flatMap
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.Atomic
@@ -26,9 +25,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.NetworkKey
-import no.nordicsemi.android.mesh.transport.MeshMessage
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import timber.log.Timber
+import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
@@ -86,8 +85,6 @@ class BeckonMesh(
     fun proxyFilter(): ProxyFilter? =
         meshApi.proxyFilter()
 
-    data class ProxyFilterMessage(val address: GroupAddress, val message: MeshMessage)
-
     fun proxyFilterMessages(): Flow<ProxyFilterMessage> =
         filteredMessages.asSharedFlow()
 
@@ -95,16 +92,12 @@ class BeckonMesh(
     fun createGroup(name: String, address: Int): Either<Throwable, Group> {
         val network = meshApi.meshNetwork()
         return Either.catch {
-            network.createGroup(network.selectedProvisioner, address, name)!!
-
-        }.flatMap {
-            Either.catch {
-                network.addGroup(it)
-                it
-            }
+            val group = network.createGroup(network.selectedProvisioner, address, name)!!
+            network.addGroup(group)
+            group
         }.map {
             it.transform()
-        }
+        }.mapLeft { IllegalArgumentException("${it.message} - $name, $address") }
     }
 
     fun deleteNode(nodeId: NodeId): Boolean {
@@ -229,7 +222,14 @@ class BeckonMesh(
     suspend fun scanForProxy(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
         val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
         return scan(scannerSetting)
-            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!, address) } }
+            .mapZ {
+                it.filter {
+                    it.scanRecord != null && meshApi.isNodeInTheMesh(
+                        it.scanRecord!!,
+                        address
+                    )
+                }
+            }
             .mapZ { it }
     }
 
