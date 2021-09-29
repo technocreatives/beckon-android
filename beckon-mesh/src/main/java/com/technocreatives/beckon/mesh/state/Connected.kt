@@ -85,12 +85,9 @@ class Connected(
         loaded
     }
 
-//    fun close() {
-//        processor.close()
-//    }
-
     suspend fun <T : ConfigStatusMessage> sendConfigMessage(message: ConfigMessage<T>): Either<SendAckMessageError, T> =
         bearer.sendConfigMessage(message)
+
 }
 
 suspend fun Connected.setUpAppKey(
@@ -161,6 +158,7 @@ class ConnectedMessageStatusCallbacks(
         super.onMeshMessageReceived(src, message)
         Timber.d("onMeshMessageReceived ${message.info()}")
         if (verifySequenceNumber(src, message.sequenceNumber() ?: 0)) {
+            // todo check if is GroupAddress
             val filteredMessage =
                 BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
             runBlocking {

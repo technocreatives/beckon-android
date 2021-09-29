@@ -1,6 +1,5 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.utils.toPublishableAddress
 import no.nordicsemi.android.mesh.utils.AddressArray
 import no.nordicsemi.android.mesh.utils.ProxyFilterType
 import no.nordicsemi.android.mesh.utils.ProxyFilter as NrfProxyFilter
@@ -24,7 +23,7 @@ internal fun ProxyFilterType.transform() = when (this.type) {
 }
 
 internal fun AddressArray.transform(): PublishableAddress =
-    address.toPublishableAddress()
+    PublishableAddress.from(address)
 
 
 internal fun NrfProxyFilter.transform() =

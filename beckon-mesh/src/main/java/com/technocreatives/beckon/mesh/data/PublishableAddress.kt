@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
+import com.technocreatives.beckon.mesh.utils.MeshAddress
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
@@ -9,11 +10,35 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import no.nordicsemi.android.mesh.utils.AddressArray
-import no.nordicsemi.android.mesh.utils.MeshAddress
-import java.lang.IllegalArgumentException
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 @Serializable(with = PublishableAddressSerializer::class)
-sealed interface PublishableAddress
+sealed interface PublishableAddress {
+    companion object {
+        fun from(value: Int): PublishableAddress =
+            when {
+                MeshAddress.isValidGroupAddress(value) -> {
+                    GroupAddress(value)
+                }
+                MeshAddress.isValidUnicastAddress(value) -> {
+                    UnicastAddress(value)
+                }
+                else -> {
+                    throw IllegalArgumentException("$value is not a valid PublishableAddress")
+                }
+            }
+
+        fun from(bytes: ByteArray): PublishableAddress {
+            val value = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).int
+            return when {
+                MeshAddress.isValidGroupAddress(value) -> GroupAddress(value)
+                MeshAddress.isValidUnicastAddress(value) -> UnicastAddress(value)
+                else -> throw IllegalArgumentException("Not supported $this")
+            }
+        }
+    }
+}
 
 fun PublishableAddress.value(): Int = when (this) {
     is GroupAddress -> value
@@ -27,19 +52,6 @@ internal fun PublishableAddress.toAddressArray(): AddressArray {
     return AddressArray(b1, b2)
 }
 
-private fun Int.toPublishableAddress(): PublishableAddress =
-    when {
-        MeshAddress.isValidGroupAddress(this) -> {
-            GroupAddress(this)
-        }
-        MeshAddress.isValidUnicastAddress(this) -> {
-            UnicastAddress(this)
-        }
-        else -> {
-            throw IllegalArgumentException("$this is not a valid PublishableAddress")
-        }
-    }
-
 @Serializer(forClass = Model::class)
 object PublishableAddressSerializer : KSerializer<PublishableAddress> {
     override val descriptor: SerialDescriptor
@@ -51,6 +63,6 @@ object PublishableAddressSerializer : KSerializer<PublishableAddress> {
 
     override fun deserialize(decoder: Decoder): PublishableAddress {
         val value = decoder.decodeInt()
-        return value.toPublishableAddress()
+        return PublishableAddress.from(value)
     }
 }
