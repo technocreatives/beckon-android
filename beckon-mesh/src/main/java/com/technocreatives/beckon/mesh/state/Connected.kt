@@ -97,7 +97,7 @@ suspend fun Connected.setUpAppKey(
     nodeAddress: UnicastAddress,
     netKey: NetKey,
     appKey: AppKey,
-): Either<Any, Unit> = either {
+): Either<SendAckMessageError, Unit> = either {
 
     val getCompositionData = GetCompositionData(nodeAddress.value)
     val compositionStatus = bearer.sendConfigMessage(getCompositionData).bind()
