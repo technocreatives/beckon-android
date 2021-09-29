@@ -89,122 +89,123 @@ class Connected(
 //        processor.close()
 //    }
 
-    suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, ConfigStatusMessage> =
+    suspend fun <T : ConfigStatusMessage> sendConfigMessage(message: ConfigMessage<T>): Either<SendAckMessageError, T> =
         bearer.sendConfigMessage(message)
-}
 
-suspend fun Connected.setUpAppKey(
-    nodeAddress: UnicastAddress,
-    netKey: NetKey,
-    appKey: AppKey,
-): Either<Any, Unit> = either {
+    suspend fun Connected.setUpAppKey(
+        nodeAddress: UnicastAddress,
+        netKey: NetKey,
+        appKey: AppKey,
+    ): Either<Any, Unit> = either {
 
 //    val compositionStatus = bearer.getConfigCompositionData(nodeAddress).bind()
-    val getCompositionData = GetCompositionData(nodeAddress.value)
-    val compositionStatus = bearer.sendConfigMessage(getCompositionData).bind()
-    Timber.d("getConfigCompositionData Status $compositionStatus")
+        val getCompositionData = GetCompositionData(nodeAddress.value)
+        val compositionStatus = bearer.sendConfigMessage(getCompositionData).bind()
+        Timber.d("getConfigCompositionData Status $compositionStatus")
 
 //    val defaultTtlStatus = bearer.getConfigDefaultTtl(nodeAddress).bind()
-    val getDefaultTtl = GetDefaultTtl(nodeAddress.value)
-    val defaultTtlStatus = bearer.sendConfigMessage(getDefaultTtl).bind()
-    Timber.d("getConfigDefaultTtl Status $defaultTtlStatus")
+        val getDefaultTtl = GetDefaultTtl(nodeAddress.value)
+        val defaultTtlStatus = bearer.sendConfigMessage(getDefaultTtl).bind()
+        Timber.d("getConfigDefaultTtl Status $defaultTtlStatus")
 
 //    val networkTransmitSet = ConfigNetworkTransmitSet(2, 1)
 //    val networkTransmit = bearer.setConfigNetworkTransmit(nodeAddress, networkTransmitSet).bind()
-    val networkTransmitSet = SetConfigNetworkTransmit(nodeAddress.value, 2, 1)
-    val networkTransmit = bearer.sendConfigMessage(networkTransmitSet).bind()
-    Timber.d("setConfigNetworkTransmit Status $networkTransmit")
+        val networkTransmitSet = SetConfigNetworkTransmit(nodeAddress.value, 2, 1)
+        val networkTransmit = bearer.sendConfigMessage(networkTransmitSet).bind()
+        Timber.d("setConfigNetworkTransmit Status $networkTransmit")
 
 //    val networkKey = beckonMesh.netKey(netKey.index)!!
 //    val applicationKey = beckonMesh.appKey(appKey.index)!!
 //    val configAppKeyAdd = ConfigAppKeyAdd(networkKey, applicationKey)
 //    val appKeyAddStatus = bearer.addConfigAppKey(nodeAddress, configAppKeyAdd).bind()
-    val configAppKeyAdd = AddConfigAppKey(nodeAddress.value, netKey, appKey)
+        val configAppKeyAdd = AddConfigAppKey(nodeAddress.value, netKey, appKey)
 
-    val appKeyAddStatus = bearer.sendConfigMessage(configAppKeyAdd).bind()
-    Timber.d("addConfigAppKey Status $appKeyAddStatus")
-}
-
-class ConnectedMeshManagerCallbacks(
-    private val beckonDevice: BeckonDevice,
-    private val meshApi: BeckonMeshManagerApi,
-    private val processor: MessageProcessor,
-) : AbstractMeshManagerCallbacks() {
-
-    override fun onMeshPduCreated(pdu: ByteArray) {
-        Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
-        runBlocking {
-            processor.sendPdu(Pdu(pdu))
-        }
+        val appKeyAddStatus = bearer.sendConfigMessage(configAppKeyAdd).bind()
+        Timber.d("addConfigAppKey Status $appKeyAddStatus")
     }
 
-    override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
-        runBlocking {
-            meshApi.updateNetwork()
-        }
-    }
+    class ConnectedMeshManagerCallbacks(
+        private val beckonDevice: BeckonDevice,
+        private val meshApi: BeckonMeshManagerApi,
+        private val processor: MessageProcessor,
+    ) : AbstractMeshManagerCallbacks() {
 
-    override fun getMtu(): Int {
-        return beckonDevice.getMaximumPacketSize()
-    }
-}
-
-class ConnectedMessageStatusCallbacks(
-    meshApi: BeckonMeshManagerApi,
-    private val processor: MessageProcessor,
-    private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
-) : AbstractMessageStatusCallbacks(meshApi) {
-
-    private val provisionerAddress = meshApi.meshNetwork().provisionerAddress!!
-    private val sequenceNumberMap = mutableMapOf<Int, Int>()
-
-    private fun verifySequenceNumber(src: Int, sequenceNumber: Int): Boolean =
-        if (sequenceNumber <= sequenceNumberMap[src] ?: -1) false
-        else {
-            sequenceNumberMap[src] = sequenceNumber
-            true
-        }
-
-    override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
-        super.onMeshMessageReceived(src, message)
-        Timber.d("onMeshMessageReceived ${message.info()}")
-        if (verifySequenceNumber(src, message.sequenceNumber() ?: 0)) {
-            val filteredMessage =
-                BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
+        override fun onMeshPduCreated(pdu: ByteArray) {
+            Timber.d("sendPdu - onMeshPduCreated - ${pdu.size}")
             runBlocking {
-                filteredSubject.emit(filteredMessage)
-                val dst = filteredMessage.message.dst
-                if (dst == provisionerAddress || dst == UnassignedAddress.value) {
-                    processor.messageReceived(message)
-                } else {
-                    Timber.w("onMeshMessageReceived, filtered message from processor with dst: $dst")
-                }
+                processor.sendPdu(Pdu(pdu))
             }
-        } else {
-            Timber.w("onMeshMessageReceived Duplicated sequence number ${message.info()}")
+        }
+
+        override fun onNetworkUpdated(meshNetwork: MeshNetwork) {
+            runBlocking {
+                meshApi.updateNetwork()
+            }
+        }
+
+        override fun getMtu(): Int {
+            return beckonDevice.getMaximumPacketSize()
         }
     }
 
-    override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
-        Timber.d("onMeshMessageProcessed - src: $dst, dst: ${meshMessage.dst},  sequenceNumber: ${meshMessage.sequenceNumber()}")
-        runBlocking {
-            processor.messageProcessed(meshMessage)
+    class ConnectedMessageStatusCallbacks(
+        meshApi: BeckonMeshManagerApi,
+        private val processor: MessageProcessor,
+        private val filteredSubject: MutableSharedFlow<BeckonMesh.ProxyFilterMessage>,
+    ) : AbstractMessageStatusCallbacks(meshApi) {
+
+        private val provisionerAddress = meshApi.meshNetwork().provisionerAddress!!
+        private val sequenceNumberMap = mutableMapOf<Int, Int>()
+
+        private fun verifySequenceNumber(src: Int, sequenceNumber: Int): Boolean =
+            if (sequenceNumber <= sequenceNumberMap[src] ?: -1) false
+            else {
+                sequenceNumberMap[src] = sequenceNumber
+                true
+            }
+
+        override fun onMeshMessageReceived(src: Int, message: MeshMessage) {
+            super.onMeshMessageReceived(src, message)
+            Timber.d("onMeshMessageReceived ${message.info()}")
+            if (verifySequenceNumber(src, message.sequenceNumber() ?: 0)) {
+                val filteredMessage =
+                    BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
+                runBlocking {
+                    filteredSubject.emit(filteredMessage)
+                    val dst = filteredMessage.message.dst
+                    if (dst == provisionerAddress || dst == UnassignedAddress.value) {
+                        processor.messageReceived(message)
+                    } else {
+                        Timber.w("onMeshMessageReceived, filtered message from processor with dst: $dst")
+                    }
+                }
+            } else {
+                Timber.w("onMeshMessageReceived Duplicated sequence number ${message.info()}")
+            }
+        }
+
+        override fun onMeshMessageProcessed(dst: Int, meshMessage: MeshMessage) {
+            Timber.d("onMeshMessageProcessed - src: $dst, dst: ${meshMessage.dst},  sequenceNumber: ${meshMessage.sequenceNumber()}")
+            runBlocking {
+                processor.messageProcessed(meshMessage)
+            }
+        }
+
+        override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
+            Timber.d("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.toInt()}")
+        }
+
+        override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
+            Timber.d("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
+        }
+
+        override fun onUnknownPduReceived(src: Int, accessPayload: ByteArray?) {
+            Timber.d("onUnknownPduReceived - src: $src, accessPayload $accessPayload")
+        }
+
+        override fun onMessageDecryptionFailed(meshLayer: String?, errorMessage: String?) {
+            Timber.d("onUnknownPduReceived - meshLayer: $meshLayer, errorMessage $errorMessage")
         }
     }
 
-    override fun onBlockAcknowledgementProcessed(dst: Int, message: ControlMessage) {
-        Timber.d("onBlockAcknowledgementProcessed - dst: $dst, src: ${message.src}, sequenceNumber: ${message.sequenceNumber.toInt()}")
-    }
-
-    override fun onBlockAcknowledgementReceived(src: Int, message: ControlMessage) {
-        Timber.d("onBlockAcknowledgementReceived - src: $src, dst: ${message.dst}, sequenceNumber: ${message.sequenceNumber.toInt()}")
-    }
-
-    override fun onUnknownPduReceived(src: Int, accessPayload: ByteArray?) {
-        Timber.d("onUnknownPduReceived - src: $src, accessPayload $accessPayload")
-    }
-
-    override fun onMessageDecryptionFailed(meshLayer: String?, errorMessage: String?) {
-        Timber.d("onUnknownPduReceived - meshLayer: $meshLayer, errorMessage $errorMessage")
-    }
 }

@@ -1,13 +1,15 @@
 package com.technocreatives.beckon.mesh.message
 
-import no.nordicsemi.android.mesh.transport.ConfigStatusMessage
+import kotlinx.serialization.Serializable
+import no.nordicsemi.android.mesh.transport.ConfigStatusMessage as NrfConfigStatusMessage
 
+@Serializable
 data class ConfigMessageStatus(
     override val dst: Int,
     override val src: Int,
     val isSuccess: Boolean,
     val statusCode: Int,
-) : com.technocreatives.beckon.mesh.message.ConfigStatusMessage
+) : ConfigStatusMessage()
 
-internal fun ConfigStatusMessage.transform() =
+internal fun NrfConfigStatusMessage.transform() =
     ConfigMessageStatus(dst, src, statusCode == 0x00, statusCode)

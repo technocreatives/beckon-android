@@ -42,7 +42,12 @@ data class Mesh(
         val VERSION = "1.0.0"
 
         private val format by lazy { Json { encodeDefaults = true; explicitNulls = false } }
-        private val prettyFormat by lazy { Json { encodeDefaults = true; explicitNulls = false; prettyPrint = true } }
+        private val prettyFormat by lazy {
+            Json {
+                encodeDefaults = true; explicitNulls = false; prettyPrint = true
+            }
+        }
+
         fun fromJson(json: String) =
             Either.catch { format.decodeFromString<Mesh>(json) }
 
@@ -128,7 +133,23 @@ data class Mesh(
                     Key(SecureUtils.generateRandomNumber())
                 )
             )
+
+        fun randomAppKey(appKeyIndex: Int, netKeyIndex: Int) =
+            AppKey(
+                "AppKey $appKeyIndex",
+                AppKeyIndex(appKeyIndex),
+                NetKeyIndex(netKeyIndex),
+                Key(SecureUtils.generateRandomNumber())
+            )
+
+        fun randomNetKey(appKeyIndex: Int, netKeyIndex: Int) =
+            NetKey(
+                "NetKey $netKeyIndex",
+                NetKeyIndex(netKeyIndex),
+                Key(SecureUtils.generateRandomNumber())
+            )
     }
+
 
 }
 

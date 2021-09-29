@@ -100,12 +100,21 @@ class MessageBearer(private val processor: MessageProcessor) {
             message
         )
 
-    suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, ConfigStatusMessage> {
+    suspend fun <T : ConfigStatusMessage> sendConfigMessage(message: ConfigMessage<T>): Either<SendAckMessageError, T> {
         Timber.d("Send $message")
         val response =
             sendAckMessage(message.dst, message.toMeshMessage(), message.responseOpCode.value)
-                .map { message.responseOpCode.convert(it) }
+                .map { message.fromResponse(it) }
         Timber.d("Received $response")
         return response
     }
+
+//    suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, ConfigStatusMessage> {
+//        Timber.d("Send $message")
+//        val response =
+//            sendAckMessage(message.dst, message.toMeshMessage(), message.responseOpCode.value)
+//                .map { message.responseOpCode.convert(it) }
+//        Timber.d("Received $response")
+//        return response
+//    }
 }

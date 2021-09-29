@@ -1,9 +1,33 @@
 package com.technocreatives.beckon.mesh.message
 
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
 
+@Serializer(forClass = StatusOpCode::class)
+object StatusOpCodeSerializer : KSerializer<StatusOpCode> {
+
+    override val descriptor: SerialDescriptor
+        get() = PrimitiveSerialDescriptor("StatusOpCode", PrimitiveKind.INT)
+
+    override fun deserialize(decoder: Decoder): StatusOpCode {
+        return StatusOpCode.from(decoder.decodeInt())
+    }
+
+    override fun serialize(encoder: Encoder, obj: StatusOpCode) {
+        encoder.encodeInt(obj.value)
+    }
+}
+
+@Serializable(with = StatusOpCodeSerializer::class)
 enum class StatusOpCode(val value: Int) {
     ConfigComposition(2), // ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
     ConfigDefaultTtl(ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS),
@@ -20,16 +44,4 @@ enum class StatusOpCode(val value: Int) {
         fun from(value: Int): StatusOpCode = values().first { it.value == value }
     }
 
-    fun convert(message: MeshMessage): ConfigStatusMessage =
-        when (from(message.opCode)) {
-            ConfigComposition -> (message as ConfigCompositionDataStatus).transform()
-            ConfigDefaultTtl -> (message as ConfigDefaultTtlStatus).transform()
-            ConfigNetworkSet -> (message as ConfigNetworkTransmitStatus).transform()
-            ConfigAppKey -> (message as ConfigAppKeyStatus).transform()
-            ConfigModelApp -> (message as ConfigModelAppStatus).transform()
-            ConfigModelSubscription -> (message as ConfigModelSubscriptionStatus).transform()
-            ConfigModelPublication -> (message as ConfigModelPublicationStatus).transform()
-            ConfigNodeReset -> (message as ConfigNodeResetStatus).transform()
-            ProxyFilterType ->  (message as ProxyConfigFilterStatus).transform()
-        }
 }

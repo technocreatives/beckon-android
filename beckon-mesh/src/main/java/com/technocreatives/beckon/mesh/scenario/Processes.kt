@@ -47,9 +47,6 @@ object Processes {
             )
         )
 
-    fun bindAppKeyToModels() {
-
-    }
     fun bindAppKeyToModels(
         addresses: List<UnicastAddress>,
         modelId: ModelId,
