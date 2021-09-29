@@ -4,11 +4,6 @@ import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.data.Element
 import no.nordicsemi.android.mesh.transport.*
 
-//sealed interface BeckonMessage {
-//    val dst: Int
-//    fun toMeshMessage(): MeshMessage
-//}
-
 sealed interface ConfigMessage {
     val responseOpCode: StatusOpCode
     val dst: Int
@@ -135,7 +130,7 @@ data class ClearConfigModelPublication(
     override fun toMeshMessage() = ConfigModelPublicationSet(elementAddress, modelId)
 }
 
-sealed interface BeckonStatusMessage {
+sealed interface ConfigStatusMessage {
     val dst: Int
     val src: Int
 }
@@ -150,7 +145,7 @@ data class GetCompositionDataResponse(
     val companyIdentifier: Int?,
     val productIdentifier: Int?,
     val versionIdentifier: Int?,
-) : BeckonStatusMessage
+) : ConfigStatusMessage
 
 internal fun ConfigCompositionDataStatus.transform(): GetCompositionDataResponse {
     val features = Features(
@@ -178,7 +173,7 @@ data class ConfigDefaultTtlResponse(
     override val src: Int,
     val statusCode: Int,
     val ttl: Int,
-) : BeckonStatusMessage
+) : ConfigStatusMessage
 
 internal fun ConfigDefaultTtlStatus.transform() = ConfigDefaultTtlResponse(
     dst,
@@ -193,7 +188,7 @@ data class ConfigNetworkTransmitResponse(
     val statusCode: Int,
     val count: Int,
     val steps: Int,
-) : BeckonStatusMessage
+) : ConfigStatusMessage
 
 internal fun ConfigNetworkTransmitStatus.transform() =
     ConfigNetworkTransmitResponse(
@@ -210,7 +205,7 @@ data class ConfigAppKeyResponse(
     val statusCode: Int,
     val netKeyIndex: NetKeyIndex,
     val appKeyIndex: AppKeyIndex,
-) : BeckonStatusMessage
+) : ConfigStatusMessage
 
 internal fun ConfigAppKeyStatus.transform() =
     ConfigAppKeyResponse(
@@ -228,7 +223,7 @@ data class ConfigModelSubscriptionResponse(
     val elementAddress: Int,
     val subscriptionAddress: Int,
     val modelId: Int
-) : BeckonStatusMessage
+) : ConfigStatusMessage
 
 internal fun ConfigModelSubscriptionStatus.transform() =
     ConfigModelSubscriptionResponse(

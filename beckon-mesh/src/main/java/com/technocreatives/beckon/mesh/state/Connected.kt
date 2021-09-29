@@ -89,7 +89,7 @@ class Connected(
 //        processor.close()
 //    }
 
-    suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, BeckonStatusMessage> =
+    suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, ConfigStatusMessage> =
         bearer.sendConfigMessage(message)
 }
 
