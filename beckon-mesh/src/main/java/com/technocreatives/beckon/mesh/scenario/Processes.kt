@@ -27,9 +27,9 @@ object Processes {
     ): Process =
         Process(
             listOf(
-//                Delay(1000),
+                Delay(2000),
                 Provision(macAddress),
-//                Delay(1000),
+                Delay(2000),
                 ConnectAfterProvisioning(nodeAddress.value),
                 Message(GetCompositionData(nodeAddress.value)),
                 Message(GetDefaultTtl(nodeAddress.value)),
@@ -56,7 +56,7 @@ object Processes {
             addresses.map { Message(BindAppKeyToModel(it.value, it, modelId, appKeyIndex)) }
         )
 
-    fun createGroupAndByModelsToIt(
+    fun createGroupAndBindModelsToIt(
         groupName: String,
         groupAddress: GroupAddress,
         addresses: List<UnicastAddress>,
@@ -70,6 +70,39 @@ object Processes {
                     it.value,
                     groupAddress.value,
                     modelId.value
+                )
+            )
+        }))
+    }
+
+    fun createProvisionerGroupAndSetPublication(
+        groupName: String,
+        groupAddress: GroupAddress,
+        addresses: List<UnicastAddress>,
+        modelId: ModelId,
+        appKeyIndex: AppKeyIndex,
+        credentialFlag: Boolean = false,
+        publishTtl: Int = 127,
+        publicationSteps: Int = 0,
+        publicationResolution: Int = 0,
+        retransmitCount: Int = 1,
+        retransmitIntervalSteps: Int = 1,
+    ): Process {
+        val createGroup = CreateGroup(groupAddress, groupName)
+        return Process(createGroup.prependTo(addresses.map {
+            Message(
+                SetConfigModelPublication(
+                    it.value,
+                    it.value,
+                    groupAddress.value,
+                    appKeyIndex.value,
+                    credentialFlag,
+                    publishTtl,
+                    publicationSteps,
+                    publicationResolution,
+                    retransmitCount,
+                    retransmitIntervalSteps,
+                    modelId.value,
                 )
             )
         }))
