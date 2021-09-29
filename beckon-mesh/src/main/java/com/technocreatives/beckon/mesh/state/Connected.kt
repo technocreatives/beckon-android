@@ -15,7 +15,9 @@ import com.technocreatives.beckon.mesh.message.*
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
+import com.technocreatives.beckon.mesh.utils.MeshAddress
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
@@ -158,20 +160,30 @@ class ConnectedMessageStatusCallbacks(
         super.onMeshMessageReceived(src, message)
         Timber.d("onMeshMessageReceived ${message.info()}")
         if (verifySequenceNumber(src, message.sequenceNumber() ?: 0)) {
-            // todo check if is GroupAddress
-            val filteredMessage =
-                BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
             runBlocking {
-                filteredSubject.emit(filteredMessage)
-                val dst = filteredMessage.message.dst
-                if (dst == provisionerAddress || dst == UnassignedAddress.value) {
-                    processor.messageReceived(message)
-                } else {
-                    Timber.w("onMeshMessageReceived, filtered message from processor with dst: $dst")
-                }
+                async { sendFilteredMessage(src, message) }.await()
+                async { sendToProcessor(message) }.await()
             }
         } else {
             Timber.w("onMeshMessageReceived Duplicated sequence number ${message.info()}")
+        }
+
+    }
+
+    private suspend fun sendFilteredMessage(src: Int, message: MeshMessage) {
+        if (MeshAddress.isValidGroupAddress(src)) {
+            val filteredMessage =
+                BeckonMesh.ProxyFilterMessage(GroupAddress(message.dst), message)
+            filteredSubject.emit(filteredMessage)
+        }
+    }
+
+    private suspend fun sendToProcessor(message: MeshMessage) {
+        val dst = message.dst
+        if (dst == provisionerAddress || dst == UnassignedAddress.value) {
+            processor.messageReceived(message)
+        } else {
+            Timber.w("onMeshMessageReceived, filtered message from processor with dst: $dst")
         }
     }
 
