@@ -27,9 +27,9 @@ object Processes {
     ): Process =
         Process(
             listOf(
-                Delay(1000),
+                Delay(2000),
                 Provision(macAddress),
-                Delay(1000),
+                Delay(2000),
                 ConnectAfterProvisioning(nodeAddress.value),
                 Message(GetCompositionData(nodeAddress.value)),
                 Message(GetDefaultTtl(nodeAddress.value)),

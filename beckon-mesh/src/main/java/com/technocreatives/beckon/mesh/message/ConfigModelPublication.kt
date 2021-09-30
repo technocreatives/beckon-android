@@ -25,7 +25,7 @@ data class ConfigModelPublication(
 suspend fun Connected.setConfigModelPublication(
     nodeAddress: UnicastAddress,
     message: ConfigModelPublication
-): Either<SendAckMessageError, ConfigModelPublicationStatus> {
+): Either<SendAckMessageError, ConfigModelPublicationResponse> {
     val configMessage = SetConfigModelPublication(
         nodeAddress.value,
         message.elementAddress.value,
@@ -42,16 +42,14 @@ suspend fun Connected.setConfigModelPublication(
 
     return bearer.sendConfigMessage(
         configMessage
-    ).map {
-        it as ConfigModelPublicationStatus
-    }
+    )
 }
 
 suspend fun Connected.clearConfigModelPublication(
     nodeAddress: UnicastAddress,
     elementAddress: UnicastAddress,
     modelId: ModelId
-): Either<SendAckMessageError, ConfigModelPublicationStatus> {
+): Either<SendAckMessageError, ConfigModelPublicationResponse> {
 
     val configMessage = ClearConfigModelPublication(
         nodeAddress.value,
@@ -61,16 +59,14 @@ suspend fun Connected.clearConfigModelPublication(
 
     return bearer.sendConfigMessage(
         configMessage
-    ).map {
-        it as ConfigModelPublicationStatus
-    }
+    )
 }
 
 suspend fun Connected.getConfigModelPublication(
     nodeAddress: UnicastAddress,
     elementAddress: UnicastAddress,
     modelId: ModelId,
-): Either<SendAckMessageError, ConfigModelPublicationStatus> {
+): Either<SendAckMessageError, ConfigModelPublicationResponse> {
 
     val configMessage = GetConfigModelPublication(
         nodeAddress.value,
@@ -80,7 +76,5 @@ suspend fun Connected.getConfigModelPublication(
 
     return bearer.sendConfigMessage(
         configMessage
-    ).map {
-        it as ConfigModelPublicationStatus
-    }
+    )
 }

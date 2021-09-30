@@ -110,6 +110,7 @@ data class RemoveConfigModelSubscription(
     override val responseOpCode = StatusOpCode.ConfigModelSubscription
     override fun toMeshMessage() =
         ConfigModelSubscriptionDelete(elementAddress, subscriptionAddress, modelId)
+
     override fun fromResponse(message: MeshMessage): ConfigModelSubscriptionResponse =
         (message as ConfigModelSubscriptionStatus).transform()
 
@@ -123,10 +124,10 @@ data class GetConfigModelPublication(
     override val dst: Int,
     val elementAddress: Int,
     val modelId: Int,
-) : ConfigMessage<ConfigMessageStatus>() {
+) : ConfigMessage<ConfigModelPublicationResponse>() {
     override val responseOpCode = StatusOpCode.ConfigModelPublication
     override fun toMeshMessage() = ConfigModelPublicationGet(elementAddress, modelId)
-    override fun fromResponse(message: MeshMessage): ConfigMessageStatus =
+    override fun fromResponse(message: MeshMessage): ConfigModelPublicationResponse =
         (message as ConfigModelPublicationStatus).transform()
 }
 
@@ -144,7 +145,7 @@ data class SetConfigModelPublication(
     val retransmitCount: Int,
     val retransmitIntervalSteps: Int,
     val modelId: Int
-) : ConfigMessage<ConfigMessageStatus>() {
+) : ConfigMessage<ConfigModelPublicationResponse>() {
     override val responseOpCode = StatusOpCode.ConfigModelPublication
     override fun toMeshMessage() = ConfigModelPublicationSet(
         elementAddress,
@@ -159,7 +160,7 @@ data class SetConfigModelPublication(
         modelId
     )
 
-    override fun fromResponse(message: MeshMessage): ConfigMessageStatus =
+    override fun fromResponse(message: MeshMessage): ConfigModelPublicationResponse =
         (message as ConfigModelPublicationStatus).transform()
 
     operator fun not() =
@@ -173,11 +174,11 @@ data class ClearConfigModelPublication(
     override val dst: Int,
     val elementAddress: Int,
     val modelId: Int,
-) : ConfigMessage<ConfigMessageStatus>() {
+) : ConfigMessage<ConfigModelPublicationResponse>() {
     override val responseOpCode = StatusOpCode.ConfigModelPublication
     override fun toMeshMessage() = ConfigModelPublicationSet(elementAddress, modelId)
 
-    override fun fromResponse(message: MeshMessage): ConfigMessageStatus =
+    override fun fromResponse(message: MeshMessage): ConfigModelPublicationResponse =
         (message as ConfigModelPublicationStatus).transform()
 }
 
@@ -186,6 +187,37 @@ sealed class ConfigStatusMessage {
     abstract val dst: Int
     abstract val src: Int
 }
+
+@Serializable
+data class ConfigModelPublicationResponse(
+    override val dst: Int,
+    override val src: Int,
+    val mElementAddress: UnicastAddress,
+    val publish: Publish,
+    val modelId: ModelId
+) : ConfigStatusMessage()
+
+internal fun ConfigModelPublicationStatus.transform() =
+    ConfigModelPublicationResponse(
+        dst,
+        src,
+        UnicastAddress(elementAddress),
+        Publish(
+            address = GroupAddress(publishAddress),
+            index = AppKeyIndex(appKeyIndex),
+            period = Period(
+                numberOfSteps = publicationSteps,
+                resolution = publicationResolution
+            ),
+            credentialsFlag = credentialFlag,
+            ttl = publishTtl,
+            retransmit = Retransmit(
+                publishRetransmitCount,
+                publishRetransmitIntervalSteps
+            )
+        ),
+        modelId = ModelId(modelIdentifier)
+    )
 
 @Serializable
 data class GetCompositionDataResponse(
@@ -277,9 +309,9 @@ data class ConfigModelSubscriptionResponse(
     override val dst: Int,
     override val src: Int,
     val statusCode: Int,
-    val elementAddress: Int,
-    val subscriptionAddress: Int,
-    val modelId: Int
+    val elementAddress: UnicastAddress,
+    val subscriptionAddress: SubscriptionAddress,
+    val modelId: ModelId
 ) : ConfigStatusMessage()
 
 internal fun ConfigModelSubscriptionStatus.transform() =
@@ -287,9 +319,9 @@ internal fun ConfigModelSubscriptionStatus.transform() =
         dst,
         src,
         statusCode,
-        elementAddress,
-        subscriptionAddress,
-        modelIdentifier
+        UnicastAddress(elementAddress),
+        GroupAddress(subscriptionAddress),
+        ModelId(modelIdentifier)
     )
 
 private fun Boolean.toFeature() = if (this) 1 else 2
