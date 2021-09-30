@@ -79,30 +79,17 @@ object Processes {
         groupName: String,
         groupAddress: GroupAddress,
         addresses: List<UnicastAddress>,
+        publish: Publish,
         modelId: ModelId,
-        appKeyIndex: AppKeyIndex,
-        credentialFlag: Boolean = false,
-        publishTtl: Int = 127,
-        publicationSteps: Int = 0,
-        publicationResolution: Int = 0,
-        retransmitCount: Int = 1,
-        retransmitIntervalSteps: Int = 1,
     ): Process {
         val createGroup = CreateGroup(groupAddress, groupName)
         return Process(createGroup.prependTo(addresses.map {
             Message(
                 SetConfigModelPublication(
                     it.value,
-                    it.value,
-                    groupAddress.value,
-                    appKeyIndex.value,
-                    credentialFlag,
-                    publishTtl,
-                    publicationSteps,
-                    publicationResolution,
-                    retransmitCount,
-                    retransmitIntervalSteps,
-                    modelId.value,
+                    it,
+                    publish,
+                    modelId,
                 )
             )
         }))

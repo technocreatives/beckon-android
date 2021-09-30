@@ -122,11 +122,11 @@ data class RemoveConfigModelSubscription(
 @SerialName("GetConfigModelPublication")
 data class GetConfigModelPublication(
     override val dst: Int,
-    val elementAddress: Int,
-    val modelId: Int,
+    val elementAddress: UnicastAddress,
+    val modelId: ModelId
 ) : ConfigMessage<ConfigModelPublicationResponse>() {
     override val responseOpCode = StatusOpCode.ConfigModelPublication
-    override fun toMeshMessage() = ConfigModelPublicationGet(elementAddress, modelId)
+    override fun toMeshMessage() = ConfigModelPublicationGet(elementAddress.value, modelId.value)
     override fun fromResponse(message: MeshMessage): ConfigModelPublicationResponse =
         (message as ConfigModelPublicationStatus).transform()
 }
@@ -135,29 +135,22 @@ data class GetConfigModelPublication(
 @SerialName("SetConfigModelPublication")
 data class SetConfigModelPublication(
     override val dst: Int,
-    val elementAddress: Int,
-    val publishAddress: Int,
-    val appKeyIndex: Int,
-    val credentialFlag: Boolean,
-    val publishTtl: Int,
-    val publicationSteps: Int,
-    val publicationResolution: Int,
-    val retransmitCount: Int,
-    val retransmitIntervalSteps: Int,
-    val modelId: Int
+    val elementAddress: UnicastAddress,
+    val publish: Publish,
+    val modelId: ModelId
 ) : ConfigMessage<ConfigModelPublicationResponse>() {
     override val responseOpCode = StatusOpCode.ConfigModelPublication
     override fun toMeshMessage() = ConfigModelPublicationSet(
-        elementAddress,
-        publishAddress,
-        appKeyIndex,
-        credentialFlag,
-        publishTtl,
-        publicationSteps,
-        publicationResolution,
-        retransmitCount,
-        retransmitIntervalSteps,
-        modelId
+        elementAddress.value,
+        publish.address.value,
+        publish.index.value,
+        publish.credentialsFlag,
+        publish.ttl,
+        publish.period.numberOfSteps,
+        publish.period.resolution,
+        publish.retransmit.count,
+        publish.retransmit.interval,
+        modelId.value
     )
 
     override fun fromResponse(message: MeshMessage): ConfigModelPublicationResponse =
@@ -172,11 +165,11 @@ data class SetConfigModelPublication(
 @SerialName("ClearConfigModelPublication")
 data class ClearConfigModelPublication(
     override val dst: Int,
-    val elementAddress: Int,
-    val modelId: Int,
+    val elementAddress: UnicastAddress,
+    val modelId: ModelId,
 ) : ConfigMessage<ConfigModelPublicationResponse>() {
     override val responseOpCode = StatusOpCode.ConfigModelPublication
-    override fun toMeshMessage() = ConfigModelPublicationSet(elementAddress, modelId)
+    override fun toMeshMessage() = ConfigModelPublicationSet(elementAddress.value, modelId.value)
 
     override fun fromResponse(message: MeshMessage): ConfigModelPublicationResponse =
         (message as ConfigModelPublicationStatus).transform()
