@@ -92,7 +92,10 @@ data class ConnectAfterProvisioning(val address: Int) : Step {
             .mapEither {
                 Timber.d("Scenario execute try to connect to $it")
                 stopScan()
-                connectForProxy(it.macAddress)
+                val retry = RepeatRetry(3)
+                retry {
+                    connectForProxy(it.macAddress)
+                }
             }
             .first().bind()
         startConnectedState(beckonDevice).bind()
@@ -109,7 +112,10 @@ data class Connect(val address: MacAddress) : Step {
             .mapEither {
                 Timber.d("Scenario execute try to connect to $it")
                 stopScan()
-                connectForProxy(it.macAddress)
+                val retry = RepeatRetry(3)
+                retry {
+                    connectForProxy(it.macAddress)
+                }
             }
             .first().bind()
         startConnectedState(beckonDevice).bind()
