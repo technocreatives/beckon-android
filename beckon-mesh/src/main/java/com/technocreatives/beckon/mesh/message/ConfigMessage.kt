@@ -8,11 +8,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
 import no.nordicsemi.android.mesh.transport.*
 
-
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
 @JsonClassDiscriminator("type")
-sealed class ConfigMessage<T : ConfigStatusMessage> {
+sealed class ConfigMessage<out T : ConfigStatusMessage> {
     abstract val responseOpCode: StatusOpCode
     abstract val dst: Int
     abstract fun toMeshMessage(): MeshMessage
