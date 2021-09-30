@@ -8,10 +8,8 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
-import com.technocreatives.beckon.mesh.data.AppKey
 import com.technocreatives.beckon.mesh.data.GroupAddress
-import com.technocreatives.beckon.mesh.data.NetKey
-import com.technocreatives.beckon.mesh.message.*
+import com.technocreatives.beckon.mesh.message.ConfigMessage
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
@@ -115,36 +113,17 @@ data class Connect(val address: MacAddress) : Step {
     }
 }
 
-data class Process(val steps: List<Step>) {
+data class Process(
+    val steps: List<Step>,
+    val retry: Retry = RepeatRetry(3),
+) {
+
     suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
         Timber.d("Process start with ${steps.size} steps")
         val start = System.nanoTime()
-        val results = steps.traverseStep { with(it) { execute() } }.bind()
+        val results = steps.traverseStep(retry) { with(it) { execute() } }.bind()
         val end = System.nanoTime()
         Timber.d("Process end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
-    }
-
-
-    companion object {
-        fun provisionCase(
-            macAddress: MacAddress,
-            nodeAddress: Int,
-            netKey: NetKey,
-            appKey: AppKey
-        ) =
-            Process(
-                listOf(
-                    Delay(1000),
-                    Provision(macAddress),
-                    Delay(1000),
-                    ConnectAfterProvisioning(nodeAddress),
-                    Message(GetCompositionData(nodeAddress)),
-                    Message(GetDefaultTtl(nodeAddress)),
-                    Message(SetConfigNetworkTransmit(nodeAddress, 2, 1)),
-                    Message(AddConfigAppKey(nodeAddress, netKey, appKey)),
-                    Disconnect,
-                )
-            )
     }
 }
 
@@ -159,11 +138,14 @@ data class Scenario(val processes: List<Process>) {
     }
 }
 
-inline fun <E, A, B> List<A>.traverseStep(f: (A) -> Either<E, B>): Either<E, List<B>> {
+suspend inline fun <E, A, B> List<A>.traverseStep(
+    retry: Retry,
+    crossinline f: suspend (A) -> Either<E, B>,
+): Either<E, List<B>> {
     val destination = ArrayList<B>(size)
     forEachIndexed { index, item ->
         Timber.d("Execute Step ${index + 1} - $item")
-        when (val res = f(item)) {
+        when (val res = retry { f(item) }) {
             is Either.Right -> destination.add(res.value)
             is Either.Left -> return res
         }
