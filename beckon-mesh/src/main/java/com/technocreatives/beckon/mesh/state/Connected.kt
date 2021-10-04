@@ -15,9 +15,10 @@ import com.technocreatives.beckon.mesh.message.*
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
-import com.technocreatives.beckon.mesh.utils.MeshAddress
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.ControlMessage
@@ -200,8 +201,8 @@ class ConnectedMessageStatusCallbacks(
     override fun onUnknownPduReceived(src: Int, accessPayload: ByteArray?) {
         Timber.d("onUnknownPduReceived - src: $src, accessPayload ${accessPayload?.toHex()}")
         accessPayload?.let {
-            val filteredMessage = ProxyFilterMessage(UnicastAddress(src), it)
-            runBlocking {
+            val filteredMessage = ProxyFilterMessage(UnicastAddress(src), AccessPayload.parse(it))
+            GlobalScope.launch {
                 filteredSubject.emit(filteredMessage)
             }
         }

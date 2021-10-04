@@ -38,11 +38,22 @@ class ConfigMessageSerializationTest : StringSpec({
             DeleteConfigAppKey(1, netKey, appKey),
             AddConfigModelSubscription(1, 2, 3, 4),
             RemoveConfigModelSubscription(1, 2, 3, 4),
-            GetConfigModelPublication(1, 2, 3),
+            GetConfigModelPublication(1, UnicastAddress(2), ModelId(3)),
             AddProxyConfigAddresses(listOf(GroupAddress(0xc000))),
-            SetConfigModelPublication(1, 2, 3, 4, true, 1, 2, 3, 4, 5, 10),
+            SetConfigModelPublication(
+                1, UnicastAddress(2), Publish(
+                    GroupAddress(1),
+                    AppKeyIndex(1),
+                    Period(1, 1),
+                    false,
+                    127,
+                    Retransmit(1, 1)
+
+
+                ), ModelId(10)
+            ),
             SetProxyFilterType(FilterType.EXCLUSION),
-            ClearConfigModelPublication(1, 2, 3),
+            ClearConfigModelPublication(1, UnicastAddress(2), ModelId(3)),
             BindAppKeyToModel(1, UnicastAddress(12), ModelId(12), AppKeyIndex(1)),
             UnbindAppKeyToModel(1, UnicastAddress(12), ModelId(12), AppKeyIndex(1)),
             ResetNode(1),
