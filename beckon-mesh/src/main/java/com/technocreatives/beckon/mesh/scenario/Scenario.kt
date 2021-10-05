@@ -2,14 +2,18 @@ package com.technocreatives.beckon.mesh.scenario
 
 import arrow.core.Either
 import arrow.core.computations.either
+import arrow.core.left
 import arrow.core.right
 import arrow.core.traverseEither
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
+import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.message.ConfigMessage
+import com.technocreatives.beckon.mesh.message.GetCompositionData
+import com.technocreatives.beckon.mesh.message.StatusOpCode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
@@ -20,6 +24,7 @@ import timber.log.Timber
 
 sealed interface Step {
     suspend fun BeckonMesh.execute(): Either<Any, Unit>
+    suspend fun BeckonMesh.execute1(): Either<StepError, StepResult> = StepError.ConnectStepError.left()
 }
 
 data class Provision(val address: MacAddress) : Step {
@@ -102,6 +107,26 @@ data class ConnectAfterProvisioning(val address: Int) : Step {
     }
 }
 
+class MessageAndOnErrorAction(val message: ConfigMessage<*>, val action: () -> Unit)
+
+val messages: List<MessageAndOnErrorAction> = TODO()
+fun onError(message: StepError.MessageStepError) {
+
+   messages.firstOrNull {it.message == message.message}?.let {
+       it.action()
+   }
+}
+
+sealed interface StepError {
+    data class MessageStepError(val error: SendAckMessageError, val message: ConfigMessage<*>) : StepError
+    object ConnectStepError : StepError
+}
+
+sealed interface StepResult {
+    object MessageStepError : StepResult
+    object ConnectStepError : StepResult
+}
+
 data class Connect(val address: MacAddress) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
         val beckonDevice = scanForProxy { false }
@@ -122,6 +147,11 @@ data class Connect(val address: MacAddress) : Step {
     }
 }
 
+suspend fun da(beckonMesh: BeckonMesh) {
+    with(Process(emptyList())) {
+        beckonMesh.execute1()
+    }
+}
 data class Process(
     val steps: List<Step>,
     val retry: Retry = RepeatRetry(3),
@@ -133,6 +163,15 @@ data class Process(
         val results = steps.traverseStep(retry) { with(it) { execute() } }.bind()
         val end = System.nanoTime()
         Timber.d("Process end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
+    }
+
+    suspend fun BeckonMesh.execute1(): Either<StepError, List<StepResult>> = either {
+        Timber.d("Process start with ${steps.size} steps")
+        val start = System.nanoTime()
+        val results = steps.traverseStep(retry) { with(it) { execute1() } }.bind()
+        val end = System.nanoTime()
+        Timber.d("Process end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
+        results
     }
 }
 
@@ -147,7 +186,7 @@ data class Scenario(val processes: List<Process>) {
     }
 }
 
-suspend inline fun <E, A, B> List<A>.traverseStep(
+private suspend inline fun <E, A, B> List<A>.traverseStep(
     retry: Retry,
     crossinline f: suspend (A) -> Either<E, B>,
 ): Either<E, List<B>> {

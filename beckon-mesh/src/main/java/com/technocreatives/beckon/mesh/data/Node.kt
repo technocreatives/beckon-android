@@ -28,6 +28,7 @@ data class Node(
     @SerialName("vid")
     @Serializable(with = VersionCompositionToIntSerializer::class)
     val versionIdentifier: Int? = null,
+    @Serializable(with = HexToIntSerializer::class)
     val crpl: Int? = null,
     val features: Features? = null,
     val defaultTTL: Int,

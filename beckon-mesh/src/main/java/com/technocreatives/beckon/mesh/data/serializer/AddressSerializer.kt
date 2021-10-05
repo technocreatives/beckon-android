@@ -16,7 +16,7 @@ object AddressSerializer : KSerializer<AddressValue> {
         get() = PrimitiveSerialDescriptor("Address", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: AddressValue) {
-        encoder.encodeString(value.value.toString(16))
+        encoder.encodeString(String.format("%04X", value.value))
     }
 
     override fun deserialize(decoder: Decoder): AddressValue {

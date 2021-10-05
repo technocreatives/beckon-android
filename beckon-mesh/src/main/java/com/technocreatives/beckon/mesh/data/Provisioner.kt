@@ -1,6 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.data.serializer.AddressSerializer
+import com.technocreatives.beckon.mesh.data.serializer.HexToIntSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -19,8 +19,12 @@ data class Provisioner(
     @Transient val isLastSelected: Boolean = false,
 )
 
-@Serializable(with = AddressSerializer::class)
-data class AddressValue(val value: Int)
+@Serializable
+@JvmInline
+value class AddressValue(
+    @Serializable(with = HexToIntSerializer::class)
+    val value: Int
+)
 
 @Serializable
 data class AddressRange(
@@ -33,4 +37,3 @@ data class SceneRange(
     val firstScene: AddressValue,
     val lastScene: AddressValue,
 )
-

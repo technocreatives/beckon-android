@@ -15,7 +15,7 @@ object HexToIntSerializer : KSerializer<Int> {
         get() = PrimitiveSerialDescriptor("HexToInt", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Int) {
-        encoder.encodeString(value.toString(16))
+        encoder.encodeString(String.format("%04X", value))
     }
 
     override fun deserialize(decoder: Decoder): Int {

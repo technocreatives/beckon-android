@@ -47,6 +47,17 @@ object Processes {
             )
         )
 
+    fun provisionDevice1(
+        macAddress: MacAddress,
+        nodeAddress: UnicastAddress,
+    ): Process =
+        Process(
+            listOf(
+                Provision(macAddress),
+                ConnectAfterProvisioning(nodeAddress.value),
+            )
+        )
+
     fun bindAppKeyToModels(
         addresses: List<UnicastAddress>,
         modelId: ModelId,

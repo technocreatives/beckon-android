@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh.state
 
 import arrow.core.Either
 import arrow.core.computations.either
+import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
@@ -16,6 +17,9 @@ import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
 import kotlinx.coroutines.GlobalScope
+import com.technocreatives.beckon.mesh.scenario.RepeatRetry
+import com.technocreatives.beckon.mesh.scenario.Retry
+import com.technocreatives.beckon.mesh.utils.MeshAddress
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -90,6 +94,14 @@ class Connected(
     suspend fun <T : ConfigStatusMessage> sendConfigMessage(message: ConfigMessage<T>): Either<SendAckMessageError, T> =
         bearer.sendConfigMessage(message)
 
+    suspend fun <T : ConfigStatusMessage> sendConfigMessage(
+        message: ConfigMessage<T>,
+        retry: Retry
+    ): Either<SendAckMessageError, T> =
+        retry {
+            bearer.sendConfigMessage(message)
+        }
+
 }
 
 suspend fun Connected.setUpAppKey(
@@ -114,6 +126,27 @@ suspend fun Connected.setUpAppKey(
 
     val appKeyAddStatus = bearer.sendConfigMessage(configAppKeyAdd).bind()
     Timber.d("addConfigAppKey Status $appKeyAddStatus")
+}
+
+fun <T> Pair<Int, SendAckMessageError>.convert(): T = TODO()
+
+suspend fun <T : ConfigStatusMessage> Connected.execute(messages: List<ConfigMessage<T>>): Either<Pair<Int, SendAckMessageError>, Unit> {
+    return messages.traverseStep(RepeatRetry(3)) { sendConfigMessage(it) }.map {}
+}
+
+private suspend inline fun <E, A, B> List<A>.traverseStep(
+    retry: Retry,
+    crossinline f: suspend (A) -> Either<E, B>,
+): Either<Pair<Int, E>, List<B>> {
+    val destination = ArrayList<B>(size)
+    forEachIndexed { index, item ->
+        Timber.d("Execute Step ${index + 1} - $item")
+        when (val res = retry { f(item) }) {
+            is Either.Right -> destination.add(res.value)
+            is Either.Left -> return res.mapLeft { index to it }
+        }
+    }
+    return destination.right()
 }
 
 class ConnectedMeshManagerCallbacks(

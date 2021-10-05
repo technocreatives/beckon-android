@@ -18,6 +18,7 @@ class MeshSerializationTest : StringSpec({
         "/mesh/many.json",
         "/mesh/netkey.json",
         "/mesh/noDeviceKey.json",
+        "/mesh/iosConfig.json",
     )
 
     "Datetime serialization" {
