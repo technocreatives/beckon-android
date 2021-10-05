@@ -6,13 +6,22 @@ on:
     branches:
       - main
 jobs:
-  test:
+  beckon-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
         uses: actions/checkout@v2
-      - name: Test
+      - name: Beckon Test
         run: ./gradlew :beckon:test
+
+  beckon-mesh-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Beckon Mesh Test
+        run: ./gradlew :beckon:test
+
   build:
     runs-on: ubuntu-latest
     steps:
