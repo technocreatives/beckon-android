@@ -23,7 +23,7 @@ class MeshSerializationTest : StringSpec({
 
     "Datetime serialization" {
 
-        val date = """{"date":"2021-08-30T14:00:27+02"}"""
+        val date = """{"date":"2021-08-30T14:00:27Z"}"""
         val dateInLong = format.decodeFromString<DateTimeTest>(date)
         val other = format.encodeToString(date)
         println("dateInLong $dateInLong")
