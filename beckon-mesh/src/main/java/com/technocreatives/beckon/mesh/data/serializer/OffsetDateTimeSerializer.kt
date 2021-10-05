@@ -17,7 +17,7 @@ object OffsetDateTimeSerializer : KSerializer<Long> {
         get() = PrimitiveSerialDescriptor("offsetDateTime", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Long) {
-        val date = OffsetDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.systemDefault())
+        val date = OffsetDateTime.ofInstant(Instant.ofEpochMilli(value), ZoneId.of("Z"))
         encoder.encodeString(date.toString())
     }
 
