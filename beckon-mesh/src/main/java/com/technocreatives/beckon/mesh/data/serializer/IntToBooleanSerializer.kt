@@ -16,7 +16,7 @@ object IntToBooleanSerializer : KSerializer<Boolean> {
 
     override fun serialize(encoder: Encoder, value: Boolean) {
         val int = if (value) 1 else 0
-        encoder.encodeString(int.toString())
+        encoder.encodeInt(int)
     }
 
     override fun deserialize(decoder: Decoder): Boolean {
