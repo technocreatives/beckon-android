@@ -89,7 +89,7 @@ class BeckonMesh(
         filteredMessages.asSharedFlow()
 
     // todo fix error
-    fun createGroup(name: String, address: Int): Either<Throwable, Group> {
+    suspend fun createGroup(name: String, address: Int): Either<Throwable, Group> {
         val network = meshApi.meshNetwork()
         return Either.catch {
             val group = network.createGroup(network.selectedProvisioner, address, name)!!
