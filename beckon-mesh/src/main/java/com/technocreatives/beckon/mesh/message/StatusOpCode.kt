@@ -31,6 +31,7 @@ object StatusOpCodeSerializer : KSerializer<StatusOpCode> {
 enum class StatusOpCode(val value: Int) {
     ConfigComposition(2), // ConfigMessageOpCodes.CONFIG_COMPOSITION_DATA_STATUS.toInt()
     ConfigDefaultTtl(ConfigMessageOpCodes.CONFIG_DEFAULT_TTL_STATUS),
+    ConfigRelaySet(ConfigMessageOpCodes.CONFIG_RELAY_STATUS),
     ConfigNetworkSet(ConfigMessageOpCodes.CONFIG_NETWORK_TRANSMIT_STATUS),
     ConfigAppKey(ConfigMessageOpCodes.CONFIG_APPKEY_STATUS),
     ConfigModelApp(ConfigMessageOpCodes.CONFIG_MODEL_APP_STATUS),

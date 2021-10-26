@@ -7,6 +7,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonClassDiscriminator
 import no.nordicsemi.android.mesh.transport.*
+import no.nordicsemi.android.mesh.utils.RelaySettings.RELAY_FEATURE_ENABLED
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
@@ -37,6 +38,34 @@ data class GetDefaultTtl(override val dst: Int) :
     override fun toMeshMessage() = ConfigDefaultTtlGet()
     override fun fromResponse(message: MeshMessage): ConfigDefaultTtlResponse =
         (message as ConfigDefaultTtlStatus).transform()
+}
+
+@Serializable
+@SerialName("SetDefaultTtl")
+data class SetDefaultTtl(
+    override val dst: Int,
+    val ttl: Int
+) :
+    ConfigMessage<ConfigDefaultTtlResponse>() {
+    override val responseOpCode = StatusOpCode.ConfigDefaultTtl
+    override fun toMeshMessage() = ConfigDefaultTtlSet(ttl)
+    override fun fromResponse(message: MeshMessage): ConfigDefaultTtlResponse =
+        (message as ConfigDefaultTtlStatus).transform()
+}
+
+@Serializable
+@SerialName("SetConfigRelay")
+data class SetRelayConfig(
+    override val dst: Int,
+    val relay: Int = RELAY_FEATURE_ENABLED,
+    val retransmit: RelayRetransmit?
+) :
+    ConfigMessage<ConfigRelayResponse>() {
+    override val responseOpCode = StatusOpCode.ConfigRelaySet
+    // TODO remove !!
+    override fun toMeshMessage() = ConfigRelaySet(relay, retransmit!!.count, retransmit.interval)
+    override fun fromResponse(message: MeshMessage): ConfigRelayResponse =
+        (message as ConfigRelayStatus).transform()
 }
 
 @Serializable
@@ -259,6 +288,23 @@ internal fun ConfigDefaultTtlStatus.transform() = ConfigDefaultTtlResponse(
     src,
     statusCode,
     ttl,
+)
+
+@Serializable
+data class ConfigRelayResponse(
+    override val dst: Int,
+    override val src: Int,
+    val statusCode: Int,
+    val count: Int,
+    val steps: Int,
+) : ConfigStatusMessage()
+
+internal fun ConfigRelayStatus.transform() = ConfigRelayResponse(
+    dst,
+    src,
+    statusCode,
+    relayRetransmitCount,
+    relayRetransmitIntervalSteps
 )
 
 @Serializable

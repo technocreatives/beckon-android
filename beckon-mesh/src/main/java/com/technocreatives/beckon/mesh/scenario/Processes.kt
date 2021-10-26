@@ -33,6 +33,8 @@ object Processes {
                 ConnectAfterProvisioning(nodeAddress.value),
                 Message(GetCompositionData(nodeAddress.value)),
                 Message(GetDefaultTtl(nodeAddress.value)),
+                Message(SetDefaultTtl(nodeAddress.value, 10)),
+                Message(SetRelayConfig(nodeAddress.value, retransmit = RelayRetransmit(1, 5))),
                 Message(SetConfigNetworkTransmit(nodeAddress.value, 2, 2)),
                 Message(AddConfigAppKey(nodeAddress.value, netKey, appKey)),
                 Message(

@@ -16,10 +16,9 @@ import com.technocreatives.beckon.mesh.message.*
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
-import kotlinx.coroutines.GlobalScope
 import com.technocreatives.beckon.mesh.scenario.RepeatRetry
 import com.technocreatives.beckon.mesh.scenario.Retry
-import com.technocreatives.beckon.mesh.utils.MeshAddress
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -118,9 +117,17 @@ suspend fun Connected.setUpAppKey(
     val defaultTtlStatus = bearer.sendConfigMessage(getDefaultTtl).bind()
     Timber.d("getConfigDefaultTtl Status $defaultTtlStatus")
 
+    val setDefaultTtl = SetDefaultTtl(nodeAddress.value, 10)
+    val ttlStatus = bearer.sendConfigMessage(setDefaultTtl).bind()
+    Timber.d("setConfigDefaultTtl Status $ttlStatus")
+
     val networkTransmitSet = SetConfigNetworkTransmit(nodeAddress.value, 2, 1)
     val networkTransmit = bearer.sendConfigMessage(networkTransmitSet).bind()
     Timber.d("setConfigNetworkTransmit Status $networkTransmit")
+
+    val relayConfigSet = SetRelayConfig(nodeAddress.value, retransmit = RelayRetransmit(1, 5))
+    val relayConfig = bearer.sendConfigMessage(relayConfigSet).bind()
+    Timber.d("setRelayConfig Status $relayConfig")
 
     val configAppKeyAdd = AddConfigAppKey(nodeAddress.value, netKey, appKey)
 

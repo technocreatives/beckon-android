@@ -109,13 +109,13 @@ data class ConnectAfterProvisioning(val address: Int) : Step {
 
 class MessageAndOnErrorAction(val message: ConfigMessage<*>, val action: () -> Unit)
 
-val messages: List<MessageAndOnErrorAction> = TODO()
-fun onError(message: StepError.MessageStepError) {
-
-   messages.firstOrNull {it.message == message.message}?.let {
-       it.action()
-   }
-}
+//val messages: List<MessageAndOnErrorAction> = TODO()
+//fun onError(message: StepError.MessageStepError) {
+//
+//   messages.firstOrNull {it.message == message.message}?.let {
+//       it.action()
+//   }
+//}
 
 sealed interface StepError {
     data class MessageStepError(val error: SendAckMessageError, val message: ConfigMessage<*>) : StepError
