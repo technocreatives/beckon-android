@@ -59,6 +59,8 @@ interface BeckonClient {
         descriptor: Descriptor
     ): Either<ConnectionError, BeckonDevice>
 
+
+    fun printConnectedDevices()
     /*
    * Connect to a scanned device and then verify if all characteristics work
    * Return @BeckonDevice or ConnectFailedException when it fails

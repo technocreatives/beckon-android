@@ -58,12 +58,12 @@ data class SetDefaultTtl(
 data class SetRelayConfig(
     override val dst: Int,
     val relay: Int = RELAY_FEATURE_ENABLED,
-    val retransmit: RelayRetransmit?
+    val retransmit: RelayRetransmit
 ) :
     ConfigMessage<ConfigRelayResponse>() {
     override val responseOpCode = StatusOpCode.ConfigRelaySet
     // TODO remove !!
-    override fun toMeshMessage() = ConfigRelaySet(relay, retransmit!!.count, retransmit.interval)
+    override fun toMeshMessage() = ConfigRelaySet(relay, retransmit.count, retransmit.interval)
     override fun fromResponse(message: MeshMessage): ConfigRelayResponse =
         (message as ConfigRelayStatus).transform()
 }

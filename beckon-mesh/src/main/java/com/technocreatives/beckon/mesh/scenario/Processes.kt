@@ -30,12 +30,11 @@ object Processes {
                 Delay(1000),
                 Provision(macAddress),
                 Delay(1000),
-                ConnectAfterProvisioning(nodeAddress.value),
+                ConnectAfterProvisioning(nodeAddress.value, macAddress),
                 Message(GetCompositionData(nodeAddress.value)),
                 Message(GetDefaultTtl(nodeAddress.value)),
-                Message(SetDefaultTtl(nodeAddress.value, 10)),
                 Message(SetRelayConfig(nodeAddress.value, retransmit = RelayRetransmit(1, 5))),
-                Message(SetConfigNetworkTransmit(nodeAddress.value, 2, 2)),
+                Message(SetConfigNetworkTransmit(nodeAddress.value, 2, 1)),
                 Message(AddConfigAppKey(nodeAddress.value, netKey, appKey)),
                 Message(
                     BindAppKeyToModel(
@@ -56,7 +55,7 @@ object Processes {
         Process(
             listOf(
                 Provision(macAddress),
-                ConnectAfterProvisioning(nodeAddress.value),
+                ConnectAfterProvisioning(nodeAddress.value, macAddress),
             )
         )
 

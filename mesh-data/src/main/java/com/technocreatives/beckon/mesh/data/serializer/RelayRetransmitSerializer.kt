@@ -13,18 +13,16 @@ import kotlinx.serialization.encoding.Encoder
 
 @ExperimentalSerializationApi
 @Serializer(forClass = RelayRetransmit::class)
-object RelayRetransmitSerializer : KSerializer<RelayRetransmit?> {
+object RelayRetransmitSerializer : KSerializer<RelayRetransmit> {
     override val descriptor: SerialDescriptor
         get() = PrimitiveSerialDescriptor("offsetDateTime", PrimitiveKind.STRING)
 
-    override fun serialize(encoder: Encoder, value: RelayRetransmit?) {
-        if (value != null) {
-            encoder.encodeSerializableValue(TransmitData.serializer(), value.toData())
-        }
+    override fun serialize(encoder: Encoder, value: RelayRetransmit) {
+        encoder.encodeSerializableValue(TransmitData.serializer(), value.toData())
     }
 
-    override fun deserialize(decoder: Decoder): RelayRetransmit? {
+    override fun deserialize(decoder: Decoder): RelayRetransmit {
         val data = decoder.decodeSerializableValue(TransmitData.serializer())
-        return data.toRelayRetransmit()
+        return data.toRelayRetransmit()!!
     }
 }

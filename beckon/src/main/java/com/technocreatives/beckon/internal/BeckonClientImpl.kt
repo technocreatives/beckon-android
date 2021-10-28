@@ -130,6 +130,15 @@ internal class BeckonClientImpl(
         }
     }
 
+    override fun printConnectedDevices() {
+
+        Timber.d("PRINTING CONNECTED DEVICES")
+
+        context.bluetoothManager().connectedDevices().map {
+            Timber.d("I'm connected! ${it.address}")
+        }
+    }
+
     override suspend fun disconnect(macAddress: MacAddress): Either<Throwable, MacAddress> {
         return when (val device = beckonStore.currentState().findConnectedDevice(macAddress)) {
             is None -> ConnectionError.ConnectedDeviceNotFound(macAddress).toException().left()

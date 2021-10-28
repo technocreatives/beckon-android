@@ -10,11 +10,11 @@ import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.SendAckMessageError
+import com.technocreatives.beckon.mesh.TimeoutError
 import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.message.ConfigMessage
-import com.technocreatives.beckon.mesh.message.GetCompositionData
-import com.technocreatives.beckon.mesh.message.StatusOpCode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
+import com.technocreatives.beckon.mesh.withTimeout
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
@@ -24,7 +24,8 @@ import timber.log.Timber
 
 sealed interface Step {
     suspend fun BeckonMesh.execute(): Either<Any, Unit>
-    suspend fun BeckonMesh.execute1(): Either<StepError, StepResult> = StepError.ConnectStepError.left()
+    suspend fun BeckonMesh.execute1(): Either<StepError, StepResult> =
+        StepError.ConnectStepError.left()
 }
 
 data class Provision(val address: MacAddress) : Step {
@@ -87,9 +88,11 @@ object AutoConnect : Step {
     }
 }
 
-data class ConnectAfterProvisioning(val address: Int) : Step {
+data class ConnectAfterProvisioning(val address: Int, val macAddress: MacAddress) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val beckonDevice = scanForProxy(address)
+        Timber.d("ConnectAfterProvisioning")
+        beckonClient.printConnectedDevices()
+        val beckonDevice = scanForProxy(address, macAddress)
 //            .mapZ { it.firstOrNull { it.macAddress == address } }
             .mapZ { it.firstOrNull() }
             .filterZ { it != null }
@@ -99,10 +102,18 @@ data class ConnectAfterProvisioning(val address: Int) : Step {
                 stopScan()
                 val retry = RepeatRetry(3)
                 retry {
-                    connectForProxy(it.macAddress)
+                    withTimeout(20000, {
+                        beckonClient.printConnectedDevices()
+                        Timber.d("connectForProxy")
+                        connectForProxy(it.macAddress)
+                    }, {
+                        beckonClient.printConnectedDevices()
+                        Timber.w("ConnectAfterProvisioning Timed out!")
+                        TimeoutError })
                 }
             }
             .first().bind()
+        Timber.d("startConnectedState")
         startConnectedState(beckonDevice).bind()
     }
 }
@@ -118,7 +129,9 @@ class MessageAndOnErrorAction(val message: ConfigMessage<*>, val action: () -> U
 //}
 
 sealed interface StepError {
-    data class MessageStepError(val error: SendAckMessageError, val message: ConfigMessage<*>) : StepError
+    data class MessageStepError(val error: SendAckMessageError, val message: ConfigMessage<*>) :
+        StepError
+
     object ConnectStepError : StepError
 }
 
@@ -152,6 +165,7 @@ suspend fun da(beckonMesh: BeckonMesh) {
         beckonMesh.execute1()
     }
 }
+
 data class Process(
     val steps: List<Step>,
     val retry: Retry = RepeatRetry(3),

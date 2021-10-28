@@ -17,7 +17,10 @@ import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
-import com.technocreatives.beckon.mesh.state.*
+import com.technocreatives.beckon.mesh.state.Connected
+import com.technocreatives.beckon.mesh.state.Loaded
+import com.technocreatives.beckon.mesh.state.MeshState
+import com.technocreatives.beckon.mesh.state.Provisioning
 import com.technocreatives.beckon.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,13 +31,12 @@ import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.NetworkKey
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import timber.log.Timber
-import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 class BeckonMesh(
     private val context: Context,
-    private val beckonClient: BeckonClient,
+    val beckonClient: BeckonClient,
     private val meshApi: BeckonMeshManagerApi,
     internal val config: BeckonMeshClientConfig,
 ) : CoroutineScope {
@@ -220,15 +222,32 @@ class BeckonMesh(
             .mapZ { connectedDevices + it }
     }
 
-    suspend fun scanForProxy(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
+    suspend fun scanForProxy(
+        address: Int,
+        macAddress: MacAddress
+    ): Flow<Either<ScanError, List<ScanResult>>> {
+        Timber.d("scanForProxy")
         val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
         return scan(scannerSetting)
             .mapZ {
+                Timber.d("newScanResult ${it.map { it.macAddress }}")
                 it.filter {
-                    it.scanRecord != null && meshApi.isNodeInTheMesh(
-                        it.scanRecord!!,
-                        address
-                    )
+                    if(it.scanRecord != null) {
+                        if(meshApi.isNodeInTheMesh(
+                                it.scanRecord!!,
+                                address
+                            )){
+                            Timber.d("nodeFound with nodeIdentity")
+                            true
+                        } else if(it.macAddress == macAddress && meshApi.isNodeInTheMesh(it.scanRecord!!)) {
+                            Timber.d("proxy NodeFound with macAddress and isNodeInMesh")
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    }
                 }
             }
             .mapZ { it }

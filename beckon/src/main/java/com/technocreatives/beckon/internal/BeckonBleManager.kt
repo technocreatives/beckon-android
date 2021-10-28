@@ -229,6 +229,7 @@ internal class BeckonBleManager(
     override fun getGattCallback(): BleManagerGattCallback {
         return object : BleManagerGattCallback() {
 
+
             // This function has to be done before enqueue works.
             override fun initialize() {
                 Timber.d("initialize")
