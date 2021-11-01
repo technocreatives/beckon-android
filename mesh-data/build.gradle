@@ -30,13 +30,13 @@ afterEvaluate {
                 groupId = findProperty("GROUP")
                 artifactId = 'mesh-data'
                 version = findProperty("VERSION_NAME")
-//                artifact(sourceJar)
+                artifact(sourceJar)
             }
         }
     }
 }
 
-//task sourceJar(type: Jar) {
-//    from sourceSets.main.java.srcDirs
-//    classifier "sources"
-//}
+task sourceJar(type: Jar) {
+    from sourceSets.main.java.srcDirs
+    classifier "sources"
+}
