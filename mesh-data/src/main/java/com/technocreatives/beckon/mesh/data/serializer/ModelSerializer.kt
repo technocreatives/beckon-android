@@ -1,21 +1,18 @@
 package com.technocreatives.beckon.mesh.data.serializer
 
 
-import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.data.Model
+import com.technocreatives.beckon.mesh.data.ModelData
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import no.nordicsemi.android.mesh.models.SigModelParser
-import no.nordicsemi.android.mesh.models.VendorModel
-import no.nordicsemi.android.mesh.utils.MeshParserUtils
-import java.util.*
 
+@ExperimentalSerializationApi
 @Serializer(forClass = Model::class)
 object ModelSerializer : KSerializer<Model> {
     override val descriptor: SerialDescriptor

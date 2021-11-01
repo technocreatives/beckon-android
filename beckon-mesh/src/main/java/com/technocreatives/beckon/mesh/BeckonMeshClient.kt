@@ -87,7 +87,9 @@ class BeckonMeshClient(
 
     suspend fun fromJson(json: String) =
         withContext(Dispatchers.IO) {
-            Mesh.fromJson(json)
+            Either.catch {
+                Mesh.fromJson(json)
+            }
         }
 
     suspend fun toJson(mesh: Mesh) =

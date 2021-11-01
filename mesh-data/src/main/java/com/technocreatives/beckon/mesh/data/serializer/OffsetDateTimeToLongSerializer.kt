@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.data.serializer
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -11,6 +12,7 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneId
 
+@ExperimentalSerializationApi
 @Serializer(forClass = Long::class)
 object OffsetDateTimeToLongSerializer : KSerializer<Long> {
     override val descriptor: SerialDescriptor

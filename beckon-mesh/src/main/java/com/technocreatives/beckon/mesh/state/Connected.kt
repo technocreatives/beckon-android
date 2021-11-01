@@ -9,6 +9,8 @@ import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.data.AccessPayload
+import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber

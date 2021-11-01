@@ -3,8 +3,6 @@ package com.technocreatives.beckon.mesh.data
 import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import no.nordicsemi.android.mesh.utils.NetworkTransmitSettings
-import no.nordicsemi.android.mesh.utils.RelaySettings
 import java.util.*
 
 @Serializable
@@ -48,12 +46,7 @@ value class NodeId(
     val uuid: UUID
 )
 
-@Serializable
-@JvmInline
-value class UnicastAddress(
-    @Serializable(with = HexToIntSerializer::class)
-    val value: Int
-) : PublishableAddress
+
 
 @Serializable
 data class NodeNetKey(
@@ -116,7 +109,7 @@ data class TransmitData(
                 NetworkTransmit(count, interval)
             } else if (interval % 10 == 0) {
                 // Interval that was exported as intervalSteps are decoded to intervalSteps.
-                val steps = NetworkTransmitSettings.decodeNetworkTransmissionInterval(interval)
+                val steps = decodeNetworkTransmissionInterval(interval)
                 NetworkTransmit(count, steps)
             } else null
         } else null
@@ -132,9 +125,19 @@ data class TransmitData(
                 RelayRetransmit(count, interval)
             } else if (interval % 10 == 0) {
                 // Interval that was exported as intervalSteps are imported as it is.
-                val steps = RelaySettings.decodeRelayRetransmitInterval(interval)
+                val steps = decodeRelayRetransmitInterval(interval)
                 RelayRetransmit(count, steps)
             } else null
         } else null
+    }
+    companion object {
+        fun decodeNetworkTransmissionInterval(interval: Int): Int {
+            require(!(interval >= 10 && interval <= 320 && interval % 10 != 0)) { "Network Transmission Interval must be 10-320 ms with a step of 10 ms" }
+            return interval / 10 - 1
+        }
+        fun decodeRelayRetransmitInterval(interval: Int): Int {
+            require(!(interval >= 10 && interval <= 320 && interval % 10 != 0)) { "Relay Retransmit Interval must be in range of 10-320 ms." }
+            return interval / 10 - 1
+        }
     }
 }

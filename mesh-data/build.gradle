@@ -1,0 +1,42 @@
+plugins {
+    id 'kotlin'
+    id 'kotlinx-serialization'
+}
+
+group = 'com.github.technocreatives.beckon-android'
+java.sourceCompatibility = JavaVersion.VERSION_1_8
+
+dependencies {
+
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
+
+    // Code quality tools
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
+
+    testImplementation("io.kotest:kotest-property:5.0.0.M2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.0.0.M2")
+    testImplementation("io.kotest:kotest-assertions-core:5.0.0.M2")
+
+    testImplementation("io.mockk:mockk:1.12.0")
+    testImplementation('commons-io:commons-io:2.11.0')
+
+}
+
+//afterEvaluate {
+//    publishing {
+//        publications {
+//            mesh(MavenPublication) {
+//                from components.release
+//                groupId = findProperty("GROUP")
+//                artifactId = 'mesh-data'
+//                version = findProperty("VERSION_NAME")
+//                artifact(sourceJar)
+//            }
+//        }
+//    }
+//}
+
+//task sourceJar(type: Jar) {
+//    from sourceSets.main.java.srcDirs
+//    classifier "sources"
+//}

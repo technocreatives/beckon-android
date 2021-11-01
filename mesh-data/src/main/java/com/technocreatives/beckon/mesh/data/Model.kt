@@ -3,9 +3,6 @@ package com.technocreatives.beckon.mesh.data
 import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import no.nordicsemi.android.mesh.models.SigModelParser
-import no.nordicsemi.android.mesh.utils.CompanyIdentifiers
-import no.nordicsemi.android.mesh.utils.MeshAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
@@ -28,14 +25,11 @@ data class VendorModel(
     override val publish: Publish? = null
 ) : Model {
 
-    private val buffer by lazy {
+    val buffer by lazy {
         ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).apply {
             putInt(modelId.value)
         }
     }
-
-    val companyIdentifier by lazy { buffer.getShort(0) }
-    val companyName by lazy { CompanyIdentifiers.getCompanyName(companyIdentifier) }
 
     val name get() = "Vendor Model"
 }
@@ -45,9 +39,7 @@ data class SigModel(
     override val bind: List<AppKeyIndex> = emptyList(),
     override val subscribe: List<SubscriptionAddress> = emptyList(),
     override val publish: Publish? = null
-) : Model {
-    val name: String by lazy { SigModelParser.getSigModel(modelId.value).modelName }
-}
+) : Model
 
 @Serializable
 data class ModelData(
@@ -112,14 +104,3 @@ data class Period(
 )
 
 
-object UnassignedAddress {
-    const val value = MeshAddress.UNASSIGNED_ADDRESS
-}
-
-@Serializable(with = SubscriptionAddressSerializer::class)
-sealed interface SubscriptionAddress
-
-@Serializable
-@JvmInline
-value class VirtualAddress(@Serializable(with = UuidSerializer::class) val value: UUID) :
-    SubscriptionAddress

@@ -1,6 +1,7 @@
 package com.technocreatives.beckon.mesh.data.serializer
 
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -10,6 +11,7 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.util.*
 
+@ExperimentalSerializationApi
 @Serializer(forClass = UUID::class)
 object UuidSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor

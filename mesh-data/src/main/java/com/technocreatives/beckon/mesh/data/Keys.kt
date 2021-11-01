@@ -1,13 +1,10 @@
 package com.technocreatives.beckon.mesh.data
 
-import android.annotation.SuppressLint
 import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.NetKeySecuritySerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import no.nordicsemi.android.mesh.ApplicationKey
-import no.nordicsemi.android.mesh.NetworkKey
 import java.time.Instant
 
 @Serializable
@@ -24,16 +21,26 @@ data class NetKey(
     val index: NetKeyIndex,
     @Serializable(with = KeySerializer::class)
     val key: Key,
-    val phase: Int = NetworkKey.NORMAL_OPERATION,
+    val phase: Int = NORMAL_OPERATION,
     @SerialName("minSecurity")
     @Serializable(with = NetKeySecuritySerializer::class)
     val isSecurity: Boolean = false,
     @Serializable(with = OffsetDateTimeToLongSerializer::class)
     val timestamp: Long = Instant.now().toEpochMilli(),
 ) {
-    @SuppressLint("RestrictedApi")
-    fun transform(): NetworkKey = NetworkKey(index.value, key.value)
+    companion object {
+        // Key refresh phases
+        const val NORMAL_OPERATION = 0
+        const val KEY_DISTRIBUTION = 1
+        const val USING_NEW_KEYS = 2
+
+        // Transitions
+        const val USE_NEW_KEYS = 2 //Normal operation
+        const val REVOKE_OLD_KEYS = 3 //Key Distribution
+    }
 }
+
+
 
 @Serializable
 data class AppKey(
@@ -43,10 +50,8 @@ data class AppKey(
 
     @Serializable(with = KeySerializer::class)
     val key: Key,
-){
-    @SuppressLint("RestrictedApi")
-    fun transform(): ApplicationKey = ApplicationKey(index.value, key.value)
-}
+)
+
 
 @Serializable
 data class Key(val value: ByteArray) {

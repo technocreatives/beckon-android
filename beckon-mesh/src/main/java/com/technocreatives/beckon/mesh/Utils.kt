@@ -1,7 +1,6 @@
 package com.technocreatives.beckon.mesh
 
 import arrow.core.*
-import arrow.core.computations.either
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScannerSetting
 import kotlinx.coroutines.*
@@ -15,13 +14,6 @@ import no.nordicsemi.android.mesh.utils.MeshParserUtils
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import java.util.*
 import kotlin.collections.foldRight
-import kotlinx.coroutines.withTimeout as withTimeoutWithException
-
-fun <T> MutableSharedFlow<T>.blockingEmit(value: T) {
-    runBlocking {
-        emit(value)
-    }
-}
 
 fun UnprovisionedMeshNode.debug(): String =
     "name: $nodeName, uuid: $deviceUuid"

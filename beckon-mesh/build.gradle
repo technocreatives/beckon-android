@@ -57,6 +57,7 @@ configurations {
 dependencies {
 
     implementation project(':beckon')
+    implementation project(':mesh-data')
     implementation("no.nordicsemi.android:mesh:3.1.6")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
@@ -77,33 +78,14 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-reflect:$kotlin_version")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
 
-
-    implementation("io.kotest:kotest-property:5.0.0.M2")
+    testImplementation("io.kotest:kotest-property:5.0.0.M2")
     testImplementation("io.kotest:kotest-runner-junit5:5.0.0.M2")
-    implementation("io.kotest:kotest-assertions-core:5.0.0.M2")
+    testImplementation("io.kotest:kotest-assertions-core:5.0.0.M2")
 
     testImplementation("io.mockk:mockk:1.12.0")
     testImplementation('commons-io:commons-io:2.11.0')
 
 }
-
-//task ktlint(type: JavaExec, group: "verification") {
-//    description = "Check Kotlin code style."
-//    classpath = configurations.ktlint
-//    main = "com.pinterest.ktlint.Main"
-//    args "src/**/*.kt"
-//    // to generate report in checkstyle format prepend following args:
-//    // "--reporter=plain", "--reporter=checkstyle,output=${buildDir}/ktlint.xml"
-//    // see https://github.com/shyiko/ktlint#usage for more
-//}
-//check.dependsOn ktlint
-//
-//task ktlintFormat(type: JavaExec, group: "formatting") {
-//    description = "Fix Kotlin code style deviations."
-//    classpath = configurations.ktlint
-//    main = "com.pinterest.ktlint.Main"
-//    args "-F", "src/**/*.kt"
-//}
 
 afterEvaluate {
     publishing {

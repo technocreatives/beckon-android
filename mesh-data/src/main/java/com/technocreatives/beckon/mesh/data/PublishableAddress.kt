@@ -1,6 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.utils.MeshAddress
+import com.technocreatives.beckon.mesh.data.util.MeshAddress
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
@@ -9,7 +9,6 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import no.nordicsemi.android.mesh.utils.AddressArray
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
@@ -45,12 +44,6 @@ fun PublishableAddress.value(): Int = when (this) {
     is UnicastAddress -> value
 }
 
-internal fun PublishableAddress.toAddressArray(): AddressArray {
-    val intAddress = value()
-    val b1 = intAddress.shr(8).toByte()
-    val b2 = intAddress.toByte()
-    return AddressArray(b1, b2)
-}
 
 @Serializer(forClass = Model::class)
 object PublishableAddressSerializer : KSerializer<PublishableAddress> {

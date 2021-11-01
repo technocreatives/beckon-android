@@ -12,6 +12,7 @@ import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.internal.toUuid
 import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult

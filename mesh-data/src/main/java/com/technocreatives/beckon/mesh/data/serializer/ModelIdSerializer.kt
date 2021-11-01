@@ -2,6 +2,8 @@ package com.technocreatives.beckon.mesh.data.serializer
 
 
 import com.technocreatives.beckon.mesh.data.ModelId
+import com.technocreatives.beckon.mesh.data.util.MeshParserUtils
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -9,8 +11,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import no.nordicsemi.android.mesh.utils.MeshParserUtils
 
+@ExperimentalSerializationApi
 @Serializer(forClass = ModelId::class)
 object ModelIdSerializer : KSerializer<ModelId> {
     override val descriptor: SerialDescriptor

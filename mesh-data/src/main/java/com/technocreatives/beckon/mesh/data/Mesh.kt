@@ -1,15 +1,14 @@
 package com.technocreatives.beckon.mesh.data
 
-import arrow.core.Either
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
+import com.technocreatives.beckon.mesh.data.util.Constants
+import com.technocreatives.beckon.mesh.data.util.generateRandomNumber
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import no.nordicsemi.android.mesh.models.SigModelParser
-import no.nordicsemi.android.mesh.utils.SecureUtils
 import java.time.Instant
 import java.util.*
 
@@ -48,15 +47,16 @@ data class Mesh(
             }
         }
 
+        // throw exception in case of error
         fun fromJson(json: String) =
-            Either.catch { format.decodeFromString<Mesh>(json) }
+             format.decodeFromString<Mesh>(json)
 
         fun toJson(mesh: Mesh): String =
             format.encodeToString(mesh)
 
         fun toJsonPretty(mesh: Mesh): String = prettyFormat.encodeToString(mesh)
 
-        internal fun generateMesh(meshName: String, provisionerName: String): Mesh {
+        fun generateMesh(meshName: String, provisionerName: String): Mesh {
             val uuid = UUID.randomUUID()
             val appKeys = generateAppKeys()
             val netKeys = generateNetKeys()
@@ -93,7 +93,7 @@ data class Mesh(
             netKeys: List<NetKey>
         ): Node {
             val model =
-                SigModelParser.getSigModel(SigModelParser.CONFIGURATION_CLIENT.toInt()).transform()
+                SigModel(ModelId(Constants.CONFIGURATION_CLIENT.toInt()))
             val unicast = UnicastAddress(1)
             val element = Element(
                 unicast,
@@ -107,7 +107,7 @@ data class Mesh(
             return Node(
                 NodeId(provisioner.uuid),
                 provisioner.name,
-                Key(SecureUtils.generateRandomNumber()),
+                Key(generateRandomNumber()),
                 UnicastAddress(1),
                 security = 0,
                 isConfigured = true,
@@ -122,7 +122,7 @@ data class Mesh(
         }
 
         private fun generateNetKeys(): List<NetKey> =
-            listOf(NetKey("NetKey 1", NetKeyIndex(0), Key(SecureUtils.generateRandomNumber())))
+            listOf(NetKey("NetKey 1", NetKeyIndex(0), Key(generateRandomNumber())))
 
         private fun generateAppKeys() =
             listOf(
@@ -130,7 +130,7 @@ data class Mesh(
                     "AppKey 1",
                     AppKeyIndex(0),
                     NetKeyIndex(0),
-                    Key(SecureUtils.generateRandomNumber())
+                    Key(generateRandomNumber())
                 )
             )
 
@@ -139,14 +139,14 @@ data class Mesh(
                 "AppKey $appKeyIndex",
                 AppKeyIndex(appKeyIndex),
                 NetKeyIndex(netKeyIndex),
-                Key(SecureUtils.generateRandomNumber())
+                Key(generateRandomNumber())
             )
 
         fun randomNetKey(appKeyIndex: Int, netKeyIndex: Int) =
             NetKey(
                 "NetKey $netKeyIndex",
                 NetKeyIndex(netKeyIndex),
-                Key(SecureUtils.generateRandomNumber())
+                Key(generateRandomNumber())
             )
     }
 

@@ -1,6 +1,7 @@
 package com.technocreatives.beckon.mesh.data.serializer
 
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -9,13 +10,13 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
+@ExperimentalSerializationApi
 @Serializer(forClass = Int::class)
 object NodeSecuritySerializer : KSerializer<Int> {
     override val descriptor: SerialDescriptor
         get() = PrimitiveSerialDescriptor("NodeSecurity", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: Int) {
-        // nodeJson.addProperty("security", (node.getSecurity() == ProvisionedBaseMeshNode.HIGH) ? "secure" : "insecure");
         encoder.encodeString(if (value == 1) "secure" else "insecure")
     }
 
