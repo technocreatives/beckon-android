@@ -22,19 +22,19 @@ dependencies {
 
 }
 
-//afterEvaluate {
-//    publishing {
-//        publications {
-//            mesh(MavenPublication) {
-//                from components.release
-//                groupId = findProperty("GROUP")
-//                artifactId = 'mesh-data'
-//                version = findProperty("VERSION_NAME")
+afterEvaluate {
+    publishing {
+        publications {
+            data(MavenPublication) {
+                from components.java
+                groupId = findProperty("GROUP")
+                artifactId = 'mesh-data'
+                version = findProperty("VERSION_NAME")
 //                artifact(sourceJar)
-//            }
-//        }
-//    }
-//}
+            }
+        }
+    }
+}
 
 //task sourceJar(type: Jar) {
 //    from sourceSets.main.java.srcDirs
