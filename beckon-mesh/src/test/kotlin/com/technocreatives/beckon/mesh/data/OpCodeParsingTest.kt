@@ -1,8 +1,8 @@
 package com.technocreatives.beckon.mesh.data
 
 import com.technocreatives.beckon.extensions.decodeHex
-import com.technocreatives.beckon.mesh.data.support.AccessPayload
-import com.technocreatives.beckon.mesh.data.support.OpCode
+import com.technocreatives.beckon.mesh.data.AccessPayload
+import com.technocreatives.beckon.mesh.data.OpCode
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.ints.shouldBeExactly
 import io.kotest.matchers.should
