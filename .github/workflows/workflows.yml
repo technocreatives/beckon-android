@@ -22,6 +22,14 @@ jobs:
       - name: Beckon Mesh Test
         run: ./gradlew :beckon-mesh:test
 
+  mesh-data-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Beckon Mesh Test
+        run: ./gradlew :mesh-data:test
+
   build:
     runs-on: ubuntu-latest
     steps:

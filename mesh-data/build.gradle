@@ -25,6 +25,10 @@ dependencies {
 
 }
 
+test {
+    useJUnitPlatform()
+}
+
 afterEvaluate {
     publishing {
         publications {
