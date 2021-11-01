@@ -1,6 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
+import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.stringFrom
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -60,7 +60,7 @@ class MeshSerializationTest : StringSpec({
 
 @Serializable
 data class DateTimeTest(
-    @Serializable(with = OffsetDateTimeSerializer::class)
+    @Serializable(with = OffsetDateTimeToLongSerializer::class)
     val date: Long
 )
 

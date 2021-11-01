@@ -12,7 +12,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneId
 
 @Serializer(forClass = Long::class)
-object OffsetDateTimeSerializer : KSerializer<Long> {
+object OffsetDateTimeToLongSerializer : KSerializer<Long> {
     override val descriptor: SerialDescriptor
         get() = PrimitiveSerialDescriptor("offsetDateTime", PrimitiveKind.STRING)
 

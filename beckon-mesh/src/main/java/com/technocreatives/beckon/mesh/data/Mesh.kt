@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.mesh.data
 
 import arrow.core.Either
-import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
+import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -23,7 +23,7 @@ data class Mesh(
     @SerialName("meshUUID")
     val meshUuid: UUID,
     val meshName: String,
-    @Serializable(with = OffsetDateTimeSerializer::class)
+    @Serializable(with = OffsetDateTimeToLongSerializer::class)
     val timestamp: Long,
     val partial: Boolean,
     val netKeys: List<NetKey> = emptyList(),

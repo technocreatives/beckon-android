@@ -2,7 +2,7 @@ package com.technocreatives.beckon.mesh.data
 
 import android.annotation.SuppressLint
 import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
-import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeSerializer
+import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.NetKeySecuritySerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -28,7 +28,7 @@ data class NetKey(
     @SerialName("minSecurity")
     @Serializable(with = NetKeySecuritySerializer::class)
     val isSecurity: Boolean = false,
-    @Serializable(with = OffsetDateTimeSerializer::class)
+    @Serializable(with = OffsetDateTimeToLongSerializer::class)
     val timestamp: Long = Instant.now().toEpochMilli(),
 ) {
     @SuppressLint("RestrictedApi")
