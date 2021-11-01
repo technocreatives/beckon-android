@@ -80,7 +80,7 @@ class BeckonMesh(
     fun appKey(index: AppKeyIndex): ApplicationKey? =
         meshApi.meshNetwork().appKeys.find { it.keyIndex == index.value }
 
-    fun meshes(): StateFlow<Mesh> =
+    fun meshes(): StateFlow<MeshConfig> =
         meshApi.meshes()
 
     fun proxyFilter(): ProxyFilter? =

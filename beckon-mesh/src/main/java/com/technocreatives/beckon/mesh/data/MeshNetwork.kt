@@ -8,7 +8,6 @@ import no.nordicsemi.android.mesh.NodeKey
 import no.nordicsemi.android.mesh.Provisioner as NrfProvisioner
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import no.nordicsemi.android.mesh.transport.PublicationSettings
-import no.nordicsemi.android.mesh.utils.CompositionDataParser
 import no.nordicsemi.android.mesh.utils.MeshAddress
 import no.nordicsemi.android.mesh.utils.NetworkTransmitSettings
 import java.util.*
@@ -17,9 +16,9 @@ import no.nordicsemi.android.mesh.transport.Element as NrfElement
 import no.nordicsemi.android.mesh.Features as NrfFeatures
 import no.nordicsemi.android.mesh.Group as NrfGroup
 
-fun MeshNetwork.transform() = Mesh(
-    Mesh.SCHEMA,
-    Mesh.ID,
+fun MeshNetwork.transform() = MeshConfig(
+    MeshConfig.SCHEMA,
+    MeshConfig.ID,
     version,
     UUID.fromString(meshUUID),
     meshName,

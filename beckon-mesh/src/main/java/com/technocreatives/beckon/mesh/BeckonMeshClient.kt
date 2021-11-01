@@ -7,7 +7,9 @@ import arrow.core.computations.either
 import arrow.core.right
 import arrow.core.rightIfNotNull
 import com.technocreatives.beckon.BeckonClient
-import com.technocreatives.beckon.mesh.data.Mesh
+import com.technocreatives.beckon.mesh.data.MeshConfig
+import com.technocreatives.beckon.mesh.data.MeshConfigHelper
+import com.technocreatives.beckon.mesh.data.MeshConfigSerializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -18,9 +20,6 @@ class BeckonMeshClient(
     private val repository: MeshRepository,
     private val config: BeckonMeshClientConfig,
 ) {
-//    private val meshApi by lazy {
-//        BeckonMeshManagerApi(context, repository)
-//    }
 
     private val meshApi =
         BeckonMeshManagerApi(context, repository)
@@ -82,19 +81,17 @@ class BeckonMeshClient(
     private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> =
         meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, config) }
 
-    fun generateMesh(meshName: String, provisionerName: String): Mesh =
-        Mesh.generateMesh(meshName, provisionerName)
+    fun generateMesh(meshName: String, provisionerName: String): MeshConfig =
+        MeshConfigHelper.generateMesh(meshName, provisionerName)
 
     suspend fun fromJson(json: String) =
         withContext(Dispatchers.IO) {
-            Either.catch {
-                Mesh.fromJson(json)
-            }
+            MeshConfigSerializer.decode(json)
         }
 
-    suspend fun toJson(mesh: Mesh) =
+    suspend fun toJson(meshConfig: MeshConfig) =
         withContext(Dispatchers.IO) {
-            Mesh.toJson(mesh)
+            MeshConfigSerializer.encode(meshConfig)
         }
 
     private val sharedPreferences by lazy {

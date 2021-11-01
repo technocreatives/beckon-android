@@ -10,8 +10,11 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
 
-    // Code quality tools
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
+
+    // Arrows
+    implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
+    implementation("io.arrow-kt:arrow-core")
 
     testImplementation("io.kotest:kotest-property:5.0.0.M2")
     testImplementation("io.kotest:kotest-runner-junit5:5.0.0.M2")

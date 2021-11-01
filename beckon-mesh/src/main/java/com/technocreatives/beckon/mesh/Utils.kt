@@ -15,25 +15,6 @@ import no.nordicsemi.android.support.v18.scanner.ScanSettings
 import java.util.*
 import kotlin.collections.foldRight
 
-fun UnprovisionedMeshNode.debug(): String =
-    "name: $nodeName, uuid: $deviceUuid"
-
-fun ProvisionedMeshNode.debug(): String =
-    "name: $nodeName, uuid: $uuid"
-
-fun MeshNetwork.debug(): String =
-    "name: $meshName, uuid: $meshUUID"
-
-fun ByteArray.debug(): String =
-    "size: $size, data: ${toList()}"
-
-fun ControlMessage.debug(): String =
-    "ControlMessage ctl: $ctl"
-
-fun MeshMessage.debug(): String =
-    "MeshMessage opCode: $opCode"
-
-
 fun scanSetting(serviceUUID: UUID): ScannerSetting {
 
     val settings = ScanSettings.Builder()
@@ -74,20 +55,6 @@ fun ByteArray.toHex(): String {
     }
 
     return result.toString()
-}
-
-fun String.hexStringToByteArray(): ByteArray {
-    val result = ByteArray(length / 2)
-
-    for (i in 0 until length step 2) {
-        val firstIndex = HEX_CHARS.indexOf(this[i]);
-        val secondIndex = HEX_CHARS.indexOf(this[i + 1]);
-
-        val octet = firstIndex.shl(4).or(secondIndex)
-        result[i.shr(1)] = octet.toByte()
-    }
-
-    return result
 }
 
 suspend fun <E, T> withTimeout(

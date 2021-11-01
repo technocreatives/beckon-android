@@ -16,7 +16,6 @@ import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.utils.tap
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import no.nordicsemi.android.mesh.MeshManagerApi
@@ -36,7 +35,7 @@ class BeckonMeshManagerApi(
         MutableStateFlow(meshNetwork().transform())
     }
 
-    fun meshes(): StateFlow<Mesh> = meshSubject.asStateFlow()
+    fun meshes(): StateFlow<MeshConfig> = meshSubject.asStateFlow()
 
     suspend fun nodes(key: NetKey): List<Node> =
         withContext(Dispatchers.IO) {
@@ -50,7 +49,8 @@ class BeckonMeshManagerApi(
     suspend fun updateNetwork() {
         val mesh = meshNetwork().transform()
         Timber.d("Update Network ${mesh.nodes.map { it.name }}")
-        repository.save(MeshData(mesh.meshUuid, Mesh.toJson(mesh)))
+        // todo should we?
+        repository.save(MeshData(mesh.meshUuid, MeshConfigSerializer.encode(mesh)))
         meshSubject.emit(mesh)
     }
 

@@ -35,18 +35,18 @@ class MeshSerializationTest : StringSpec({
     "mesh decode & encode" {
         jsonInput.map { this.javaClass.stringFrom(it) }
             .forEach {
-                val mesh = format.decodeFromString<Mesh>(it)
+                val mesh = format.decodeFromString<MeshConfig>(it)
                 val json = format.encodeToString(mesh)
-                val anotherMesh = format.decodeFromString<Mesh>(json)
+                val anotherMesh = format.decodeFromString<MeshConfig>(json)
                 println(mesh.meshUuid)
                 mesh shouldBe anotherMesh
             }
     }
 
     "Default mesh encode & decode" {
-        val mesh = Mesh.generateMesh("New Mesh", "Provisioner")
+        val mesh = MeshConfigHelper.generateMesh("New Mesh", "Provisioner")
         val json = format.encodeToString(mesh)
-        val anotherMesh = format.decodeFromString<Mesh>(json)
+        val anotherMesh = format.decodeFromString<MeshConfig>(json)
         mesh shouldBe anotherMesh
     }
 
