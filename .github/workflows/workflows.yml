@@ -20,7 +20,7 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v2
       - name: Beckon Mesh Test
-        run: ./gradlew :beckon:test
+        run: ./gradlew :beckon-mesh:test
 
   build:
     runs-on: ubuntu-latest

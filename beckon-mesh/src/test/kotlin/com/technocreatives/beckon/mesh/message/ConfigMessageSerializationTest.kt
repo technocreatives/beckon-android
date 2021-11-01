@@ -28,8 +28,8 @@ class ConfigMessageSerializationTest : StringSpec({
     }
 
     "list of messages decode & encode" {
-        val netKey = Mesh.randomNetKey(0, 0)
-        val appKey = Mesh.randomAppKey(0, 0)
+        val netKey = MeshConfigHelper.randomNetKey(0, 0)
+        val appKey = MeshConfigHelper.randomAppKey(0, 0)
         val messages = listOf(
             GetCompositionData(1),
             GetDefaultTtl(1),
