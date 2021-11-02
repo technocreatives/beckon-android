@@ -13,6 +13,9 @@ typealias MacAddress = String
 @JvmInline
 value class Mtu(@IntRange(from = 23, to = 517) val value: Int) {
     fun maximumPacketSize(): Int = value - 3
+    companion object {
+        val max = Mtu(517)
+    }
 }
 
 data class DeviceFilter(
