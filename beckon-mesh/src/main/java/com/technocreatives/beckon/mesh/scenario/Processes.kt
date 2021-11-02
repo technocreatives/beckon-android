@@ -48,6 +48,63 @@ object Processes {
             )
         )
 
+    fun provisionVendorDevice(
+        macAddress: MacAddress,
+        nodeAddress: UnicastAddress,
+        netKey: NetKey,
+        appKey: AppKey,
+        allLightsGroup: GroupAddress,
+        vendorModelId: ModelId,
+        proxyGroupAddress: GroupAddress,
+        vendorSteps: List<Step> = emptyList()
+    ): Process =
+        Process(
+            listOf(
+                Provision(macAddress),
+                ConnectAfterProvisioning(nodeAddress.value, macAddress),
+                Message(GetCompositionData(nodeAddress.value)),
+                Message(GetDefaultTtl(nodeAddress.value)),
+                Message(SetRelayConfig(nodeAddress.value, retransmit = RelayRetransmit(1, 5))),
+// Should be used according to docs:
+// Message(SetConfigNetworkTransmit(nodeAddress.value, 1, 5)),
+                Message(SetConfigNetworkTransmit(nodeAddress.value, 2, 2)),
+                Message(AddConfigAppKey(nodeAddress.value, netKey, appKey)),
+                Message(
+                    BindAppKeyToModel(
+                        nodeAddress.value,
+                        nodeAddress,
+                        vendorModelId,
+                        appKey.index
+                    )
+                ),
+                Message(
+                    AddConfigModelSubscription(
+                        nodeAddress.value,
+                        nodeAddress.value,
+                        allLightsGroup.value,
+                        vendorModelId.value
+                    )
+                ),
+                Message(
+                    SetConfigModelPublication(
+                        nodeAddress.value,
+                        UnicastAddress(nodeAddress.value),
+                        Publish(
+                            proxyGroupAddress,
+                            appKey.index,
+                            Period(0, 0),
+                            false,
+                            10,
+                            Retransmit(0, 0),
+                        ),
+                        vendorModelId,
+                    )
+                )
+            )
+                    + vendorSteps
+                    + listOf(Disconnect)
+        )
+
     fun provisionDevice1(
         macAddress: MacAddress,
         nodeAddress: UnicastAddress,

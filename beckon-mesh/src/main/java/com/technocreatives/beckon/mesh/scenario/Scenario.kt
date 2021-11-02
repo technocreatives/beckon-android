@@ -20,6 +20,7 @@ import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import no.nordicsemi.android.mesh.transport.VendorModelMessageAcked
 import timber.log.Timber
 
 sealed interface Step {
@@ -46,7 +47,19 @@ data class Message(val message: ConfigMessage<*>) : Step {
         val response = connected.bearer.sendConfigMessage(message).bind()
         response
     }
+}
 
+data class VendorMessage(
+    val dst: Int,
+    val message: VendorModelMessageAcked,
+    val responseOpCode: Int,
+) : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        val connected = connectedState().bind()
+        val response =
+            connected.bearer.sendVendorModelMessageAck(dst, message, responseOpCode).bind()
+        response
+    }
 }
 
 data class CreateGroup(val groupAddress: GroupAddress, val name: String) : Step {
@@ -109,7 +122,8 @@ data class ConnectAfterProvisioning(val address: Int, val macAddress: MacAddress
                     }, {
                         beckonClient.printConnectedDevices()
                         Timber.w("ConnectAfterProvisioning Timed out!")
-                        TimeoutError })
+                        TimeoutError
+                    })
                 }
             }
             .first().bind()
