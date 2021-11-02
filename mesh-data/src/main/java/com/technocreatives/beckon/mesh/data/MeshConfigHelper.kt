@@ -12,8 +12,10 @@ object MeshConfigHelper {
         "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#"
     val VERSION = "1.0.0"
 
-    fun generateMesh(meshName: String, provisionerName: String): MeshConfig {
-        val uuid = UUID.randomUUID()
+    fun generateMesh(meshName: String, provisionerName: String): MeshConfig =
+        generateMesh(meshName, UUID.randomUUID(), provisionerName, UUID.randomUUID())
+
+    fun generateMesh(meshName: String, meshId: UUID, provisionerName: String, provisionerId: UUID): MeshConfig {
         val appKeys = generateAppKeys()
         val netKeys = generateNetKeys()
         val unicastRanges = listOf(AddressRange(AddressValue(0x0001), AddressValue(0x199A)))
@@ -21,7 +23,7 @@ object MeshConfigHelper {
         val sceneRanges = listOf(SceneRange(AddressValue(0x0001), AddressValue(0x3333)))
         val provisioner = Provisioner(
             provisionerName,
-            UUID.randomUUID(),
+            provisionerId,
             unicastRanges,
             groupRanges,
             sceneRanges,
@@ -32,7 +34,7 @@ object MeshConfigHelper {
             SCHEMA,
             ID,
             VERSION,
-            uuid,
+            meshId,
             meshName,
             Instant.now().toEpochMilli(),
             false,

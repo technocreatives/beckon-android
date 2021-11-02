@@ -1,4 +1,4 @@
-package com.technocreatives.beckon.mesh
+package com.technocreatives.beckon.mesh.data
 
 import org.apache.commons.io.IOUtils
 import java.io.IOException

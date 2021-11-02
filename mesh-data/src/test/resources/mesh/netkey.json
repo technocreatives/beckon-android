@@ -1,0 +1,194 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#",
+  "version": "1.0.0",
+  "meshUUID": "54819308-1465-4E4A-94F7-32C387E66BED",
+  "meshName": "nRF Mesh Network",
+  "timestamp": "2021-08-31T09:57:53+02",
+  "partial": false,
+  "netKeys": [
+    {
+      "name": "Network Key 1",
+      "index": 0,
+      "key": "50C85B29E0CE479C2B96976424208681",
+      "phase": 0,
+      "minSecurity": "insecure",
+      "timestamp": "2021-08-31T09:54:34+02"
+    },
+    {
+      "name": "Network Key 2",
+      "index": 1,
+      "key": "2D219A3BE541E65F9C729745C5C46B4E",
+      "phase": 0,
+      "minSecurity": "insecure",
+      "timestamp": "2021-08-31T09:57:30+02"
+    },
+    {
+      "name": "Network Key 3",
+      "index": 2,
+      "key": "BB5DE7F10CD63C43A1581651D057B679",
+      "phase": 0,
+      "minSecurity": "insecure",
+      "timestamp": "2021-08-31T09:57:40+02"
+    }
+  ],
+  "appKeys": [
+    {
+      "name": "Application Key 1",
+      "index": 0,
+      "boundNetKey": 0,
+      "key": "31CF78B5FA121DA7FD86D82C3E2092FB"
+    },
+    {
+      "name": "Application Key 2",
+      "index": 1,
+      "boundNetKey": 1,
+      "key": "164EBEC422AFA833922A2033608842BB"
+    },
+    {
+      "name": "Application Key 3",
+      "index": 2,
+      "boundNetKey": 0,
+      "key": "E44119E4A6DE67A687C7899F13248914"
+    }
+  ],
+  "provisioners": [
+    {
+      "provisionerName": "nRF Mesh Provisioner",
+      "UUID": "83115857-4981-4076-9F57-1937342D315B",
+      "allocatedUnicastRange": [
+        {
+          "lowAddress": "0001",
+          "highAddress": "199A"
+        }
+      ],
+      "allocatedGroupRange": [
+        {
+          "lowAddress": "C000",
+          "highAddress": "CC9A"
+        }
+      ],
+      "allocatedSceneRange": [
+        {
+          "firstScene": "0001",
+          "lastScene": "3333"
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "UUID": "83115857-4981-4076-9F57-1937342D315B",
+      "name": "nRF Mesh Provisioner",
+      "deviceKey": "4339C6CE2103A8F893A5A9971CD29E09",
+      "unicastAddress": "0001",
+      "security": "insecure",
+      "configComplete": true,
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 2,
+        "relay": 2
+      },
+      "defaultTTL": 5,
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        },
+        {
+          "index": 1,
+          "updated": false
+        },
+        {
+          "index": 2,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "name": "Element: 0x0001",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0001",
+              "bind": [],
+              "subscribe": []
+            }
+          ]
+        }
+      ],
+      "excluded": false
+    },
+    {
+      "UUID": "109E746D-EB51-C646-A643-DE7A81ADF433",
+      "name": "TYRI_LC_43e6",
+      "deviceKey": "8AF6B0169DDBBFA2B40BA7358186B862",
+      "unicastAddress": "0002",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0060",
+      "crpl": "0028",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 20
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "name": "Element: 0x0002",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [],
+              "subscribe": []
+            }
+          ]
+        }
+      ],
+      "excluded": false
+    }
+  ],
+  "groups": [],
+  "scenes": [],
+  "networkExclusions": []
+}

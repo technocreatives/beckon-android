@@ -1,0 +1,238 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#",
+  "version": "1.0.0",
+  "meshUUID": "1C3D6D30-635B-49A9-A21C-11FCCDD2C9FB",
+  "meshName": "nRF Mesh Network",
+  "timestamp": "2021-08-30T13:58:27+02",
+  "partial": false,
+  "netKeys": [
+    {
+      "name": "Network Key 1",
+      "index": 0,
+      "key": "48696A7D5E0296CF39A20E24E4C611F1",
+      "phase": 0,
+      "minSecurity": "insecure",
+      "timestamp": "2021-08-30T13:56:35+02"
+    }
+  ],
+  "appKeys": [
+    {
+      "name": "Application Key 1",
+      "index": 0,
+      "boundNetKey": 0,
+      "key": "710E724D20BD8A58FA7D536BE694A0BF"
+    },
+    {
+      "name": "Application Key 2",
+      "index": 1,
+      "boundNetKey": 0,
+      "key": "39B0B9A58623B58D40B81AFD469774CB"
+    },
+    {
+      "name": "Application Key 3",
+      "index": 2,
+      "boundNetKey": 0,
+      "key": "1D83C993D5D745CDB8C012CC1CDAC1E1"
+    }
+  ],
+  "provisioners": [
+    {
+      "provisionerName": "nRF Mesh Provisioner",
+      "UUID": "90DBF081-4B9B-40C0-855A-2AE7B7DD40CE",
+      "allocatedUnicastRange": [
+        {
+          "lowAddress": "0001",
+          "highAddress": "199A"
+        }
+      ],
+      "allocatedGroupRange": [
+        {
+          "lowAddress": "C000",
+          "highAddress": "CC9A"
+        }
+      ],
+      "allocatedSceneRange": [
+        {
+          "firstScene": "0001",
+          "lastScene": "3333"
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "UUID": "90DBF081-4B9B-40C0-855A-2AE7B7DD40CE",
+      "name": "nRF Mesh Provisioner",
+      "deviceKey": "B5A3D50E160F9456B14DDEEBC75B9C22",
+      "unicastAddress": "0001",
+      "security": "insecure",
+      "configComplete": true,
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 2,
+        "relay": 2
+      },
+      "defaultTTL": 5,
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        },
+        {
+          "index": 1,
+          "updated": false
+        },
+        {
+          "index": 2,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "name": "Element: 0x0001",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0001",
+              "bind": [],
+              "subscribe": ["71277ff3817d49e1b1b1602e3c5e863b"]
+            }
+          ]
+        }
+      ],
+      "excluded": false
+    },
+    {
+      "UUID": "8ADA34D1-906E-9946-A474-89573998E20E",
+      "name": "TYRI_LC_7464",
+      "deviceKey": "37B146F2463A6D6E61299A142A52CBDD",
+      "unicastAddress": "0002",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0060",
+      "crpl": "0028",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 20
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "name": "Element: 0x0002",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [],
+              "subscribe": []
+            }
+          ]
+        }
+      ],
+      "excluded": false
+    },
+    {
+      "UUID": "109E746D-EB51-C646-A643-DE7A81ADF433",
+      "name": "TYRI_LC_43e6",
+      "deviceKey": "6AB775E2A9B9FF09D483920DB14B5776",
+      "unicastAddress": "0003",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0060",
+      "crpl": "0028",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 20
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "name": "Element: 0x0003",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [],
+              "subscribe": []
+            }
+          ]
+        }
+      ],
+      "excluded": false
+    }
+  ],
+  "groups": [],
+  "scenes": [],
+  "networkExclusions": []
+}
