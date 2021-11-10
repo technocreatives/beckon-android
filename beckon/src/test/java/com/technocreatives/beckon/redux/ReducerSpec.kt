@@ -1,5 +1,7 @@
 package com.technocreatives.beckon.redux
 
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.runBlocking
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import strikt.api.expectThat
@@ -8,7 +10,7 @@ import strikt.assertions.doesNotContain
 import strikt.assertions.hasSize
 import strikt.assertions.isEmpty
 
-object ReducerSpec : Spek({
+class ReducerSpec : Spek({
     lateinit var store: BeckonStore
 
     val macAddress = "macAddress"
@@ -26,11 +28,16 @@ object ReducerSpec : Spek({
 
         beforeEachTest {
             store = testBeckonStore(initialState)
+            with(store) {
+                GlobalScope.init()
+            }
         }
 
         describe("when dispatch AddConnectedDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then connected devices in current state should have size 1") {
@@ -49,7 +56,9 @@ object ReducerSpec : Spek({
 
         describe("when dispatch RemoveConnectedDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then connected devices in current state should be empty") {
@@ -63,7 +72,9 @@ object ReducerSpec : Spek({
 
         describe("when dispatch AddConnectingDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(macAddress)))
+                }
             }
 
             it("then connecting devices in current state should have size 1") {
@@ -82,7 +93,9 @@ object ReducerSpec : Spek({
 
         describe("when dispatch RemoveConnectingDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata(macAddress)))
+                }
             }
 
             it("then connected devices in current state should be empty") {
@@ -96,7 +109,9 @@ object ReducerSpec : Spek({
 
         describe("when dispatch RemoveAllConnectedDevices action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveAllConnectedDevices)
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveAllConnectedDevices)
+                }
             }
 
             it("then connected devices in current state should have size 0") {
@@ -109,12 +124,17 @@ object ReducerSpec : Spek({
 
         beforeEachTest {
             store = testBeckonStore(initialState.copy(connectedDevices = connectedDevices))
+            with(store) {
+                GlobalScope.init()
+            }
         }
 
         describe("when dispatch AddConnectedDevice with a nonexistent connected Device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then connected devices in current state should have size ${connectedDevices.size + 1}") {
@@ -130,7 +150,9 @@ object ReducerSpec : Spek({
         describe("when dispatch AddConnectedDevice with an existing connected Device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(connectedAddress1)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(connectedAddress1)))
+                }
             }
 
             it("then connected devices in current state should have size ${connectedDevices.size}") {
@@ -146,7 +168,9 @@ object ReducerSpec : Spek({
         describe("when dispatch RemoveConnectedDevice with a nonexistent connected Device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then connected devices in current state should have the same size") {
@@ -157,7 +181,9 @@ object ReducerSpec : Spek({
         describe("when dispatch RemoveConnectedDevice with an existing connected Device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(connectedAddress1)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(connectedAddress1)))
+                }
             }
 
             it("then connected devices in current state should have size ${connectedDevices.size - 1}") {
@@ -172,7 +198,9 @@ object ReducerSpec : Spek({
 
         describe("when dispatch AddConnectingDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(macAddress)))
+                }
             }
 
             it("then connecting devices in current state should have size 1") {
@@ -191,7 +219,9 @@ object ReducerSpec : Spek({
 
         describe("when dispatch RemoveConnectingDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata(macAddress)))
+                }
             }
 
             it("then connected devices in current state should have the same size") {
@@ -206,7 +236,9 @@ object ReducerSpec : Spek({
         describe("when dispatch RemoveAllConnectedDevices") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveAllConnectedDevices)
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveAllConnectedDevices)
+                }
             }
 
             it("then connected devices in current state should be empty") {
@@ -219,11 +251,16 @@ object ReducerSpec : Spek({
 
         beforeEachTest {
             store = testBeckonStore(initialState.copy(connectingDevices = connectingDevices))
+            with(store) {
+                GlobalScope.init()
+            }
         }
 
         describe("when dispatch AddConnectedDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then connected devices in current state should have size 1") {
@@ -242,7 +279,9 @@ object ReducerSpec : Spek({
 
         describe("when dispatch RemoveConnectedDevice action") {
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then connected devices in current state should be empty") {
@@ -266,13 +305,18 @@ object ReducerSpec : Spek({
                     connectingDevices = connectingDevices
                 )
             )
+            with(store) {
+                GlobalScope.init()
+            }
             currentState = store.currentState()
         }
 
         describe("when add a new connected device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then connected devices should have size ${connectedDevices.size + 1}") {
@@ -292,7 +336,9 @@ object ReducerSpec : Spek({
         describe("when add an existing connected device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(connectedAddress1)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(connectedAddress1)))
+                }
             }
 
             it("then the state should not change") {
@@ -303,7 +349,9 @@ object ReducerSpec : Spek({
         describe("when add a connected device from connecting devices") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(connectingAddress1)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectedDevice(beckonDevice(connectingAddress1)))
+                }
             }
 
             it("then connected devices should have size ${connectedDevices.size + 1}") {
@@ -328,7 +376,9 @@ object ReducerSpec : Spek({
         describe("when remove an existing connected device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(connectedAddress1)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(connectedAddress1)))
+                }
             }
 
             it("then connected devices should have size ${connectedDevices.size - 1}") {
@@ -378,7 +428,10 @@ object ReducerSpec : Spek({
         describe("when add an existing connecting device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(connectingAddress1)))
+
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(connectingAddress1)))
+                }
             }
 
             it("then the state should not change") {
@@ -388,7 +441,9 @@ object ReducerSpec : Spek({
 
         describe("when add a connecting device from connected devices") {
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(connectedAddress1)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(connectedAddress1)))
+                }
             }
 
             it("then connected devices state should have size ${connectedDevices.size - 1}") {
@@ -413,7 +468,16 @@ object ReducerSpec : Spek({
         describe("when remove an existing connecting device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata(connectingAddress1)))
+                runBlocking {
+
+                    store.dispatch(
+                        BeckonAction.RemoveConnectingDevice(
+                            savedMetadata(
+                                connectingAddress1
+                            )
+                        )
+                    )
+                }
             }
 
             it("then connected devices should have the same size ${connectedDevices.size}") {
@@ -433,7 +497,9 @@ object ReducerSpec : Spek({
         describe("when remove a nonexistent connecting device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata(macAddress)))
+                }
             }
 
             it("then the state should not change") {
@@ -444,7 +510,10 @@ object ReducerSpec : Spek({
         describe("when dispatch RemoveAllConnectedDevices") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveAllConnectedDevices)
+
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveAllConnectedDevices)
+                }
             }
 
             it("then connected devices in current state should be empty") {

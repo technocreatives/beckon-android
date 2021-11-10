@@ -208,6 +208,9 @@ internal class BeckonClientImpl(
     }
 
     override fun register(context: Context) {
+        with(beckonStore) {
+            init()
+        }
         registerJob =
             launch {
                 bluetoothReceiver.register(context)

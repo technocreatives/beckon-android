@@ -8,18 +8,22 @@ import android.content.IntentFilter
 import com.lenguyenthanh.redux.core.Dispatcher
 import com.technocreatives.beckon.BluetoothState
 import com.technocreatives.beckon.redux.BeckonAction
+import kotlinx.coroutines.runBlocking
 
 internal interface Receiver {
     fun register(context: Context)
     fun unregister(context: Context)
 }
 
-internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher<BeckonAction>) : BroadcastReceiver(), Receiver {
+internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher<BeckonAction>) :
+    BroadcastReceiver(), Receiver {
 
     override fun onReceive(context: Context?, intent: Intent) {
         if (intent.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
             val state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)
-            dispatcher.dispatch(BeckonAction.ChangeBluetoothState(state.toBluetoothState()))
+            runBlocking {
+                dispatcher.dispatch(BeckonAction.ChangeBluetoothState(state.toBluetoothState()))
+            }
         }
     }
 
@@ -30,7 +34,9 @@ internal class BluetoothAdapterReceiver(private val dispatcher: Dispatcher<Becko
         )
 
         // Post initial state
-        dispatcher.dispatch(BeckonAction.ChangeBluetoothState(BluetoothAdapter.getDefaultAdapter().state.toBluetoothState()))
+        runBlocking {
+            dispatcher.dispatch(BeckonAction.ChangeBluetoothState(BluetoothAdapter.getDefaultAdapter().state.toBluetoothState()))
+        }
     }
 
     override fun unregister(context: Context) {
