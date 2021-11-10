@@ -10,7 +10,6 @@ import arrow.core.computations.either
 import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.util.toBondState
-import io.reactivex.subjects.SingleSubject
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import no.nordicsemi.android.ble.BleManager
@@ -50,7 +49,6 @@ internal class BeckonBleManager(
         MutableSharedFlow<Change>(1)
     }
 
-    private val devicesSubject by lazy { SingleSubject.create<Either<ConnectionError, DeviceDetail>>() }
     private val deviceConnectionEmitter =
         CompletableDeferred<Either<ConnectionError, DeviceDetail>>()
 
@@ -266,7 +264,7 @@ internal class BeckonBleManager(
                         )
                     }
                 } else {
-                    devicesSubject.onSuccess(
+                    deviceConnectionEmitter.complete(
                         ConnectionError.BluetoothGattNull(device.address).left()
                     )
                 }
