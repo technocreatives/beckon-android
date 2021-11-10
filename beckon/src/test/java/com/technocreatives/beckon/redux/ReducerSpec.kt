@@ -398,7 +398,9 @@ class ReducerSpec : Spek({
         describe("when remove a nonexistent connected device") {
 
             beforeEachTest {
-                store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                }
             }
 
             it("then the state should not change") {
@@ -408,7 +410,9 @@ class ReducerSpec : Spek({
 
         describe("when add a new connecting device") {
             beforeEachTest {
-                store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(macAddress)))
+                runBlocking {
+                    store.dispatch(BeckonAction.AddConnectingDevice(savedMetadata(macAddress)))
+                }
             }
 
             it("then connecting devices should have size ${connectingDevices.size + 1}") {
