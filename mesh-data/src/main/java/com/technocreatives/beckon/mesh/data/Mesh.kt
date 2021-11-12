@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
+import arrow.optics.optics
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
 import com.technocreatives.beckon.mesh.data.util.Constants
@@ -12,6 +13,7 @@ import java.util.*
 
 @ExperimentalSerializationApi
 @Serializable
+@optics
 data class MeshConfig(
     @SerialName("\$schema")
     val schema: String,
@@ -31,7 +33,9 @@ data class MeshConfig(
     val groups: List<Group> = emptyList(),
     val scenes: List<Scene> = emptyList(),
     val networkExclusions: List<NetworkExclusion> = emptyList(),
-)
+) {
+    companion object
+}
 
 @ExperimentalSerializationApi
 fun MeshConfig.nodesWithoutProvisioner(): List<Node> {

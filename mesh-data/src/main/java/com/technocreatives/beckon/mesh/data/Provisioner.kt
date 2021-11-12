@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
+import arrow.optics.optics
 import com.technocreatives.beckon.mesh.data.serializer.HexToIntSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
 import kotlinx.serialization.SerialName
@@ -7,6 +8,7 @@ import kotlinx.serialization.Serializable
 import java.util.*
 
 @Serializable
+@optics
 data class Provisioner(
     @SerialName("provisionerName")
     val name: String,
@@ -17,7 +19,9 @@ data class Provisioner(
     val allocatedGroupRange: List<AddressRange>,
     val allocatedSceneRange: List<SceneRange>,
     @Transient val isLastSelected: Boolean = false,
-)
+) {
+    companion object
+}
 
 @Serializable
 @JvmInline
