@@ -9,8 +9,6 @@ import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
 import com.technocreatives.beckon.mesh.data.*
-import com.technocreatives.beckon.mesh.data.AccessPayload
-import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
@@ -28,6 +26,7 @@ import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.transport.ControlMessage
 import no.nordicsemi.android.mesh.transport.MeshMessage
+import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus
 import timber.log.Timber
 
 class Connected(
@@ -207,6 +206,14 @@ class ConnectedMessageStatusCallbacks(
             }
         } else {
             Timber.w("onMeshMessageReceived Duplicated sequence number ${message.info()}")
+        }
+
+        if (message is VendorModelMessageStatus) {
+            val filteredMessage =
+                ProxyFilterMessage(UnicastAddress(src), AccessPayload.parse(message.accessPayload))
+            GlobalScope.launch {
+                filteredSubject.emit(filteredMessage)
+            }
         }
 
     }
