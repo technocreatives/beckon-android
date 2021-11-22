@@ -1,8 +1,10 @@
 package com.technocreatives.beckon.mesh.callbacks
 
+import com.technocreatives.beckon.Mtu
 import no.nordicsemi.android.mesh.MeshManagerCallbacks
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.provisionerstates.UnprovisionedMeshNode
+import timber.log.Timber
 
 abstract class AbstractMeshManagerCallbacks : MeshManagerCallbacks {
     override fun onNetworkLoaded(meshNetwork: MeshNetwork?) {
@@ -31,10 +33,11 @@ abstract class AbstractMeshManagerCallbacks : MeshManagerCallbacks {
     }
 
     override fun onMeshPduCreated(pdu: ByteArray) {
-        TODO("Callback is not implemented: onMeshPduCreated")
+        Timber.w("onMeshPduCreated in incorrect state")
     }
 
     override fun getMtu(): Int {
-        TODO("Callback is not implemented: getMtu")
+        Timber.w("getMTU in incorrect state")
+        return Mtu.MAX.toInt()
     }
 }

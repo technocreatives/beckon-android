@@ -41,7 +41,9 @@ data class DeviceFilter(
         when {
             serviceUuid == null -> true
             device.uuids == null -> false
-            else -> device.uuids.any { it.uuid.toString().lowercase(Locale.US) == serviceUuid.lowercase(Locale.US) }
+            else -> device.uuids.any {
+                it.uuid.toString().lowercase(Locale.US) == serviceUuid.lowercase(Locale.US)
+            }
         }
 }
 
