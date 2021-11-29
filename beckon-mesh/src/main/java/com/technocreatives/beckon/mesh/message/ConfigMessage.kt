@@ -268,7 +268,7 @@ internal fun ConfigCompositionDataStatus.transform(): GetCompositionDataResponse
         statusCode,
         crpl,
         features,
-        elements.transform(),
+        elements.transform(UnicastAddress(src)),
         companyIdentifier,
         productIdentifier,
         versionIdentifier,

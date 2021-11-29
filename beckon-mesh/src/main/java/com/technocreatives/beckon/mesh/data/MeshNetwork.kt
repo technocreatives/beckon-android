@@ -5,16 +5,16 @@ import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.NetworkKey
 import no.nordicsemi.android.mesh.NodeKey
-import no.nordicsemi.android.mesh.Provisioner as NrfProvisioner
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import no.nordicsemi.android.mesh.transport.PublicationSettings
 import no.nordicsemi.android.mesh.utils.MeshAddress
 import no.nordicsemi.android.mesh.utils.NetworkTransmitSettings
 import java.util.*
-import no.nordicsemi.android.mesh.transport.MeshModel as NrfMeshModel
-import no.nordicsemi.android.mesh.transport.Element as NrfElement
 import no.nordicsemi.android.mesh.Features as NrfFeatures
 import no.nordicsemi.android.mesh.Group as NrfGroup
+import no.nordicsemi.android.mesh.Provisioner as NrfProvisioner
+import no.nordicsemi.android.mesh.transport.Element as NrfElement
+import no.nordicsemi.android.mesh.transport.MeshModel as NrfMeshModel
 
 fun MeshNetwork.transform() = MeshConfig(
     MeshConfigHelper.SCHEMA,
@@ -87,8 +87,8 @@ fun NrfElement.transform(index: ElementIndex) = Element(
     meshModels.map { it.value.transform() }
 )
 
-fun Map<Int, NrfElement>.transform(): List<Element> =
-    this.map { it.value.transform(ElementIndex(it.key)) }
+fun Map<Int, NrfElement>.transform(nodeAddress: UnicastAddress): List<Element> =
+    this.map { it.value.transform(ElementIndex(nodeAddress.value - it.key)) }
 
 @SuppressLint("RestrictedApi")
 fun NrfProvisioner.transform() = Provisioner(
@@ -115,26 +115,30 @@ fun NrfProvisioner.transform() = Provisioner(
     isLastSelected,
 )
 
-fun ProvisionedMeshNode.transform() = Node(
-    NodeId(UUID.fromString(uuid)),
-    nodeName,
-    Key(deviceKey),
-    UnicastAddress(unicastAddress),
-    security,
-    isConfigured,
-    companyIdentifier = companyIdentifier,
-    productIdentifier = productIdentifier,
-    versionIdentifier = versionIdentifier,
-    crpl = crpl,
-    nodeFeatures?.transform(),
-    ttl,
-    isExcluded,
-    networkTransmitSettings?.transform(),
-    addedNetKeys.map { it.toNetKey() },
-    addedAppKeys.map { it.toAppKey() },
-    elements.transform(),
-    sequenceNumber,
-)
+fun ProvisionedMeshNode.transform(): Node {
+    val nodeAddress = UnicastAddress(unicastAddress)
+
+    return Node(
+        NodeId(UUID.fromString(uuid)),
+        nodeName,
+        Key(deviceKey),
+        nodeAddress,
+        security,
+        isConfigured,
+        companyIdentifier = companyIdentifier,
+        productIdentifier = productIdentifier,
+        versionIdentifier = versionIdentifier,
+        crpl = crpl,
+        nodeFeatures?.transform(),
+        ttl,
+        isExcluded,
+        networkTransmitSettings?.transform(),
+        addedNetKeys.map { it.toNetKey() },
+        addedAppKeys.map { it.toAppKey() },
+        elements.transform(nodeAddress),
+        sequenceNumber,
+    )
+}
 
 fun NetworkTransmitSettings.transform() = NetworkTransmit(
     networkTransmitCount, networkIntervalSteps
