@@ -1,11 +1,13 @@
 package com.technocreatives.beckon.mesh.data
 
+import arrow.optics.optics
 import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.util.*
 
 @Serializable
+@optics
 data class Node(
     @SerialName("UUID")
     val uuid: NodeId,
@@ -37,7 +39,9 @@ data class Node(
     val appKeys: List<NodeAppKey> = emptyList(),
     val elements: List<Element> = emptyList(),
     @Transient val sequenceNumber: Int = 0,
-)
+) {
+    companion object
+}
 
 @Serializable
 @JvmInline
@@ -45,8 +49,6 @@ value class NodeId(
     @Serializable(with = UuidSerializer::class)
     val uuid: UUID
 )
-
-
 
 @Serializable
 data class NodeNetKey(

@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
+import arrow.optics.optics
 import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
