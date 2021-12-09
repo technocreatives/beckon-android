@@ -3,18 +3,14 @@ package com.technocreatives.beckon.mesh.data
 import arrow.optics.optics
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
-import com.technocreatives.beckon.mesh.data.util.Constants
-import com.technocreatives.beckon.mesh.data.util.generateRandomNumber
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import java.time.Instant
 import java.util.*
 
-@ExperimentalSerializationApi
 @Serializable
 @optics
-data class MeshConfig(
+data class MeshConfig @OptIn(ExperimentalSerializationApi::class) constructor(
     @SerialName("\$schema")
     val schema: String,
     val id: String,
@@ -38,9 +34,15 @@ data class MeshConfig(
 }
 
 @ExperimentalSerializationApi
-fun MeshConfig.nodesWithoutProvisioner(): List<Node> {
-    val selectedProvisioner = provisioners.findLast { it.isLastSelected }
-    return nodes.filter { it.uuid.uuid != selectedProvisioner?.uuid }
+fun MeshConfig.nodesWithoutProvisioners(): List<Node> {
+    val provisioners = provisioners.map { it.uuid }
+    return nodes.filter { it.uuid.uuid !in provisioners }
+}
+
+@ExperimentalSerializationApi
+fun MeshConfig.provisionerNodes(): List<Node> {
+    val provisioners = provisioners.map { it.uuid }
+    return nodes.filter { it.uuid.uuid in provisioners }
 }
 
 @Serializable
