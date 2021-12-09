@@ -10,15 +10,6 @@ import kotlinx.serialization.json.Json
 
 class MeshSerializationTest : StringSpec({
     val format = Json { encodeDefaults = true }
-    val jsonInput = listOf(
-//        "/mesh/1.json",
-        "/mesh/2.json",
-        "/mesh/empty.json",
-        "/mesh/many.json",
-        "/mesh/netkey.json",
-        "/mesh/noDeviceKey.json",
-        "/mesh/iosConfig.json",
-    )
 
     "Datetime serialization" {
 
@@ -32,7 +23,7 @@ class MeshSerializationTest : StringSpec({
     }
 
     "mesh decode & encode" {
-        jsonInput.map { this.javaClass.stringFrom(it) }
+        MeshTestConfigs.meshConfigJsons
             .forEach {
                 val mesh = format.decodeFromString<MeshConfig>(it)
                 val json = format.encodeToString(mesh)
