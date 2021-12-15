@@ -5,7 +5,7 @@ buildscript {
     // all library versions
     ext.rxJava = '2.2.8'
     ext.rxAndroid = '2.1.1'
-    ext.kotlin_version = '1.5.30'
+    ext.kotlin_version = '1.6.10'
     ext.arrow_version = "1.0.1"
     ext.rxarrow = "0.13.1"
     ext.timber = '4.7.1'
@@ -14,7 +14,7 @@ buildscript {
     ext.nsScannerVersion = '1.5.0'
     ext.nsBleVersion = '2.3.0'
     ext.nsDfuVersion = '1.9.0'
-    ext.moshi = '1.12.0'
+    ext.moshi = '1.13.0'
 
     ext.statemachine = '0.02'
 
@@ -32,7 +32,7 @@ buildscript {
 
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.5.31"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "de.mannodermaus.gradle.plugins:android-junit5:1.7.1.1"
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
     }

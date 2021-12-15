@@ -11,7 +11,10 @@ import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.util.toBondState
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.scan
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.ConnectRequest
 import no.nordicsemi.android.ble.callback.DataReceivedCallback
@@ -223,7 +226,6 @@ internal class BeckonBleManager(
         return mtu() - 3
     }
 
-    @DelicateCoroutinesApi
     override fun getGattCallback(): BleManagerGattCallback {
         return object : BleManagerGattCallback() {
 
