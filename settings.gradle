@@ -2,3 +2,6 @@ include ':beckon', ':beckon-mesh'
 // ':app', ':beckon-rx2',
 
 include ':mesh-data'
+
+include ':mesh'
+project(':mesh').projectDir = new File(rootDir, 'Android-nRF-Mesh-Library/mesh/')

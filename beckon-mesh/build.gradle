@@ -27,7 +27,7 @@ android {
 
     lintOptions {
         warningsAsErrors true
-        abortOnError true // Fail early.
+        abortOnError false // Fail early.
 
         disable "UnusedResources"              // Unused will be removed on release
         disable "IconExpectedSize"             // Using the material icons provided from Google
@@ -58,7 +58,8 @@ dependencies {
 
     implementation project(':beckon')
     implementation project(':mesh-data')
-    implementation("no.nordicsemi.android:mesh:3.1.6")
+
+    api project(':mesh')
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
 
