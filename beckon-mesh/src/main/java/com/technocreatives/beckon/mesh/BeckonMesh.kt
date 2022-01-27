@@ -249,6 +249,7 @@ class BeckonMesh(
         either {
             val beckonDevice = beckonClient.connect(macAddress).bind()
             // TODO
+            // Maybe we need some delay here for checking client termination signal
             beckonDevice.requestMtu(MeshConstants.maxMtu)
                 .fold({ Timber.w("RequestMtu failed $it") }, { Timber.d("RequestMtu success $it") })
             beckonDevice.subscribe(characteristic).bind()

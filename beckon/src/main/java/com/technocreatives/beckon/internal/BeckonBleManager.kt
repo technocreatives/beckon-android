@@ -233,16 +233,17 @@ internal class BeckonBleManager(
             override fun initialize() {
                 Timber.d("initialize")
                 if (bluetoothGatt != null) {
-                    val services = bluetoothGatt!!.services.map { it.uuid }
-                    val characteristics = allCharacteristics(bluetoothGatt!!)
-                    val detail = DeviceDetail(services, characteristics)
-                    //
+
                     launch {
                         // TODO Add timeout error???
+                        val delayTime = 1600L
+                        delay(delayTime)
+                        val services = bluetoothGatt!!.services.map { it.uuid }
+                        val characteristics = allCharacteristics(bluetoothGatt!!)
+                        val detail = DeviceDetail(services, characteristics)
+
                         either<BeckonError, Unit> {
-                            val delayTime = 1600L
                             // val delayTime = 0L
-                            delay(delayTime)
 //                            if (descriptor.actionsOnConnected.isEmpty()) {
                             subscribe(descriptor.subscribes, detail).bind()
                             read(descriptor.reads, detail).bind()
@@ -260,8 +261,12 @@ internal class BeckonBleManager(
                                 )
                             },
                             {
-                                Timber.d("Initialize Success: $detail")
-                                deviceConnectionEmitter.complete(detail.right())
+                                Timber.d("Initialize Success: $detail ${this@BeckonBleManager.isConnected}")
+                                if(this@BeckonBleManager.isConnected) {
+                                    deviceConnectionEmitter.complete(detail.right())
+                                } else {
+                                    deviceConnectionEmitter.complete(ConnectionError.BleConnectFailed(device.address, -137).left())
+                                }
                             }
                         )
                     }
