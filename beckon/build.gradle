@@ -96,7 +96,7 @@ dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:$moshi")
     implementation "com.github.lenguyenthanh:simpleredux:28844b4b43"
 
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
 
     // Arrows
     implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
