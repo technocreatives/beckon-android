@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh.message
 
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
+import com.technocreatives.beckon.mesh.SendMessageError
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
@@ -94,20 +95,26 @@ class MessageBearer(private val processor: MessageProcessor) {
     internal suspend fun sendMessage(
         address: Int,
         message: MeshMessage
-    ): Either<SendAckMessageError, Unit> =
+    ): Either<SendMessageError, Unit> =
         processor.sendMessage(
             address,
             message
         )
 
     suspend fun <T : ConfigStatusMessage> sendConfigMessage(message: ConfigMessage<T>): Either<SendAckMessageError, T> {
-        Timber.d("Send $message")
+        Timber.d("Send Ack $message")
         val response =
             sendAckMessage(message.dst, message.toMeshMessage(), message.responseOpCode.value)
                 .map { message.fromResponse(it) }
         Timber.d("Received $response")
         return response
     }
+
+    suspend fun sendConfigMessageUnAck(message: ConfigMessage<*>): Either<SendMessageError, Unit> {
+        Timber.d("Send unack $message")
+        return sendMessage(message.dst, message.toMeshMessage())
+    }
+
 
 //    suspend fun sendConfigMessage(message: ConfigMessage): Either<SendAckMessageError, ConfigStatusMessage> {
 //        Timber.d("Send $message")

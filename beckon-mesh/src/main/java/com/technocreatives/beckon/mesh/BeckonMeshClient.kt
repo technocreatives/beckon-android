@@ -7,9 +7,7 @@ import arrow.core.computations.either
 import arrow.core.right
 import arrow.core.rightIfNotNull
 import com.technocreatives.beckon.BeckonClient
-import com.technocreatives.beckon.mesh.data.MeshConfig
-import com.technocreatives.beckon.mesh.data.MeshConfigHelper
-import com.technocreatives.beckon.mesh.data.MeshConfigSerializer
+import com.technocreatives.beckon.mesh.data.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -81,8 +79,26 @@ class BeckonMeshClient(
     private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> =
         meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, config) }
 
-    fun generateMesh(meshName: String, provisionerName: String): MeshConfig =
-        MeshConfigHelper.generateMesh(meshName, provisionerName)
+    fun generateMesh(meshName: String, provisionerName: String): MeshConfig {
+        val provisionerId = UUID.randomUUID()
+        val m = MeshConfigHelper.generateMesh(meshName, UUID.randomUUID(), provisionerName, provisionerId)
+        val p = bla(provisionerId, provisionerName)
+        return m.copy(provisioners = listOf(p))
+    }
+
+    private fun bla(provisionerId: UUID, provisionerName: String): Provisioner {
+            val unicastRanges = listOf(AddressRange(AddressValue(0x0001), AddressValue(0x7FFF)))
+            val groupRanges = listOf(AddressRange(AddressValue(0xC000), AddressValue(0xCC9A)))
+            val sceneRanges = listOf(SceneRange(AddressValue(0x0001), AddressValue(0x3333)))
+            return Provisioner(
+                provisionerName,
+                provisionerId,
+                unicastRanges,
+                groupRanges,
+                sceneRanges,
+                true
+            )
+    }
 
     suspend fun fromJson(json: String) =
         withContext(Dispatchers.IO) {

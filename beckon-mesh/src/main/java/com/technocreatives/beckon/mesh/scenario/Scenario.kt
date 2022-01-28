@@ -24,7 +24,8 @@ import timber.log.Timber
 
 sealed interface Step {
     suspend fun BeckonMesh.execute(): Either<Any, Unit>
-    suspend fun BeckonMesh.execute1(): Either<StepError, StepResult> = StepError.ConnectStepError.left()
+    suspend fun BeckonMesh.execute1(): Either<StepError, StepResult> =
+        StepError.ConnectStepError.left()
 }
 
 data class Provision(val address: MacAddress) : Step {
@@ -42,10 +43,15 @@ data class Provision(val address: MacAddress) : Step {
 data class Message(val message: ConfigMessage<*>) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
         val connected = connectedState().bind()
-        val response = connected.bearer.sendConfigMessage(message).bind()
-        response
+        connected.bearer.sendConfigMessage(message).bind()
     }
+}
 
+data class UnAckMessage(val message: ConfigMessage<*>) : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        val connected = connectedState().bind()
+        connected.bearer.sendConfigMessageUnAck(message).bind()
+    }
 }
 
 data class CreateGroup(val groupAddress: GroupAddress, val name: String) : Step {
@@ -119,7 +125,9 @@ class MessageAndOnErrorAction(val message: ConfigMessage<*>, val action: () -> U
 //}
 
 sealed interface StepError {
-    data class MessageStepError(val error: SendAckMessageError, val message: ConfigMessage<*>) : StepError
+    data class MessageStepError(val error: SendAckMessageError, val message: ConfigMessage<*>) :
+        StepError
+
     object ConnectStepError : StepError
 }
 

@@ -11,6 +11,7 @@ import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.internal.toUuid
+import com.technocreatives.beckon.internal.withTimeout
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
@@ -220,6 +221,7 @@ class BeckonMesh(
             .mapZ { connectedDevices + it }
     }
 
+    // todo support timeout
     suspend fun scanForProxy(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
         val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
         return scan(scannerSetting)
@@ -250,9 +252,10 @@ class BeckonMesh(
             val beckonDevice = beckonClient.connect(macAddress).bind()
             // TODO
             // Maybe we need some delay here for checking client termination signal
-            beckonDevice.requestMtu(MeshConstants.maxMtu)
-                .fold({ Timber.w("RequestMtu failed $it") }, { Timber.d("RequestMtu success $it") })
-            beckonDevice.subscribe(characteristic).bind()
+            beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
+//                .fold({ Timber.w("RequestMtu failed $it") }, { Timber.d("RequestMtu success $it") })
+            beckonDevice.subscribe(characteristic)
+                .bind()
             with(meshApi) {
                 handleNotifications(beckonDevice, characteristic)
             }

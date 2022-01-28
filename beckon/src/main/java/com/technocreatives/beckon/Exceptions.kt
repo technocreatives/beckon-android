@@ -27,6 +27,8 @@ data class BleActionError(
 
 data class MtuRequestError(val macAddress: String, val status: Int) : BeckonActionError, BeckonError
 
+object TimeOutError : BeckonActionError
+
 sealed interface RequirementFailed : BeckonActionError
 data class CharacteristicNotFound(val characteristic: Characteristic) : RequirementFailed
 data class ServiceNotFound(val characteristic: Characteristic) : RequirementFailed
@@ -52,6 +54,7 @@ sealed class ConnectionError : BeckonError {
     data class CreateBondFailed(val macAddress: String, val status: Int) : ConnectionError()
     data class RemoveBondFailed(val macAddress: String, val status: Int) : ConnectionError()
     data class BluetoothGattNull(val macAddress: MacAddress) : ConnectionError()
+    data class Timeout(val macAddress: MacAddress) : ConnectionError()
 
     data class RequirementFailed(val fails: List<CharacteristicFailed>) : ConnectionError()
     data class ConnectedDeviceNotFound(val macAddress: MacAddress) : ConnectionError()

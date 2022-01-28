@@ -74,30 +74,54 @@ internal class BeckonBleManager(
 
     fun states() = states
 
-    private suspend fun connect(request: ConnectRequest): Either<ConnectionError, DeviceDetail> {
-        Timber.d("Connect ${request.device}")
-        request
-            .fail { device, status ->
-                Timber.e("ConnectionError ${device.address} status: $status")
-                deviceConnectionEmitter.complete(
-                    ConnectionError.BleConnectFailed(
-                        device.address,
-                        status
-                    ).left()
-                )
-            }.enqueue()
-        return deviceConnectionEmitter.await()
+//    private suspend fun connect(request: ConnectRequest): Either<ConnectionError, DeviceDetail> {
+//        Timber.d("Connect ${request.device}")
+//        request
+//            .fail { device, status ->
+//                Timber.e("ConnectionError ${device.address} status: $status")
+//                deviceConnectionEmitter.complete(
+//                    ConnectionError.BleConnectFailed(
+//                        device.address,
+//                        status
+//                    ).left()
+//                )
+//            }.enqueue()
+//        return deviceConnectionEmitter.await()
+//    }
+
+    private suspend fun connect(request: ConnectRequest): Either<ConnectionError, Unit> {
+        return suspendCancellableCoroutine { cont ->
+            request
+                .done { cont.resume(Unit.right()) }
+                .fail { device, status ->
+                    Timber.e("ConnectionError ${device.address} status: $status")
+                    cont.resume(
+                        ConnectionError.BleConnectFailed(
+                            device.address,
+                            status
+                        ).left()
+                    )
+                }.enqueue()
+            Timber.d("Connect ${request.device}")
+        }
+
     }
 
     suspend fun connect(
         retryAttempts: Int = 3,
-        retryDelay: Int = 100
+        retryDelay: Int = 100,
+        autoConnect: Boolean = false,
+        timeOut: Long = 60000L
     ): Either<ConnectionError, DeviceDetail> {
         Timber.d("SingleZ connect")
         val request = connect(device)
+            .timeout(10000)
             .retry(retryAttempts, retryDelay)
-//            .useAutoConnect(true)
-        return connect(request)
+            .useAutoConnect(autoConnect)
+        return withTimeout(
+            timeOut,
+            { connect(request) }) { ConnectionError.Timeout(device.address) }
+            .flatMap { deviceConnectionEmitter.await() }
     }
 
     suspend fun applyActions(
@@ -262,10 +286,15 @@ internal class BeckonBleManager(
                             },
                             {
                                 Timber.d("Initialize Success: $detail ${this@BeckonBleManager.isConnected}")
-                                if(this@BeckonBleManager.isConnected) {
+                                if (this@BeckonBleManager.isConnected) {
                                     deviceConnectionEmitter.complete(detail.right())
                                 } else {
-                                    deviceConnectionEmitter.complete(ConnectionError.BleConnectFailed(device.address, -137).left())
+                                    deviceConnectionEmitter.complete(
+                                        ConnectionError.BleConnectFailed(
+                                            device.address,
+                                            -137
+                                        ).left()
+                                    )
                                 }
                             }
                         )
@@ -478,50 +507,97 @@ internal class BeckonBleManager(
     }
 
     // TODO Only read if readable
+//    suspend fun subscribe(
+//        uuid: UUID,
+//        gatt: BluetoothGattCharacteristic
+//    ): Either<SubscribeDataException, Unit> {
+//        val result = CompletableDeferred<Either<SubscribeDataException, Unit>>()
+//        Timber.d("setNotification callback $uuid")
+//        val callback = DataReceivedCallback { device, data ->
+//            Timber.d("notify DataReceivedCallback $device $data")
+//            runBlocking {
+//                changeSubject.emit(Change(uuid, data))
+//            }
+//        }
+//
+//        setNotificationCallback(gatt).with(callback)
+//        enableNotifications(gatt)
+//            .invalid {
+//                result.complete(
+//                    SubscribeDataException(
+//                        device.address,
+//                        uuid,
+//                        -1
+//                    ).left()
+//                )
+//            }
+//            .fail { device, status ->
+//                Timber.w("EnableNotification request failed: $device $status")
+//                result.complete(
+//                    SubscribeDataException(
+//                        device.address,
+//                        uuid,
+//                        status
+//                    ).left()
+//                )
+//            }
+//            .done {
+//                Timber.w("EnableNotification request success: $it")
+//                result.complete(Unit.right())
+//            }
+//            .enqueue()
+////        readCharacteristic(gatt).with(readCallback)
+////            .fail { device, status -> Timber.w("Read request failed: $device $status") }
+////            .enqueue()
+//        Timber.d("end of setNotification callback $uuid")
+//        return result.await()
+//    }
+
+    // TODO Only read if readable
     suspend fun subscribe(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
     ): Either<SubscribeDataException, Unit> {
-        val result = CompletableDeferred<Either<SubscribeDataException, Unit>>()
-        Timber.d("setNotification callback $uuid")
-        val callback = DataReceivedCallback { device, data ->
-            Timber.d("notify DataReceivedCallback $device $data")
-            runBlocking {
-                changeSubject.emit(Change(uuid, data))
+        return suspendCoroutine<Either<SubscribeDataException, Unit>> { result ->
+            Timber.d("setNotification callback $uuid")
+            val callback = DataReceivedCallback { device, data ->
+                Timber.d("notify DataReceivedCallback $device $data")
+                runBlocking {
+                    changeSubject.emit(Change(uuid, data))
+                }
             }
-        }
 
-        setNotificationCallback(gatt).with(callback)
-        enableNotifications(gatt)
-            .invalid {
-                result.complete(
-                    SubscribeDataException(
-                        device.address,
-                        uuid,
-                        -1
-                    ).left()
-                )
-            }
-            .fail { device, status ->
-                Timber.w("EnableNotification request failed: $device $status")
-                result.complete(
-                    SubscribeDataException(
-                        device.address,
-                        uuid,
-                        status
-                    ).left()
-                )
-            }
-            .done {
-                Timber.w("EnableNotification request success: $it")
-                result.complete(Unit.right())
-            }
-            .enqueue()
+            setNotificationCallback(gatt).with(callback)
+            enableNotifications(gatt)
+                .invalid {
+                    result.resume(
+                        SubscribeDataException(
+                            device.address,
+                            uuid,
+                            -1
+                        ).left()
+                    )
+                }
+                .fail { device, status ->
+                    Timber.w("EnableNotification request failed: $device $status")
+                    result.resume(
+                        SubscribeDataException(
+                            device.address,
+                            uuid,
+                            status
+                        ).left()
+                    )
+                }
+                .done {
+                    Timber.w("EnableNotification request success: $it")
+                    result.resume(Unit.right())
+                }
+                .enqueue()
 //        readCharacteristic(gatt).with(readCallback)
 //            .fail { device, status -> Timber.w("Read request failed: $device $status") }
 //            .enqueue()
-        Timber.d("end of setNotification callback $uuid")
-        return result.await()
+            Timber.d("end of setNotification callback $uuid")
+        }
     }
 
     suspend fun unsubscribe(notify: FoundCharacteristic.Notify): Either<SubscribeDataException, Unit> {
@@ -559,3 +635,10 @@ internal class BeckonBleManager(
         }
     }
 }
+
+suspend fun <E, T> withTimeout(
+    timeMillis: Long,
+    block: suspend CoroutineScope.() -> Either<E, T>,
+    error: () -> E
+): Either<E, T> =
+    withTimeoutOrNull(timeMillis, block) ?: error().left()

@@ -10,11 +10,8 @@ import com.technocreatives.beckon.data.DeviceRepository
 import com.technocreatives.beckon.redux.BeckonAction
 import com.technocreatives.beckon.redux.BeckonStore
 import com.technocreatives.beckon.util.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import no.nordicsemi.android.ble.data.Data
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
@@ -312,8 +309,10 @@ internal class BeckonClientImpl(
             beckonDevice
         }
         return result.mapLeft {
-            if (it is ConnectionError.RequirementFailed) {
+            if (it is ConnectionError.RequirementFailed || it is ConnectionError.Timeout) {
                 manager.disconnect().enqueue()
+                // make sure we disconnect the devices
+                delay(300)
             }
             beckonStore.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata))
             it

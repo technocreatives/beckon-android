@@ -12,6 +12,7 @@ data class RepeatRetry(val n: Int) : Retry {
         Timber.w("Retry 1")
         val res = f()
         if (res.isLeft()) {
+            Timber.w("Execute error $res")
             for (i in 2..n) {
                 Timber.w("Retry $i")
                 val res = f()
