@@ -62,6 +62,7 @@ object Disconnect : Step {
 
 data class Delay(val time: Long) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> {
+        Timber.d("Delay $time")
         delay(time)
         return Unit.right()
     }
@@ -152,6 +153,7 @@ suspend fun da(beckonMesh: BeckonMesh) {
         beckonMesh.execute1()
     }
 }
+
 data class Process(
     val steps: List<Step>,
     val retry: Retry = RepeatRetry(3),

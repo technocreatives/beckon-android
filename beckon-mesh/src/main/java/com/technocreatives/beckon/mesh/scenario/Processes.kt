@@ -103,7 +103,7 @@ object Processes {
                 )
             )
                     + vendorSteps
-                    + listOf(Disconnect)
+                    + listOf(Disconnect, Delay(5000))
         )
 
     fun provisionDevice1(
