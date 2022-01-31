@@ -2,6 +2,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'de.mannodermaus.android-junit5'
+apply plugin: 'kotlinx-serialization'
+
 
 group='com.github.technocreatives.beckon-android'
 
@@ -92,8 +94,7 @@ dependencies {
     ktlint "com.pinterest:ktlint:$ktlint_version"
 
     implementation "com.jakewharton.timber:timber:$timber"
-    implementation "com.squareup.moshi:moshi:$moshi"
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:$moshi")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.2")
     implementation "com.github.lenguyenthanh:simpleredux:28844b4b43"
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
@@ -106,6 +107,7 @@ dependencies {
     // Spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:$spek_version"
     testImplementation "org.spekframework.spek2:spek-runner-junit5:$spek_version"
+
     // Spek requires kotlin-reflect, omit when already in classpath
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
@@ -114,8 +116,8 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.19.0'
     testImplementation "io.strikt:strikt-core:0.31.0"
 
-    testImplementation ("io.kotest:kotest-runner-junit5:5.0.0.M3")
-    testImplementation ("io.kotest:kotest-assertions-core:5.0.0.M3")
+    testImplementation ("io.kotest:kotest-runner-junit5:5.0.3")
+    testImplementation ("io.kotest:kotest-assertions-core:5.0.3")
 }
 
 //task ktlint(type: JavaExec, group: "verification") {

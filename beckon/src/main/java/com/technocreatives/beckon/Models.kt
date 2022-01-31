@@ -2,7 +2,8 @@ package com.technocreatives.beckon
 
 import android.bluetooth.BluetoothDevice
 import androidx.annotation.IntRange
-import com.squareup.moshi.JsonClass
+import com.technocreatives.beckon.util.UuidSerializer
+import kotlinx.serialization.Serializable
 import no.nordicsemi.android.ble.data.Data
 import no.nordicsemi.android.support.v18.scanner.ScanRecord
 import no.nordicsemi.android.support.v18.scanner.ScanSettings
@@ -54,14 +55,16 @@ data class ScannerSetting(
     val useFilter: Boolean
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Requirement(
+    @Serializable(with = UuidSerializer::class)
     val uuid: UUID,
+    @Serializable(with = UuidSerializer::class)
     val service: UUID,
     val property: Property
 ) // mandatory characteristic
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Descriptor(
     val requirements: List<Requirement> = emptyList(),
     val subscribes: List<Characteristic> = emptyList(),
@@ -69,6 +72,8 @@ data class Descriptor(
     val actionsOnConnected: List<BleAction> = emptyList()
 )
 
+
+@Serializable
 sealed class BleAction {
     data class RequestMTU(val mtu: Mtu) : BleAction()
     data class Read(val characteristic: Characteristic) : BleAction()
@@ -129,8 +134,13 @@ sealed class BondState {
     }
 }
 
-@JsonClass(generateAdapter = true)
-data class Characteristic(val uuid: UUID, val service: UUID) {
+@Serializable
+data class Characteristic(
+    @Serializable(with = UuidSerializer::class)
+    val uuid: UUID,
+    @Serializable(with = UuidSerializer::class)
+    val service: UUID
+) {
     fun toRequirement(property: Property): Requirement {
         return Requirement(uuid, service, property)
     }
@@ -144,6 +154,7 @@ operator fun State.plus(change: Change): State {
     return this + (change.uuid to change.data)
 }
 
+@Serializable
 enum class Property {
     WRITE,
     NOTIFY,
