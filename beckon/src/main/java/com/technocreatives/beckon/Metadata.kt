@@ -5,7 +5,6 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.core.rightIfNotNull
 import arrow.core.toOption
-import com.squareup.moshi.JsonClass
 import com.technocreatives.beckon.util.parallelValidate
 import java.util.UUID
 
@@ -186,7 +185,6 @@ fun Requirement.toFailed(): CharacteristicFailed {
     }
 }
 
-@JsonClass(generateAdapter = true)
 data class SavedMetadata(
     val macAddress: MacAddress,
     val name: String,

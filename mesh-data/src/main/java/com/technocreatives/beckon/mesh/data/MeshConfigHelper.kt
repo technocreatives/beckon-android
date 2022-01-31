@@ -5,6 +5,7 @@ import com.technocreatives.beckon.mesh.data.util.generateRandomNumber
 import java.time.Instant
 import java.util.*
 
+// TODO remove
 object MeshConfigHelper {
 
     val SCHEMA = "http://json-schema.org/draft-04/schema#"

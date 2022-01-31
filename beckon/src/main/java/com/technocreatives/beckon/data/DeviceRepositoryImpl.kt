@@ -4,10 +4,6 @@ import android.content.Context
 import androidx.core.content.edit
 import arrow.core.Either
 import arrow.core.identity
-import com.squareup.moshi.FromJson
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.ToJson
-import com.squareup.moshi.Types
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.SavedMetadata
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +11,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
-import java.util.*
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 private const val KEY_DEVICES = "key.saved.devices"
 
 internal class DeviceRepositoryImpl(private val context: Context) : DeviceRepository {
+    private val json = Json { encodeDefaults = true; explicitNulls = false }
+    private fun List<SavedMetadata>.toJson(): String =
+        json.encodeToString(this)
+
+    private fun String.toData(): List<SavedMetadata> =
+        json.decodeFromString(this)
 
     private val devicesSubject by lazy {
         MutableSharedFlow<List<SavedMetadata>>(1)
@@ -34,21 +38,6 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         )
     }
 
-    private val moshi by lazy {
-        Moshi.Builder().add(object {
-            @ToJson
-            fun toJson(uuid: UUID) = uuid.toString()
-
-            @FromJson
-            fun fromJson(s: String) = UUID.fromString(s)
-        }).build()
-    }
-
-    private val adapter by lazy {
-        val type = Types.newParameterizedType(List::class.java, SavedMetadata::class.java)
-        moshi.adapter<List<SavedMetadata>>(type)
-    }
-
     override suspend fun currentDevices(): List<SavedMetadata> {
         val json = sharedPreferences.getString(KEY_DEVICES, "")!!
         return if (json.isBlank()) {
@@ -56,7 +45,7 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
         } else {
             Either.catch {
                 withContext(Dispatchers.IO) {
-                    adapter.fromJson(json) ?: emptyList()
+                    json.toData()
                 }
             }.fold({ emptyList() }, ::identity)
         }
@@ -89,7 +78,7 @@ internal class DeviceRepositoryImpl(private val context: Context) : DeviceReposi
     }
 
     override suspend fun saveDevices(devices: List<SavedMetadata>): List<SavedMetadata> {
-        val json = adapter.toJson(devices)
+        val json = devices.toJson()
         sharedPreferences.edit(commit = true) {
             this.putString(KEY_DEVICES, json)
         }
