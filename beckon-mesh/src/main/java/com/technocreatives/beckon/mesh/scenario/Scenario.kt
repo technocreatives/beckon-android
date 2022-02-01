@@ -8,7 +8,6 @@ import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.BeckonTimeOutError
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
-import com.technocreatives.beckon.mesh.MeshConstants
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.message.ConfigMessage
@@ -16,7 +15,7 @@ import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
@@ -212,7 +211,10 @@ internal suspend fun BeckonMesh.scanForProvisioning(macAddress: MacAddress, time
                 .mapZ { it!! }
                 .first()
         }
-    ).mapLeft { BeckonTimeOutError }.flatMap(::identity)
+    ).mapLeft {
+        Timber.e("scanForProvisioning timeout $macAddress")
+        BeckonTimeOutError
+    }.flatMap(::identity)
 
 
 internal suspend fun BeckonMesh.connectForProvisioning(
@@ -228,17 +230,26 @@ internal suspend fun BeckonMesh.connectForProvisioning(
                 .mapEither { connectForProvisioning(it!!) }
                 .first()
         }
-    ).mapLeft { BeckonTimeOutError }.flatMap(::identity)
+    ).mapLeft {
+        Timber.e("connectForProvisioning timeout $macAddress")
+        BeckonTimeOutError
+    }.flatMap(::identity)
 
 }
 
-suspend fun BeckonMesh.connectForProvisioning(scanResult: UnprovisionedScanResult, timeout: Long): Either<BeckonError, BeckonDevice> =
+suspend fun BeckonMesh.connectForProvisioning(
+    scanResult: UnprovisionedScanResult,
+    timeout: Long
+): Either<BeckonError, BeckonDevice> =
     raceN(
         { delay(timeout) },
         {
             connectForProvisioning(scanResult)
         }
-    ).mapLeft { BeckonTimeOutError }.flatMap(::identity)
+    ).mapLeft {
+        Timber.e("connectForProvisioning timeout ${scanResult.macAddress}")
+        BeckonTimeOutError
+    }.flatMap(::identity)
 
 
 internal suspend fun BeckonMesh.connectForProxy(
@@ -249,7 +260,6 @@ internal suspend fun BeckonMesh.connectForProxy(
         { delay(timeout) },
         {
             scanForProxy(address)
-//            .mapZ { it.firstOrNull { it.macAddress == address } }
                 .mapZ { it.firstOrNull() }
                 .filterZ { it != null }
                 .mapZ { it!! }
@@ -263,3 +273,6 @@ internal suspend fun BeckonMesh.connectForProxy(
                 }
                 .first()
         }).flatMap(::identity)
+        .tapLeft {
+            Timber.e("connectForProxy timeout $address")
+        }
