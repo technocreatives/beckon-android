@@ -10,6 +10,15 @@ import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.Metadata
 import com.technocreatives.beckon.SavedMetadata
 
+fun beckonDeviceForRemoving(macAddress: MacAddress): MacAddress {
+//    val device = mock<BeckonDevice>()
+//    val metadata = mock<Metadata>()
+//    whenever(metadata.macAddress).thenReturn(macAddress)
+//    whenever(device.metadata()).thenReturn(metadata)
+//    return device
+    return macAddress
+}
+
 fun beckonDevice(macAddress: MacAddress): BeckonDevice {
     val device = mock<BeckonDevice>()
     val metadata = mock<Metadata>()

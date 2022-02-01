@@ -282,7 +282,7 @@ internal class BeckonClientImpl(
      */
     private suspend fun disconnect(device: BeckonDevice): Either<Throwable, MacAddress> {
         return device.disconnect()
-            .map { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device)) }
+//            .map { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device)) }
             .map { device.metadata().macAddress }
     }
 
@@ -298,7 +298,7 @@ internal class BeckonClientImpl(
         descriptor: Descriptor
     ): Either<ConnectionError, BeckonDevice> {
         Timber.d("Connect BluetoothDevice: $device")
-        val manager = BeckonBleManager(context, device, descriptor)
+        val manager = BeckonBleManager(context, beckonStore, device, descriptor)
         val savedMetadata = SavedMetadata(device.address, device.name, descriptor)
         beckonStore.dispatch(BeckonAction.AddConnectingDevice(savedMetadata))
         val result = either<ConnectionError, BeckonDevice> {

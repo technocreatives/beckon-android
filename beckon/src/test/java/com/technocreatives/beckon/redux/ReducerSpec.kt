@@ -58,7 +58,7 @@ class ReducerSpec : Spek({
         describe("when dispatch RemoveConnectedDevice action") {
             beforeEachTest {
                 runBlocking {
-                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDeviceForRemoving(macAddress)))
                 }
             }
 
@@ -170,7 +170,7 @@ class ReducerSpec : Spek({
 
             beforeEachTest {
                 runBlocking {
-                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDeviceForRemoving(macAddress)))
                 }
             }
 
@@ -183,7 +183,7 @@ class ReducerSpec : Spek({
 
             beforeEachTest {
                 runBlocking {
-                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(connectedAddress1)))
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDeviceForRemoving(connectedAddress1)))
                 }
             }
 
@@ -281,7 +281,7 @@ class ReducerSpec : Spek({
         describe("when dispatch RemoveConnectedDevice action") {
             beforeEachTest {
                 runBlocking {
-                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDeviceForRemoving(macAddress)))
                 }
             }
 
@@ -378,7 +378,7 @@ class ReducerSpec : Spek({
 
             beforeEachTest {
                 runBlocking {
-                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(connectedAddress1)))
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDeviceForRemoving(connectedAddress1)))
                 }
             }
 
@@ -400,7 +400,7 @@ class ReducerSpec : Spek({
 
             beforeEachTest {
                 runBlocking {
-                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDevice(macAddress)))
+                    store.dispatch(BeckonAction.RemoveConnectedDevice(beckonDeviceForRemoving(macAddress)))
                 }
             }
 

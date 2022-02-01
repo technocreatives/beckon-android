@@ -29,7 +29,6 @@ object Processes {
             listOf(
                 Delay(1000),
                 Provision(macAddress),
-                Delay(1000),
                 ConnectAfterProvisioning(nodeAddress.value),
                 Message(GetCompositionData(nodeAddress.value)),
                 Message(GetDefaultTtl(nodeAddress.value)),
@@ -103,7 +102,7 @@ object Processes {
                 )
             )
                     + vendorSteps
-                    + listOf(Disconnect, Delay(5000))
+                    + listOf(Disconnect, Delay(1000))
         )
 
     fun provisionDevice1(

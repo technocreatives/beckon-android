@@ -27,7 +27,7 @@ data class BleActionError(
 
 data class MtuRequestError(val macAddress: String, val status: Int) : BeckonActionError, BeckonError
 
-object TimeOutError : BeckonActionError
+object BeckonTimeOutError : BeckonError
 
 sealed interface RequirementFailed : BeckonActionError
 data class CharacteristicNotFound(val characteristic: Characteristic) : RequirementFailed

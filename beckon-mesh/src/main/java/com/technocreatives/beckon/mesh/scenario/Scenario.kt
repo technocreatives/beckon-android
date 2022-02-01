@@ -1,26 +1,26 @@
 package com.technocreatives.beckon.mesh.scenario
 
-import arrow.core.Either
+import arrow.core.*
 import arrow.core.computations.either
-import arrow.core.left
-import arrow.core.right
-import arrow.core.traverseEither
+import arrow.fx.coroutines.raceN
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
+import com.technocreatives.beckon.BeckonTimeOutError
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
+import com.technocreatives.beckon.mesh.MeshConstants
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.message.ConfigMessage
-import com.technocreatives.beckon.mesh.message.GetCompositionData
-import com.technocreatives.beckon.mesh.message.StatusOpCode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+
+private const val TIME_OUT_FOR_STEP: Long = 60000
 
 sealed interface Step {
     suspend fun BeckonMesh.execute(): Either<Any, Unit>
@@ -30,14 +30,15 @@ sealed interface Step {
 
 data class Provision(val address: MacAddress) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val scanResult = scanForProvisioning(address).bind()
+        val scanResult = scanForProvisioning(address, TIME_OUT_FOR_STEP).bind()
         stopScan()
-        val beckonDevice = connectForProvisioning(scanResult).bind()
+        val beckonDevice = connectForProvisioning(scanResult, TIME_OUT_FOR_STEP).bind()
         val provisioning = startProvisioning(beckonDevice).bind()
         val unProvisionedNode = provisioning.identify(scanResult, 5).bind()
         val provisionedNode = provisioning.startProvisioning(unProvisionedNode).bind()
         provisionedNode
     }
+
 }
 
 data class Message(val message: ConfigMessage<*>) : Step {
@@ -96,20 +97,8 @@ object AutoConnect : Step {
 
 data class ConnectAfterProvisioning(val address: Int) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val beckonDevice = scanForProxy(address)
-//            .mapZ { it.firstOrNull { it.macAddress == address } }
-            .mapZ { it.firstOrNull() }
-            .filterZ { it != null }
-            .mapZ { it!! }
-            .mapEither {
-                Timber.d("Scenario execute try to connect to $it")
-                stopScan()
-                val retry = RepeatRetry(3)
-                retry {
-                    connectForProxy(it.macAddress)
-                }
-            }
-            .first().bind()
+
+        val beckonDevice = connectForProxy(address, TIME_OUT_FOR_STEP).bind()
         startConnectedState(beckonDevice).bind()
     }
 }
@@ -212,18 +201,65 @@ private suspend inline fun <E, A, B> List<A>.traverseStep(
 }
 
 
-internal suspend fun BeckonMesh.scanForProvisioning(macAddress: MacAddress): Either<BeckonError, UnprovisionedScanResult> =
-    scanForProvisioning()
-        .mapZ { it.firstOrNull { it.macAddress == macAddress } }
-        .filterZ { it != null }
-        .mapZ { it!! }
-        .first()
+internal suspend fun BeckonMesh.scanForProvisioning(macAddress: MacAddress, timeout: Long):
+        Either<BeckonError, UnprovisionedScanResult> =
+    raceN(
+        { delay(timeout) },
+        {
+            scanForProvisioning()
+                .mapZ { it.firstOrNull { it.macAddress == macAddress } }
+                .filterZ { it != null }
+                .mapZ { it!! }
+                .first()
+        }
+    ).mapLeft { BeckonTimeOutError }.flatMap(::identity)
 
-internal suspend fun BeckonMesh.connectForProvisioning(macAddress: MacAddress): Either<BeckonError, BeckonDevice> =
-    scanForProvisioning()
-        .mapZ { it.firstOrNull { it.macAddress == macAddress } }
-        .filterZ { it != null }
-        .mapEither { connectForProvisioning(it!!) }
-        .first()
+
+internal suspend fun BeckonMesh.connectForProvisioning(
+    macAddress: MacAddress,
+    timeout: Long = 60000
+): Either<BeckonError, BeckonDevice> {
+    return raceN(
+        { delay(timeout) },
+        {
+            scanForProvisioning()
+                .mapZ { it.firstOrNull { it.macAddress == macAddress } }
+                .filterZ { it != null }
+                .mapEither { connectForProvisioning(it!!) }
+                .first()
+        }
+    ).mapLeft { BeckonTimeOutError }.flatMap(::identity)
+
+}
+
+suspend fun BeckonMesh.connectForProvisioning(scanResult: UnprovisionedScanResult, timeout: Long): Either<BeckonError, BeckonDevice> =
+    raceN(
+        { delay(timeout) },
+        {
+            connectForProvisioning(scanResult)
+        }
+    ).mapLeft { BeckonTimeOutError }.flatMap(::identity)
 
 
+internal suspend fun BeckonMesh.connectForProxy(
+    address: Int,
+    timeout: Long
+): Either<Any, BeckonDevice> =
+    raceN(
+        { delay(timeout) },
+        {
+            scanForProxy(address)
+//            .mapZ { it.firstOrNull { it.macAddress == address } }
+                .mapZ { it.firstOrNull() }
+                .filterZ { it != null }
+                .mapZ { it!! }
+                .mapEither {
+                    Timber.d("Scenario execute try to connect to $it")
+                    stopScan()
+                    val retry = RepeatRetry(3)
+                    retry {
+                        connectForProxy(it.macAddress)
+                    }
+                }
+                .first()
+        }).flatMap(::identity)

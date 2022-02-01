@@ -7,6 +7,7 @@ import arrow.core.computations.either
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.Atomic
+import arrow.fx.coroutines.raceN
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
@@ -221,7 +222,6 @@ class BeckonMesh(
             .mapZ { connectedDevices + it }
     }
 
-    // todo support timeout
     suspend fun scanForProxy(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
         val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
         return scan(scannerSetting)
