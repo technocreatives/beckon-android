@@ -88,7 +88,8 @@ internal class BeckonBleManager(
     private suspend fun connect(request: ConnectRequest): Either<ConnectionError, Unit> {
         return suspendCancellableCoroutine { cont ->
             cont.invokeOnCancellation {
-                if (isActive) {
+                Timber.w("isActive: $isActive, isCompleted: $isCompleted")
+                if (isCompleted) {
                     cont.resume(
                         ConnectionError.BleConnectFailed(
                             device.address,
@@ -99,13 +100,15 @@ internal class BeckonBleManager(
             }
             request
                 .done {
-                    if (isActive) {
+                    Timber.w("isActive: $isActive, isCompleted: $isCompleted")
+                    if (isCompleted) {
                         cont.resume(Unit.right())
                     }
                 }
                 .fail { device, status ->
                     Timber.e("ConnectionError ${device.address} status: $status")
-                    if (isActive) {
+                    Timber.w("isActive: $isActive, isCompleted: $isCompleted")
+                    if (isCompleted) {
                         cont.resume(
                             ConnectionError.BleConnectFailed(
                                 device.address,
@@ -616,3 +619,6 @@ suspend fun <E, T> withTimeout(
     error: () -> E
 ): Either<E, T> =
     withTimeoutOrNull(timeMillis, block) ?: error().left()
+
+public val CoroutineScope.isCompleted: Boolean
+    get() = coroutineContext[Job]?.isCompleted ?: true
