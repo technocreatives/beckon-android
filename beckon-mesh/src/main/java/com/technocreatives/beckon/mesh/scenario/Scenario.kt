@@ -17,6 +17,7 @@ import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 private const val TIME_OUT_FOR_STEP: Long = 60000
@@ -216,6 +217,9 @@ internal suspend fun BeckonMesh.scanForProvisioning(macAddress: MacAddress, time
                 .first()
         }
     ).mapLeft {
+        runBlocking {
+            stopScan()
+        }
         Timber.e("scanForProvisioning timeout $macAddress")
         BeckonTimeOutError
     }.flatMap(::identity)

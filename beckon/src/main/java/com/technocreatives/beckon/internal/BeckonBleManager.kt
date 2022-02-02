@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Context
+import android.util.Log
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.fx.coroutines.parTraverseEither
@@ -593,6 +594,10 @@ internal class BeckonBleManager(
                 .done { emitter.resume(Unit.right()) }
                 .enqueue()
         }
+    }
+
+    override fun getMinLogPriority(): Int {
+        return Log.VERBOSE
     }
 
     override fun log(priority: Int, message: String) {
