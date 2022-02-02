@@ -89,7 +89,7 @@ internal class BeckonBleManager(
         return suspendCancellableCoroutine { cont ->
             cont.invokeOnCancellation {
                 Timber.w("isActive: $isActive, isCompleted: $isCompleted")
-                if (isCompleted) {
+                if (!isCompleted) {
                     cont.resume(
                         ConnectionError.BleConnectFailed(
                             device.address,
@@ -101,14 +101,14 @@ internal class BeckonBleManager(
             request
                 .done {
                     Timber.w("isActive: $isActive, isCompleted: $isCompleted")
-                    if (isCompleted) {
+                    if (!isCompleted) {
                         cont.resume(Unit.right())
                     }
                 }
                 .fail { device, status ->
                     Timber.e("ConnectionError ${device.address} status: $status")
                     Timber.w("isActive: $isActive, isCompleted: $isCompleted")
-                    if (isCompleted) {
+                    if (!isCompleted) {
                         cont.resume(
                             ConnectionError.BleConnectFailed(
                                 device.address,
