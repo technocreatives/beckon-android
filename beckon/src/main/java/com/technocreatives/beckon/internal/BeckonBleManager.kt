@@ -596,9 +596,9 @@ internal class BeckonBleManager(
         }
     }
 
-    override fun getMinLogPriority(): Int {
-        return Log.VERBOSE
-    }
+//    override fun getMinLogPriority(): Int {
+//        return Log.VERBOSE
+//    }
 
     override fun log(priority: Int, message: String) {
         Timber.log(priority, "NRF logs: $message")
