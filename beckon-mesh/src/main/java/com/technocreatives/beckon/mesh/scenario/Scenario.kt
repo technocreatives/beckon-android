@@ -280,7 +280,12 @@ internal suspend fun BeckonMesh.connectForProxy(
                     }
                 }
                 .first()
-        }).flatMap(::identity)
-        .tapLeft {
+        })
+        .mapLeft {
+            runBlocking {
+                stopScan()
+            }
             Timber.e("connectForProxy timeout $address")
+            BeckonTimeOutError
         }
+        .flatMap(::identity)
