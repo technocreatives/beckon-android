@@ -12,14 +12,15 @@ import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.internal.toUuid
-import com.technocreatives.beckon.internal.withTimeout
 import com.technocreatives.beckon.mesh.data.*
-import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
-import com.technocreatives.beckon.mesh.state.*
+import com.technocreatives.beckon.mesh.state.Connected
+import com.technocreatives.beckon.mesh.state.Loaded
+import com.technocreatives.beckon.mesh.state.MeshState
+import com.technocreatives.beckon.mesh.state.Provisioning
 import com.technocreatives.beckon.util.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,6 @@ import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.NetworkKey
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import timber.log.Timber
-import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
@@ -92,7 +92,7 @@ class BeckonMesh(
         filteredMessages.asSharedFlow()
 
     // todo fix error
-    suspend fun createGroup(name: String, address: Int): Either<Throwable, Group> {
+    fun createGroup(name: String, address: Int): Either<Throwable, Group> {
         val network = meshApi.meshNetwork()
         return Either.catch {
             val group = network.createGroup(network.selectedProvisioner, address, name)!!
@@ -101,6 +101,20 @@ class BeckonMesh(
         }.map {
             it.transform()
         }.mapLeft { IllegalArgumentException("${it.message} - $name, $address") }
+    }
+
+    // todo fix error
+    fun deleteGroup(address: Int): Either<DeleteGroupError, Unit> {
+        val network = meshApi.meshNetwork()
+        val meshGroup = network.groups.firstOrNull { group -> group.address == address }
+            ?: return DeleteGroupError.GroupDoesNotExist.left()
+
+        if (network.getElements(meshGroup).isNotEmpty()) {
+            return DeleteGroupError.GroupHasElements.left()
+        }
+
+        network.removeGroup(meshGroup)
+        return Unit.right()
     }
 
     fun deleteNode(nodeId: NodeId): Boolean {
@@ -259,3 +273,9 @@ class BeckonMesh(
         }
 
 }
+
+sealed interface DeleteGroupError {
+    object GroupDoesNotExist : DeleteGroupError
+    object GroupHasElements : DeleteGroupError
+}
+
