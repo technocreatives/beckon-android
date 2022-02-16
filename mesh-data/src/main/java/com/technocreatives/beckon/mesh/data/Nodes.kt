@@ -34,7 +34,7 @@ data class Node(
     val defaultTTL: Int,
     val excluded: Boolean,
     val networkTransmit: NetworkTransmit? = null,
-//    val relayRetransmit: RelayRetransmit? = null, //TODO ??
+    val relayRetransmit: RelayRetransmit? = null,
     val netKeys: List<NodeNetKey> = emptyList(),
     val appKeys: List<NodeAppKey> = emptyList(),
     val elements: List<Element> = emptyList(),
