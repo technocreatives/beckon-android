@@ -9,6 +9,7 @@ import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import no.nordicsemi.android.mesh.transport.PublicationSettings
 import no.nordicsemi.android.mesh.utils.MeshAddress
 import no.nordicsemi.android.mesh.utils.NetworkTransmitSettings
+import no.nordicsemi.android.mesh.utils.RelaySettings
 import java.util.*
 import no.nordicsemi.android.mesh.Features as NrfFeatures
 import no.nordicsemi.android.mesh.Group as NrfGroup
@@ -133,6 +134,7 @@ fun ProvisionedMeshNode.transform(): Node {
         ttl,
         isExcluded,
         networkTransmitSettings?.transform(),
+        relaySettings?.transform(),
         addedNetKeys.map { it.toNetKey() },
         addedAppKeys.map { it.toAppKey() },
         elements.transform(nodeAddress),
@@ -142,6 +144,10 @@ fun ProvisionedMeshNode.transform(): Node {
 
 fun NetworkTransmitSettings.transform() = NetworkTransmit(
     networkTransmitCount, networkIntervalSteps
+)
+
+fun RelaySettings.transform() = RelayRetransmit(
+    relayTransmitCount, relayIntervalSteps
 )
 
 fun NrfFeatures.transform() = Features(

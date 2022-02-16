@@ -1,0 +1,1456 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#",
+  "version": "1.0.0",
+  "meshUUID": "a26267d1-efac-47f5-8f0e-3c5d9fbddb20",
+  "meshName": "Fggg",
+  "timestamp": "2021-10-27T10:03:52.89Z",
+  "partial": false,
+  "netKeys": [
+    {
+      "name": "NetKey 1",
+      "index": 0,
+      "key": "33BE8B895A20AD02951AAB145FDBB05B",
+      "phase": 0,
+      "minSecurity": "insecure",
+      "timestamp": "1970-01-01T00:00Z"
+    }
+  ],
+  "appKeys": [
+    {
+      "name": "AppKey 1",
+      "index": 0,
+      "boundNetKey": 0,
+      "key": "F0409E1AFB2CCE483459819795D7FFD7"
+    }
+  ],
+  "provisioners": [
+    {
+      "provisionerName": "ff",
+      "UUID": "3a1c6601-bd99-402c-8f71-c1b6b98d186e",
+      "allocatedUnicastRange": [
+        {
+          "lowAddress": "0001",
+          "highAddress": "199A"
+        }
+      ],
+      "allocatedGroupRange": [
+        {
+          "lowAddress": "C000",
+          "highAddress": "CC9A"
+        }
+      ],
+      "allocatedSceneRange": [
+        {
+          "firstScene": "0001",
+          "lastScene": "3333"
+        }
+      ],
+      "isLastSelected": true
+    }
+  ],
+  "nodes": [
+    {
+      "UUID": "3a1c6601-bd99-402c-8f71-c1b6b98d186e",
+      "name": "ff",
+      "deviceKey": "F15E8FFA986788BB86FD66953E240113",
+      "unicastAddress": "00C2",
+      "security": "insecure",
+      "configComplete": true,
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 2,
+        "relay": 2
+      },
+      "defaultTTL": 5,
+      "excluded": false,
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "elements": [
+        {
+          "address": "0001",
+          "name": "Element 0x0001",
+          "index": 1,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0001",
+              "bind": [],
+              "subscribe": []
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 277
+    },
+    {
+      "UUID": "b0ba702c-034a-483d-99e7-588ca1eb243e",
+      "name": "My Node",
+      "deviceKey": "E6D5B93E460B67331996A91D7DF4D68D",
+      "unicastAddress": "0002",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0002",
+          "name": "Element: 0x0002",
+          "index": 2,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 21
+    },
+    {
+      "UUID": "33dace69-e1ee-47bd-9ca6-93b817a0fc98",
+      "name": "My Node",
+      "deviceKey": "3B1C3F0E329EFD5EB46D397C967EB91D",
+      "unicastAddress": "0003",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0003",
+          "name": "Element: 0x0003",
+          "index": 3,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 22
+    },
+    {
+      "UUID": "38b27eef-f893-4c51-b36b-6692abea6edc",
+      "name": "My Node",
+      "deviceKey": "1060421D495425BEBC3B76847DB43FB6",
+      "unicastAddress": "0004",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0004",
+          "name": "Element: 0x0004",
+          "index": 4,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 21
+    },
+    {
+      "UUID": "edc19831-3b23-4c62-a0de-8c140ac01435",
+      "name": "My Node",
+      "deviceKey": "A7349FECA95AC84350A5ED6EEEB5BB88",
+      "unicastAddress": "0005",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0005",
+          "name": "Element: 0x0005",
+          "index": 5,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 22
+    },
+    {
+      "UUID": "2f1e581c-9837-4551-87e1-346c966b6862",
+      "name": "My Node",
+      "deviceKey": "2E684453D4A1A930D04D228706DBE2CB",
+      "unicastAddress": "0006",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0006",
+          "name": "Element: 0x0006",
+          "index": 6,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 21
+    },
+    {
+      "UUID": "4b45f739-0354-4b14-af60-209deb123a78",
+      "name": "My Node",
+      "deviceKey": "7BD8BE9AB199ACCE48C1CDDBA2C30B95",
+      "unicastAddress": "0007",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0007",
+          "name": "Element: 0x0007",
+          "index": 7,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 20
+    },
+    {
+      "UUID": "c5c2cae2-d1b2-4ba0-a178-0ad9dd58330e",
+      "name": "My Node",
+      "deviceKey": "57E30B561854A2D850C58883C29020AF",
+      "unicastAddress": "0008",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0008",
+          "name": "Element: 0x0008",
+          "index": 8,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 19
+    },
+    {
+      "UUID": "935da354-188f-4ccc-b95f-3ed0fb0ed510",
+      "name": "My Node",
+      "deviceKey": "829EC5181B97FBC90C37957E5070BBC2",
+      "unicastAddress": "0009",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0009",
+          "name": "Element: 0x0009",
+          "index": 9,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 20
+    },
+    {
+      "UUID": "9531b041-84bc-4a1d-8e28-5901d306b7f9",
+      "name": "My Node",
+      "deviceKey": "7B59B0AF69930D733F81E6350D0A7904",
+      "unicastAddress": "000A",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "000A",
+          "name": "Element: 0x000A",
+          "index": 10,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 22
+    },
+    {
+      "UUID": "02c6f71c-0546-44b7-8272-14c5067fbc7e",
+      "name": "My Node",
+      "deviceKey": "673B245B27643814F7868F7C533428B5",
+      "unicastAddress": "000B",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "000B",
+          "name": "Element: 0x000B",
+          "index": 11,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 23
+    },
+    {
+      "UUID": "e1b99baf-f483-477f-a9bd-aa64f0f4f909",
+      "name": "My Node",
+      "deviceKey": "F73345CD1F76318B2F012720688BA661",
+      "unicastAddress": "000C",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "000C",
+          "name": "Element: 0x000C",
+          "index": 12,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 19
+    },
+    {
+      "UUID": "d937970f-eca3-42eb-8791-04407aea4cd8",
+      "name": "My Node",
+      "deviceKey": "FC5E3F2D240D10CE4F757B4DF593416B",
+      "unicastAddress": "000D",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "000D",
+          "name": "Element: 0x000D",
+          "index": 13,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 19
+    },
+    {
+      "UUID": "58d48bd0-7627-446d-a94f-cdfcbfd0b01a",
+      "name": "My Node",
+      "deviceKey": "502F66C1D3B795990642F65EE70AAF48",
+      "unicastAddress": "000E",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "000E",
+          "name": "Element: 0x000E",
+          "index": 14,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 21
+    },
+    {
+      "UUID": "c987582f-962c-4afa-a35e-f6679ca20a93",
+      "name": "My Node",
+      "deviceKey": "0B3D19CCF09ADF3D3B94B7B44E59E74F",
+      "unicastAddress": "000F",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "000F",
+          "name": "Element: 0x000F",
+          "index": 15,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 19
+    },
+    {
+      "UUID": "fe877818-d48b-42ed-a71d-4733f3ccbe06",
+      "name": "My Node",
+      "deviceKey": "D0D6B932A23DAE0F92E6CE5AF06E97E9",
+      "unicastAddress": "0010",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0010",
+          "name": "Element: 0x0010",
+          "index": 16,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 22
+    },
+    {
+      "UUID": "5c4b494b-ed2f-4639-967d-26bca8a9d8f9",
+      "name": "My Node",
+      "deviceKey": "64C2A8AACDD081438CDFD894B5F54503",
+      "unicastAddress": "0011",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "0071",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 2,
+        "interval": 2
+      },
+      "relayRetransmit": {
+        "count": 1,
+        "interval": 5
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0011",
+          "name": "Element: 0x0011",
+          "index": 17,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "C001"
+              ],
+              "publish": {
+                "address": "C002",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 0
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "sequenceNumber": 22
+    }
+  ],
+  "groups": [
+    {
+      "name": "Group 1",
+      "address": "C001",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "Provisioners",
+      "address": "C002",
+      "parentAddress": "0000"
+    }
+  ],
+  "scenes": [],
+  "networkExclusions": []
+}
