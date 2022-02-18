@@ -1,5 +1,9 @@
 package com.technocreatives.beckon.mesh.scenario
 
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothManager
+import android.content.Context
+import androidx.core.content.ContextCompat.getSystemService
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.fx.coroutines.raceN
@@ -19,6 +23,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import timber.log.Timber
+
 
 private const val TIME_OUT_FOR_STEP: Long = 60000
 
@@ -116,6 +121,18 @@ class MessageAndOnErrorAction(val message: ConfigMessage<*>, val action: () -> U
 //       it.action()
 //   }
 //}
+
+object OnOffBluetooth : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> {
+        Timber.d("Execute OnOffBluetooth")
+        val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+        mBluetoothAdapter.disable()
+        delay(10000)
+        mBluetoothAdapter.enable()
+        delay(10000)
+        return Unit.right()
+    }
+}
 
 sealed interface StepError {
     data class MessageStepError(val error: SendAckMessageError, val message: ConfigMessage<*>) :
