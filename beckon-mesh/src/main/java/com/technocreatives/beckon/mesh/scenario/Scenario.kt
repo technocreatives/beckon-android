@@ -122,7 +122,7 @@ class MessageAndOnErrorAction(val message: ConfigMessage<*>, val action: () -> U
 object OnOffBluetooth : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> {
         Timber.d("Execute OnOffBluetooth")
-        onOffBluetooth(10000)
+        onOffBluetooth(60000)
         return Unit.right()
     }
 }
@@ -305,7 +305,7 @@ internal suspend fun BeckonMesh.connectForProxy(
                     result.fold({
                         if (it is ConnectionError) {
                             Timber.d("Connection error, so we turn on/off BLT and try again")
-                            onOffBluetooth(10000)
+                            onOffBluetooth(60000)
                             retry {
                                 connectForProxy(scanResult.macAddress)
                             }
