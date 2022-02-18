@@ -29,13 +29,12 @@ data class RepeatRetry(val n: Int) : Retry {
     }
 }
 
-data class ExponentialBackOffRetry(val maxRepeat: Int, val totalTime: Int) : Retry {
+data class ExponentialBackOffRetry(val maxRepeat: Int, val timeInSeconds: Int) : Retry {
     override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
         Timber.w("ExponentialBackOffRetry 1")
-        val sc = getSchedule<E, A>(maxRepeat, totalTime)
+        val sc = getSchedule<E, A>(maxRepeat, timeInSeconds)
         return sc.repeat { f() }
     }
-
 }
 
 
@@ -52,7 +51,7 @@ fun <A> max(max: Int) = Schedule.recurs<A>(max)
 @OptIn(ExperimentalTime::class)
 fun <A, B> getSchedule(max: Int, totalTime: Int): ESchedule<A, B> =
     Schedule.doWhile<Either<A, B>> {
-        Timber.w("Execute error $it")
+        Timber.w("Execute result: $it")
         it.isLeft()
     } zipLeft exp(max, totalTime)
 

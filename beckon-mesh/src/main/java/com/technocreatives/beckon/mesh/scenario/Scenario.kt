@@ -7,10 +7,7 @@ import androidx.core.content.ContextCompat.getSystemService
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.fx.coroutines.raceN
-import com.technocreatives.beckon.BeckonDevice
-import com.technocreatives.beckon.BeckonError
-import com.technocreatives.beckon.BeckonTimeOutError
-import com.technocreatives.beckon.MacAddress
+import com.technocreatives.beckon.*
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.GroupAddress
@@ -125,13 +122,18 @@ class MessageAndOnErrorAction(val message: ConfigMessage<*>, val action: () -> U
 object OnOffBluetooth : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> {
         Timber.d("Execute OnOffBluetooth")
-        val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
-        mBluetoothAdapter.disable()
-        delay(10000)
-        mBluetoothAdapter.enable()
-        delay(10000)
+        onOffBluetooth(10000)
         return Unit.right()
     }
+}
+
+private suspend fun onOffBluetooth(delayInMs: Long) {
+    Timber.d("Execute OnOffBluetooth daylay: $delayInMs")
+    val mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+    mBluetoothAdapter.disable()
+    delay(delayInMs)
+    mBluetoothAdapter.enable()
+    delay(delayInMs)
 }
 
 sealed interface StepError {
@@ -153,22 +155,27 @@ data class Connect(val address: MacAddress) : Step {
 //            .mapZ { it.firstOrNull() }
             .filterZ { it != null }
             .mapZ { it!! }
-            .mapEither {
-                Timber.d("Scenario execute try to connect to $it")
+            .mapEither { scanResult ->
+                Timber.d("Scenario execute try to connect to $scanResult")
                 stopScan()
                 val retry = ExponentialBackOffRetry(5, 360)
-                retry {
-                    connectForProxy(it.macAddress)
+                val result = retry {
+                    connectForProxy(scanResult.macAddress)
                 }
+                result.fold({
+                    if (it is ConnectionError) {
+                        Timber.d("Connection error, so we turn on/off BLT and try again")
+                        onOffBluetooth(10000)
+                        retry {
+                            connectForProxy(scanResult.macAddress)
+                        }
+                    }
+                }, ::identity)
+
+                result
             }
             .first().bind()
         startConnectedState(beckonDevice).bind()
-    }
-}
-
-suspend fun da(beckonMesh: BeckonMesh) {
-    with(Process(emptyList())) {
-        beckonMesh.execute1()
     }
 }
 
