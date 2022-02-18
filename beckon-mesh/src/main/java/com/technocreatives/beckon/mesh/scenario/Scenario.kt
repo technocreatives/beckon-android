@@ -169,10 +169,10 @@ data class Connect(val address: MacAddress) : Step {
                         retry {
                             connectForProxy(scanResult.macAddress)
                         }
+                    } else {
+                        result
                     }
-                }, ::identity)
-
-                result
+                }, { result })
             }
             .first().bind()
         startConnectedState(beckonDevice).bind()
@@ -295,13 +295,24 @@ internal suspend fun BeckonMesh.connectForProxy(
                 .mapZ { it.firstOrNull() }
                 .filterZ { it != null }
                 .mapZ { it!! }
-                .mapEither {
-                    Timber.d("Scenario execute try to connect to $it")
+                .mapEither { scanResult ->
+                    Timber.d("Scenario execute try to connect to $scanResult")
                     stopScan()
-                    val retry = RepeatRetry(3)
-                    retry {
-                        connectForProxy(it.macAddress)
+                    val retry = ExponentialBackOffRetry(5, 360)
+                    val result = retry {
+                        connectForProxy(scanResult.macAddress)
                     }
+                    result.fold({
+                        if (it is ConnectionError) {
+                            Timber.d("Connection error, so we turn on/off BLT and try again")
+                            onOffBluetooth(10000)
+                            retry {
+                                connectForProxy(scanResult.macAddress)
+                            }
+                        } else {
+                            result
+                        }
+                    }, { result })
                 }
                 .first()
         })
