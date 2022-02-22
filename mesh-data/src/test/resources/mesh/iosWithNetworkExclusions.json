@@ -1,0 +1,155 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "appKeys": [
+    {
+      "boundNetKey": 0,
+      "index": 0,
+      "key": "F482C2C612ECADF0BF8DC9AA10FC2630",
+      "name": "AppKey 1"
+    }
+  ],
+  "groups": [
+    {
+      "address": "E000",
+      "name": "allProvisionersGroup",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E001",
+      "name": "allLightsGroup",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E100",
+      "name": "remoteGroupUp",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E103",
+      "name": "remoteGroupDown",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E101",
+      "name": "remoteGroupLeft",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E102",
+      "name": "remoteGroupRight",
+      "parentAddress": "0000"
+    }
+  ],
+  "id": "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#",
+  "meshName": "test",
+  "meshUUID": "72DCC88C-F3BF-433B-BB0B-3F629A0DD5A2",
+  "netKeys": [
+    {
+      "index": 0,
+      "key": "2B7A7EB56300F5458B45BA26A1AA4C47",
+      "minSecurity": "insecure",
+      "name": "NetKey 1",
+      "phase": 0,
+      "timestamp": "2022-02-22T10:07:40Z"
+    }
+  ],
+  "networkExclusions": [
+    {
+      "addresses": [
+        "0001"
+      ],
+      "ivIndex": 0
+    }
+  ],
+  "nodes": [
+    {
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "configComplete": true,
+      "defaultTTL": 5,
+      "deviceKey": "FA74B9180CB63BCAC2F0F8F52922CAD5",
+      "elements": [
+        {
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "bind": [],
+              "modelId": "0000",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "0001",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "0002",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "0003",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "1205",
+              "subscribe": []
+            }
+          ]
+        }
+      ],
+      "excluded": false,
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 2,
+        "relay": 2
+      },
+      "name": "Provisioner",
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "security": "insecure",
+      "unicastAddress": "2000",
+      "UUID": "680694FC-F787-488F-874B-B1E4CF7C3F81"
+    }
+  ],
+  "partial": false,
+  "provisioners": [
+    {
+      "allocatedGroupRange": [
+        {
+          "highAddress": "EFFF",
+          "lowAddress": "C000"
+        }
+      ],
+      "allocatedSceneRange": [
+        {
+          "firstScene": "0001",
+          "lastScene": "3333"
+        }
+      ],
+      "allocatedUnicastRange": [
+        {
+          "highAddress": "6FFF",
+          "lowAddress": "0001"
+        }
+      ],
+      "provisionerName": "Provisioner",
+      "UUID": "680694FC-F787-488F-874B-B1E4CF7C3F81"
+    }
+  ],
+  "scenes": [],
+  "timestamp": "2022-02-22T10:22:13Z",
+  "version": "1.0.0"
+}

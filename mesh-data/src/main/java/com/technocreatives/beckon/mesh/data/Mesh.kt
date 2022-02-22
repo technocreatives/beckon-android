@@ -46,4 +46,4 @@ fun MeshConfig.provisionerNodes(): List<Node> {
 }
 
 @Serializable
-data class NetworkExclusion(val ivIndex: Int, val addresses: List<Int>)
+data class NetworkExclusion(val ivIndex: Int, val addresses: List<UnicastAddress>)

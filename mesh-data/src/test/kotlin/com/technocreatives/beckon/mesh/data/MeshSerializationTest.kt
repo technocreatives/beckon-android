@@ -28,7 +28,7 @@ class MeshSerializationTest : StringSpec({
                 val mesh = format.decodeFromString<MeshConfig>(it)
                 val json = format.encodeToString(mesh)
                 val anotherMesh = format.decodeFromString<MeshConfig>(json)
-                println(mesh.meshUuid)
+                println(json)
                 mesh shouldBe anotherMesh
             }
     }
