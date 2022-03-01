@@ -1,1 +1,4 @@
-<manifest package="com.technocreatives.beckon.mesh"/>
+<manifest package="com.technocreatives.beckon.mesh"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+</manifest>
