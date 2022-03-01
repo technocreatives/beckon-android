@@ -89,7 +89,7 @@ fun NrfElement.transform(index: ElementIndex) = Element(
 )
 
 fun Map<Int, NrfElement>.transform(nodeAddress: UnicastAddress): List<Element> =
-    this.map { it.value.transform(ElementIndex(nodeAddress.value - it.key)) }
+    map { it.value.transform(ElementIndex(it.key - nodeAddress.value)) }
 
 @SuppressLint("RestrictedApi")
 fun NrfProvisioner.transform() = Provisioner(
