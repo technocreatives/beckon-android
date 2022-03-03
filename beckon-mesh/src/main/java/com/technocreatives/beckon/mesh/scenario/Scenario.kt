@@ -18,7 +18,8 @@ import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
 
-private const val TIME_OUT_FOR_STEP: Long = 60000
+private const val TIME_OUT_FOR_STEP: Long = 360000
+//private const val TIME_OUT_FOR_STEP: Long = 60
 
 sealed interface Step {
     suspend fun BeckonMesh.execute(): Either<Any, Unit>
@@ -35,6 +36,7 @@ data class Provision(val address: MacAddress) : Step {
         val beckonDevice = retry {
             connectForProvisioning(scanResult, TIME_OUT_FOR_STEP)
         }.bind()
+
         val provisioning = startProvisioning(beckonDevice).bind()
         val unProvisionedNode = provisioning.identify(scanResult, 5).bind()
         val provisionedNode = provisioning.startProvisioning(unProvisionedNode).bind()
@@ -258,6 +260,10 @@ suspend fun BeckonMesh.connectForProvisioning(
     }.flatMap(::identity)
 
 
+/***
+ * scan and connect to a device by it's unicast address
+ * with retry and timeout
+ */
 internal suspend fun BeckonMesh.connectForProxy(
     address: Int,
     timeout: Long
@@ -270,9 +276,10 @@ internal suspend fun BeckonMesh.connectForProxy(
                 .filterZ { it != null }
                 .mapZ { it!! }
                 .mapEither { scanResult ->
+                    // try to connect
                     Timber.d("Scenario execute try to connect to $scanResult")
                     stopScan()
-                    val retry = ExponentialBackOffRetry(5, 360)
+                    val retry = ExponentialBackOffRetry(5, 360) // 5 retries in max 6 minutes
                     val result = retry {
                         connectForProxy(scanResult.macAddress)
                     }

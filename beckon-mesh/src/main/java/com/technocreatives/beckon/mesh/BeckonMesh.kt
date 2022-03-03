@@ -249,6 +249,7 @@ class BeckonMesh(
             .mapZ { connectedDevices + it }
     }
 
+    // scan for the device with a specific unicastAddress
     suspend fun scanForProxy(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
         val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
         return scan(scannerSetting)
@@ -260,7 +261,7 @@ class BeckonMesh(
                     )
                 }
             }
-            .mapZ { it }
+//            .mapZ { it }
     }
 
     suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =

@@ -308,12 +308,14 @@ internal class BeckonClientImpl(
             beckonStore.dispatch(BeckonAction.AddConnectedDevice(beckonDevice))
             beckonDevice
         }
+
         return result.mapLeft {
             if (it is ConnectionError.RequirementFailed || it is ConnectionError.Timeout) {
-                manager.disconnect().enqueue()
-                // make sure we disconnect the devices
+                manager.disconnect(Unit)
+                // TODO make sure we disconnect the devices
                 delay(300)
             }
+            manager.unregister()
             beckonStore.dispatch(BeckonAction.RemoveConnectingDevice(savedMetadata))
             it
         }
