@@ -5,9 +5,7 @@ import arrow.core.Either
 import arrow.core.left
 import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 import no.nordicsemi.android.ble.data.Data
 
 internal class BeckonDeviceImpl(
@@ -33,6 +31,7 @@ internal class BeckonDeviceImpl(
 
     override suspend fun disconnect(): Either<ConnectionError.DisconnectDeviceFailed, Unit> =
         manager.disconnect(Unit)
+            .also { manager.unregister() }
 
     override fun metadata(): Metadata {
         return metadata

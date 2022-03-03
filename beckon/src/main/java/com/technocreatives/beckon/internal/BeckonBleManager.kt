@@ -118,6 +118,7 @@ internal class BeckonBleManager(
 //                }
 
             }
+
             request
                 .done {
                     Timber.w("isActive: $isActive, isCompleted: $isCompleted")
@@ -142,7 +143,7 @@ internal class BeckonBleManager(
 
     }
 
-    internal suspend fun disconnect(empty: Unit): Either<ConnectionError.DisconnectDeviceFailed, Unit> {
+    internal suspend fun disconnect(lol: Unit): Either<ConnectionError.DisconnectDeviceFailed, Unit> {
         return suspendCancellableCoroutine { cont ->
             cont.invokeOnCancellation {
                 Timber.w("DisconnectRequest: ${device.address} got cancelled")
@@ -174,15 +175,16 @@ internal class BeckonBleManager(
 
     }
 
+    // TODO maybe disconnect here after timeout
     suspend fun connect(
         retryAttempts: Int = 3,
         retryDelay: Int = 100,
         autoConnect: Boolean = false,
-        timeOut: Long = 1000L
+        timeOut: Long = 60000L
     ): Either<ConnectionError, DeviceDetail> {
         Timber.d("SingleZ connect")
         val request = connect(device)
-            .timeout(30000)
+//            .timeout(30000)
             .retry(retryAttempts, retryDelay)
             .useAutoConnect(autoConnect)
         return withTimeout(
@@ -198,7 +200,10 @@ internal class BeckonBleManager(
         return actions.parTraverseEither { applyAction(it, detail) }.map { }
     }
 
-    private suspend fun applyAction(action: BleAction, detail: DeviceDetail): Either<BeckonError, Unit> {
+    private suspend fun applyAction(
+        action: BleAction,
+        detail: DeviceDetail
+    ): Either<BeckonError, Unit> {
         return when (action) {
             is BleAction.Subscribe -> {
                 subscribe(action.characteristic, detail)
@@ -211,7 +216,6 @@ internal class BeckonBleManager(
             }
             is BleAction.Write -> {
                 // TODO fix
-                write(action.data, action.characteristic)
                 Unit.right()
             }
         }
@@ -668,7 +672,8 @@ internal class BeckonBleManager(
         }
     }
 
-    suspend fun unregister() {
+    internal fun unregister() {
+        Timber.w("BeckonBleManager unregister isActive: ${job.isActive}, isCompleted: ${job.isCompleted}, isCancelled: ${job.isCancelled}")
         if (job.isActive) {
             job.cancel()
         }
