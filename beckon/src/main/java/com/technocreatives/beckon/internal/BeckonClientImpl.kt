@@ -53,7 +53,7 @@ internal class BeckonClientImpl(
         }
     }
 
-    override suspend fun disconnectAllConnectedButNotSavedDevices(): Either<Throwable, Unit> {
+    override suspend fun disconnectAllConnectedButNotSavedDevices(): Either<ConnectionError.DisconnectDeviceFailed, Unit> {
         Timber.d("disconnectAllConnectedButNotSavedDevices is called")
 
         val currentSavedDevices = deviceRepository.currentDevices().map { it.macAddress }
@@ -127,9 +127,9 @@ internal class BeckonClientImpl(
         }
     }
 
-    override suspend fun disconnect(macAddress: MacAddress): Either<Throwable, MacAddress> {
+    override suspend fun disconnect(macAddress: MacAddress): Either<ConnectionError, MacAddress> {
         return when (val device = beckonStore.currentState().findConnectedDevice(macAddress)) {
-            is None -> ConnectionError.ConnectedDeviceNotFound(macAddress).toException().left()
+            is None -> ConnectionError.ConnectedDeviceNotFound(macAddress).left()
             is Some -> disconnect(device.value)
         }
     }
@@ -145,7 +145,7 @@ internal class BeckonClientImpl(
         }
     }
 
-    override suspend fun remove(macAddress: MacAddress): Either<Throwable, MacAddress> {
+    override suspend fun remove(macAddress: MacAddress): Either<ConnectionError.DisconnectDeviceFailed, MacAddress> {
         return beckonStore.currentState().findConnectedDevice(macAddress).fold(
             {
                 deviceRepository.removeDevice(macAddress)
@@ -231,10 +231,10 @@ internal class BeckonClientImpl(
                             beckonStore.currentState().connectedDevices.onEach {
                                 it.disconnect().fold(
                                     {
-                                        Timber.d("Disconnect after BT_OFF success")
+                                        Timber.w(it.toException(), "Disconnect after BT_OFF failed")
                                     },
                                     {
-                                        Timber.w("Disconnect after BT_OFF failed $it")
+                                        Timber.d("Disconnect after BT_OFF success")
                                     }
                                 )
                             }
@@ -280,7 +280,7 @@ internal class BeckonClientImpl(
      * Disconnect bluetooth and then remove that device from BeckonStore
      * in case of error remove it any way
      */
-    private suspend fun disconnect(device: BeckonDevice): Either<Throwable, MacAddress> {
+    private suspend fun disconnect(device: BeckonDevice): Either<ConnectionError.DisconnectDeviceFailed, MacAddress> {
         return device.disconnect()
 //            .map { beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device)) }
             .map { device.metadata().macAddress }

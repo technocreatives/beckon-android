@@ -25,7 +25,7 @@ data class BleActionError(
     val property: Property
 ) : BeckonActionError
 
-data class MtuRequestError(val macAddress: String, val status: Int) : BeckonActionError, BeckonError
+data class MtuRequestError(val macAddress: String, val status: Int) :  BeckonError
 
 object BeckonTimeOutError : BeckonError
 
