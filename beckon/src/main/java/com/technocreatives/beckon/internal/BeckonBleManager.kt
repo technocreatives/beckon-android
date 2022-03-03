@@ -35,9 +35,9 @@ const val STATUS_TIME_OUT = -73
 // This one should be private and safe with Either
 internal class BeckonBleManager(
     context: Context,
-    val beckonStore: BeckonStore,
-    val device: BluetoothDevice,
-    val descriptor: Descriptor
+    private val beckonStore: BeckonStore,
+    private val device: BluetoothDevice,
+    private val descriptor: Descriptor
 ) : BleManager(context), CoroutineScope {
 
     private val job = Job()
@@ -67,9 +67,24 @@ internal class BeckonBleManager(
     }
 
     init {
+
+        job.invokeOnCompletion { cause ->
+            when (cause) {
+                null -> {
+                    Timber.w("BeckonBleManager: ${device.address} is completed normally")
+                }
+                is CancellationException -> {
+                    Timber.w(cause, "BeckonBleManager: ${device.address} is cancelled normally")
+                }
+                else -> {
+                    Timber.w(cause, "BeckonBleManager: ${device.address} is failed")
+                }
+            }
+        }
+
         val onStateChange: (BleConnectionState) -> Unit = {
             val newState = processState(it, ConnectionState.NotConnected)
-            if(newState == ConnectionState.NotConnected) {
+            if (newState == ConnectionState.NotConnected) {
                 runBlocking {
                     beckonStore.dispatch(BeckonAction.RemoveConnectedDevice(device.address))
                 }
@@ -89,27 +104,31 @@ internal class BeckonBleManager(
     private suspend fun connect(request: ConnectRequest): Either<ConnectionError, Unit> {
         return suspendCancellableCoroutine { cont ->
             cont.invokeOnCancellation {
+                Timber.w("ConnectRequest: ${device.address} got cancelled")
                 Timber.w("isActive: $isActive, isCompleted: $isCompleted")
-                if (!isCompleted) {
-                    cont.resume(
-                        ConnectionError.BleConnectFailed(
-                            device.address,
-                            STATUS_TIME_OUT
-                        ).left()
-                    )
-                }
+                Timber.w("Cont isActive: ${cont.isActive}, isCompleted: ${cont.isCompleted}, isCancelled: ${cont.isCancelled}")
+
+//                if (!isCompleted) {
+//                    cont.resume(
+//                        ConnectionError.BleConnectFailed(
+//                            device.address,
+//                            STATUS_TIME_OUT
+//                        ).left()
+//                    )
+//                }
+
             }
             request
                 .done {
                     Timber.w("isActive: $isActive, isCompleted: $isCompleted")
-                    if (!isCompleted) {
+                    if (isActive) {
                         cont.resume(Unit.right())
                     }
                 }
                 .fail { device, status ->
                     Timber.e("ConnectionError ${device.address} status: $status")
                     Timber.w("isActive: $isActive, isCompleted: $isCompleted")
-                    if (!isCompleted) {
+                    if (isActive) {
                         cont.resume(
                             ConnectionError.BleConnectFailed(
                                 device.address,
@@ -123,15 +142,47 @@ internal class BeckonBleManager(
 
     }
 
+    internal suspend fun disconnect(empty: Unit): Either<ConnectionError.DisconnectDeviceFailed, Unit> {
+        return suspendCancellableCoroutine { cont ->
+            cont.invokeOnCancellation {
+                Timber.w("DisconnectRequest: ${device.address} got cancelled")
+                Timber.w("isActive: $isActive, isCompleted: $isCompleted")
+                Timber.w("Cont isActive: ${cont.isActive}, isCompleted: ${cont.isCompleted}, isCancelled: ${cont.isCancelled}")
+            }
+            val request = disconnect()
+            request
+                .done {
+                    Timber.w("isActive: $isActive, isCompleted: $isCompleted")
+                    if (isActive) {
+                        cont.resume(Unit.right())
+                    }
+                }
+                .fail { device, status ->
+                    Timber.e("ConnectionError ${device.address} status: $status")
+                    Timber.w("isActive: $isActive, isCompleted: $isCompleted")
+                    if (isActive) {
+                        cont.resume(
+                            ConnectionError.DisconnectDeviceFailed(
+                                device.address,
+                                status
+                            ).left()
+                        )
+                    }
+                }.enqueue()
+            Timber.d("disconnect ${device.address}")
+        }
+
+    }
+
     suspend fun connect(
         retryAttempts: Int = 3,
         retryDelay: Int = 100,
         autoConnect: Boolean = false,
-        timeOut: Long = 60000L
+        timeOut: Long = 1000L
     ): Either<ConnectionError, DeviceDetail> {
         Timber.d("SingleZ connect")
         val request = connect(device)
-            .timeout(10000)
+            .timeout(30000)
             .retry(retryAttempts, retryDelay)
             .useAutoConnect(autoConnect)
         return withTimeout(
@@ -147,7 +198,7 @@ internal class BeckonBleManager(
         return actions.parTraverseEither { applyAction(it, detail) }.map { }
     }
 
-    suspend fun applyAction(action: BleAction, detail: DeviceDetail): Either<BeckonError, Unit> {
+    private suspend fun applyAction(action: BleAction, detail: DeviceDetail): Either<BeckonError, Unit> {
         return when (action) {
             is BleAction.Subscribe -> {
                 subscribe(action.characteristic, detail)
@@ -160,6 +211,7 @@ internal class BeckonBleManager(
             }
             is BleAction.Write -> {
                 // TODO fix
+                write(action.data, action.characteristic)
                 Unit.right()
             }
         }
@@ -509,7 +561,6 @@ internal class BeckonBleManager(
     }
 
     suspend fun read(list: List<FoundCharacteristic.Read>): Either<ReadDataException, List<Change>> {
-        if (list.isEmpty()) return emptyList<Change>().right()
         return list.parTraverseEither { read(it.id, it.gatt) }
     }
 
@@ -616,6 +667,13 @@ internal class BeckonBleManager(
             BleConnectionState.Connected, BleConnectionState.Ready -> ConnectionState.Connected
         }
     }
+
+    suspend fun unregister() {
+        if (job.isActive) {
+            job.cancel()
+        }
+    }
+
 }
 
 suspend fun <E, T> withTimeout(

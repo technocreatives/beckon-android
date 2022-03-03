@@ -1,9 +1,6 @@
 package com.technocreatives.beckon.mesh.scenario
 
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.Context
-import androidx.core.content.ContextCompat.getSystemService
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.fx.coroutines.raceN
@@ -18,7 +15,6 @@ import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 
 
@@ -241,33 +237,11 @@ internal suspend fun BeckonMesh.scanForProvisioning(macAddress: MacAddress, time
                 .first()
         }
     ).mapLeft {
-        runBlocking {
-            stopScan()
-        }
+        stopScan()
         Timber.e("scanForProvisioning timeout $macAddress")
         BeckonTimeOutError
     }.flatMap(::identity)
 
-
-internal suspend fun BeckonMesh.connectForProvisioning(
-    macAddress: MacAddress,
-    timeout: Long = 60000
-): Either<BeckonError, BeckonDevice> {
-    return raceN(
-        { delay(timeout) },
-        {
-            scanForProvisioning()
-                .mapZ { it.firstOrNull { it.macAddress == macAddress } }
-                .filterZ { it != null }
-                .mapEither { connectForProvisioning(it!!) }
-                .first()
-        }
-    ).mapLeft {
-        Timber.e("connectForProvisioning timeout $macAddress")
-        BeckonTimeOutError
-    }.flatMap(::identity)
-
-}
 
 suspend fun BeckonMesh.connectForProvisioning(
     scanResult: UnprovisionedScanResult,
@@ -317,9 +291,7 @@ internal suspend fun BeckonMesh.connectForProxy(
                 .first()
         })
         .mapLeft {
-            runBlocking {
-                stopScan()
-            }
+            stopScan()
             Timber.e("connectForProxy timeout $address")
             BeckonTimeOutError
         }

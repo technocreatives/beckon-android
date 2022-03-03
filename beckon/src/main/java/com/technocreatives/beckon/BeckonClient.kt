@@ -38,7 +38,7 @@ interface BeckonClient {
 
     suspend fun stopScan()
 
-    suspend fun disconnectAllConnectedButNotSavedDevices(): Either<Throwable, Unit>
+    suspend fun disconnectAllConnectedButNotSavedDevices(): Either<ConnectionError.DisconnectDeviceFailed, Unit>
 
     /**
      * Search for all currently connected devices in the systems which satisfies ScannerSetting
@@ -77,7 +77,7 @@ interface BeckonClient {
         metadata: SavedMetadata
     ): Either<BeckonError, BeckonDevice>
 
-    suspend fun disconnect(macAddress: MacAddress): Either<Throwable, MacAddress>
+    suspend fun disconnect(macAddress: MacAddress): Either<ConnectionError, MacAddress>
 
     /*===========================Device management==========================*/
 
@@ -95,7 +95,7 @@ interface BeckonClient {
      * - Remove from store
      * - This function does not remove Bond so you have to removeBond before use this function if you want.
      */
-    suspend fun remove(macAddress: MacAddress): Either<Throwable, MacAddress>
+    suspend fun remove(macAddress: MacAddress): Either<ConnectionError.DisconnectDeviceFailed, MacAddress>
 
     suspend fun findConnectedDevice(macAddress: MacAddress): Either<ConnectionError, BeckonDevice>
 

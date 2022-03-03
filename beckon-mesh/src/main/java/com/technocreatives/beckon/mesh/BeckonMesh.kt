@@ -7,7 +7,6 @@ import arrow.core.computations.either
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.Atomic
-import arrow.fx.coroutines.raceN
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.subscribe
@@ -22,11 +21,8 @@ import com.technocreatives.beckon.mesh.state.Loaded
 import com.technocreatives.beckon.mesh.state.MeshState
 import com.technocreatives.beckon.mesh.state.Provisioning
 import com.technocreatives.beckon.util.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.ApplicationKey
 import no.nordicsemi.android.mesh.NetworkKey
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
@@ -56,6 +52,23 @@ class BeckonMesh(
         val initialState = Loaded(this, meshApi)
         currentState = Atomic.invoke(initialState)
         stateSubject = MutableStateFlow(initialState)
+    }
+
+    init {
+        job.invokeOnCompletion { cause ->
+            when (cause) {
+                null -> {
+                    Timber.w("BeckonMesh: $this is completed normally")
+                }
+                is CancellationException -> {
+                    Timber.w(cause, "BeckonMesh: $this is cancelled normally")
+                }
+                else -> {
+                    Timber.w(cause, "BeckonMesh: $this is failed")
+                }
+            }
+        }
+
     }
 
     suspend fun register() {

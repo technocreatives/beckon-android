@@ -12,7 +12,7 @@ interface BeckonDevice {
     fun changes(): Flow<Change>
     fun states(): Flow<State>
 
-    suspend fun disconnect(): Either<Throwable, Unit>
+    suspend fun disconnect(): Either<ConnectionError.DisconnectDeviceFailed, Unit>
 
     fun metadata(): Metadata
 

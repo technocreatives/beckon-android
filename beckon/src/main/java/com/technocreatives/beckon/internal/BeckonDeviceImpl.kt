@@ -31,13 +31,8 @@ internal class BeckonDeviceImpl(
         return manager.states()
     }
 
-    override suspend fun disconnect(): Either<Throwable, Unit> {
-        return Either.catch {
-            withContext(Dispatchers.IO) {
-                manager.disconnect().await()
-            }
-        }
-    }
+    override suspend fun disconnect(): Either<ConnectionError.DisconnectDeviceFailed, Unit> =
+        manager.disconnect(Unit)
 
     override fun metadata(): Metadata {
         return metadata

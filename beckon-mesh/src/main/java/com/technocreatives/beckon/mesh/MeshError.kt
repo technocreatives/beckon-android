@@ -1,6 +1,7 @@
 package com.technocreatives.beckon.mesh
 
 import com.technocreatives.beckon.BeckonActionError
+import com.technocreatives.beckon.ConnectionError
 import no.nordicsemi.android.mesh.NetworkKey as NrfNetworkKey
 import com.technocreatives.beckon.mesh.state.MeshState
 import no.nordicsemi.android.mesh.provisionerstates.ProvisioningState
@@ -30,7 +31,7 @@ data class ProvisioningFailed(
 
 object NoAvailableUnicastAddress : ProvisioningError
 object NoAllocatedUnicastRange : ProvisioningError
-data class BleDisconnectError(val throwable: Throwable) : ProvisioningError, MeshLoadError
+data class BleDisconnectError(val throwable: ConnectionError.DisconnectDeviceFailed) : ProvisioningError, MeshLoadError
 
 sealed interface SendMessageError : SendAckMessageError
 
