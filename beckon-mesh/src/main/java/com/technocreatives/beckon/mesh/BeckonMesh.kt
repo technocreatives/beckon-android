@@ -239,6 +239,10 @@ class BeckonMesh(
 
     suspend fun scanForProxy(filter: (BluetoothDevice) -> Boolean): Flow<Either<ScanError, List<ScanResult>>> {
         val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
+
+        val cds = context.bluetoothManager().connectedDevices()
+        Timber.d("All connected ble devices: $cds")
+
         val connectedDevices = context.bluetoothManager()
             .connectedDevices()
             .filter { filter(it) }

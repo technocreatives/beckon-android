@@ -44,6 +44,7 @@ internal class BeckonClientImpl(
     }
 
     override suspend fun stopScan() {
+        Timber.w("Execute stopScan")
         if (beckonStore.currentState().bluetoothState == BluetoothState.ON) {
             scanner?.stopScan()
             scanner = null
