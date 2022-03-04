@@ -29,13 +29,19 @@ sealed interface Step {
 
 data class Provision(val address: MacAddress) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        Timber.d("Execute Provision $address started")
+
         val scanResult = scanForProvisioning(address, TIME_OUT_FOR_STEP).bind()
+
+        Timber.d("Execute Provision $address scanResult: $scanResult")
         stopScan()
         val retry = ExponentialBackOffRetry(5, 360)
 
         val beckonDevice = retry {
             connectForProvisioning(scanResult, TIME_OUT_FOR_STEP)
         }.bind()
+
+        Timber.d("Execute Provision connected ${beckonDevice.metadata().macAddress}")
 
         val provisioning = startProvisioning(beckonDevice).bind()
         val unProvisionedNode = provisioning.identify(scanResult, 5).bind()
@@ -255,6 +261,7 @@ suspend fun BeckonMesh.connectForProvisioning(
             connectForProvisioning(scanResult)
         }
     ).mapLeft {
+        // disconnect
         Timber.e("connectForProvisioning timeout ${scanResult.macAddress}")
         BeckonTimeOutError
     }.flatMap(::identity)

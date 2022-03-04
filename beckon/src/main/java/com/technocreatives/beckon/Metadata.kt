@@ -146,6 +146,7 @@ sealed class FoundCharacteristic {
         val gatt: BluetoothGattCharacteristic
     ) : FoundCharacteristic()
 
+    // todo write type
     data class Write(
         override val id: UUID,
         override val service: UUID,

@@ -82,14 +82,15 @@ internal class ScannerImpl : Scanner {
     }
 
     override suspend fun stopScan() {
+        Timber.d("ScannerImpl stopScan")
         scanSubject?.let {
             scanSubject = null
         }
         callback?.let {
-            Timber.d("Scanner stop scanning")
+            Timber.d("Scanner stop scanning cleaning callback")
             scanner.stopScan(it)
-            callback = null
         }
+        callback = null
     }
 }
 

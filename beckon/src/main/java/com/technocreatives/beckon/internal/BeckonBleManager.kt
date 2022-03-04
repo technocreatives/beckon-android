@@ -31,6 +31,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 const val STATUS_TIME_OUT = -73
+const val STATUS_FAILED_AFTER_CONNECT = -137
 
 // This one should be private and safe with Either
 internal class BeckonBleManager(
@@ -364,7 +365,7 @@ internal class BeckonBleManager(
                                     deviceConnectionEmitter.complete(
                                         ConnectionError.BleConnectFailed(
                                             device.address,
-                                            -137
+                                            STATUS_FAILED_AFTER_CONNECT
                                         ).left()
                                     )
                                 }
@@ -386,6 +387,7 @@ internal class BeckonBleManager(
             }
 
             override fun onServicesInvalidated() {
+                // todo recalculate DeviceDetail
                 Timber.d("onServicesInvalidated gattCallback")
             }
 
@@ -394,7 +396,7 @@ internal class BeckonBleManager(
                 val services = gatt.services.map { it.uuid }
                 Timber.d("All discovered services $services")
                 bluetoothGatt = gatt
-
+                // always return true because we'll check in initialize phrase
                 return true
             }
 
@@ -409,20 +411,19 @@ internal class BeckonBleManager(
                 }
             }
 
-            fun allCharacteristics(
+            private fun allCharacteristics(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
             ): List<FoundCharacteristic> {
                 return Property.values().toList()
-                    .map { findCharacteristic(service, char, it) }
-                    .filterOption()
+                    .mapNotNull { findCharacteristic(service, char, it) }
             }
 
             private fun findCharacteristic(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic,
                 type: Property
-            ): Option<FoundCharacteristic> {
+            ): FoundCharacteristic? {
                 return when (type) {
                     Property.WRITE -> writeCharacteristic(service, char)
                     Property.READ -> readCharacteristic(service, char)
@@ -433,37 +434,37 @@ internal class BeckonBleManager(
             private fun notifyCharacteristic(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
-            ): Option<FoundCharacteristic.Notify> {
+            ): FoundCharacteristic.Notify? {
 //                return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0 &&
 //                    char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0
 //                )
                 return if (char.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY > 0) {
-                    Option(FoundCharacteristic.Notify(char.uuid, service.uuid, char))
+                    FoundCharacteristic.Notify(char.uuid, service.uuid, char)
                 } else {
-                    None
+                    null
                 }
             }
 
             private fun readCharacteristic(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
-            ): Option<FoundCharacteristic.Read> {
+            ): FoundCharacteristic.Read? {
                 return if (char.properties and BluetoothGattCharacteristic.PROPERTY_READ > 0) {
-                    Option(FoundCharacteristic.Read(char.uuid, service.uuid, char))
+                    FoundCharacteristic.Read(char.uuid, service.uuid, char)
                 } else {
-                    None
+                    null
                 }
             }
 
             private fun writeCharacteristic(
                 service: BluetoothGattService,
                 char: BluetoothGattCharacteristic
-            ): Option<FoundCharacteristic.Write> {
+            ): FoundCharacteristic.Write? {
                 Timber.w("char: ${char.uuid} with properties ${char.properties}")
                 return if (char.properties.isWriteProperty()) {
-                    Option(FoundCharacteristic.Write(char.uuid, service.uuid, char))
+                    FoundCharacteristic.Write(char.uuid, service.uuid, char)
                 } else {
-                    None
+                    null
                 }
             }
 
@@ -490,6 +491,7 @@ internal class BeckonBleManager(
         return changeSubject.distinctUntilChanged()
     }
 
+    // todo thinking about write type
     suspend fun write(
         data: Data,
         uuid: UUID,
@@ -582,15 +584,11 @@ internal class BeckonBleManager(
         uuid: UUID,
         gatt: BluetoothGattCharacteristic
     ): Either<SubscribeDataException, Unit> {
-        return suspendCancellableCoroutine { result ->
-            result.invokeOnCancellation {
-                result.resume(
-                    SubscribeDataException(
-                        device.address,
-                        uuid,
-                        STATUS_TIME_OUT
-                    ).left()
-                )
+        return suspendCancellableCoroutine { cont ->
+            cont.invokeOnCancellation {
+                Timber.w("subscribe request: ${device.address} got cancelled")
+                Timber.w("isActive: $isActive, isCompleted: $isCompleted")
+                Timber.w("Cont isActive: ${cont.isActive}, isCompleted: ${cont.isCompleted}, isCancelled: ${cont.isCancelled}")
             }
             Timber.d("setNotification callback $uuid")
             val callback = DataReceivedCallback { device, data ->
@@ -603,7 +601,7 @@ internal class BeckonBleManager(
             setNotificationCallback(gatt).with(callback)
             enableNotifications(gatt)
                 .invalid {
-                    result.resume(
+                    cont.resume(
                         SubscribeDataException(
                             device.address,
                             uuid,
@@ -613,7 +611,7 @@ internal class BeckonBleManager(
                 }
                 .fail { device, status ->
                     Timber.w("EnableNotification request failed: $device $status")
-                    result.resume(
+                    cont.resume(
                         SubscribeDataException(
                             device.address,
                             uuid,
@@ -623,7 +621,7 @@ internal class BeckonBleManager(
                 }
                 .done {
                     Timber.w("EnableNotification request success: $it")
-                    result.resume(Unit.right())
+                    cont.resume(Unit.right())
                 }
                 .enqueue()
 //        readCharacteristic(gatt).with(readCallback)
