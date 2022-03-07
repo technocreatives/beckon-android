@@ -199,7 +199,8 @@ class BeckonMesh(
     }
 
     suspend fun disconnect(): Either<BleDisconnectError, Loaded> {
-        meshApi.close()
+        Timber.d("BeckonMesh disconnect")
+//        meshApi.close()
         return when (
             val state = currentState.get()) {
             is Loaded -> state.right()
@@ -306,4 +307,3 @@ sealed interface DeleteGroupError {
     object GroupDoesNotExist : DeleteGroupError
     object GroupHasElements : DeleteGroupError
 }
-
