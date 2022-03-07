@@ -1,6 +1,8 @@
 package com.technocreatives.beckon.mesh.data
 
 import com.technocreatives.beckon.mesh.data.util.MeshAddress
+import com.technocreatives.beckon.mesh.data.util.MeshAddress.unsignedBytesToInt
+import com.technocreatives.beckon.mesh.data.util.toHex
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
@@ -29,7 +31,10 @@ sealed interface PublishableAddress {
             }
 
         fun from(bytes: ByteArray): PublishableAddress {
-            val value = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).int
+            println("PublishableAddress: " + bytes.toHex())
+//            val value = ByteBuffer.wrap(bytes).order(ByteOrder.BIG_ENDIAN).short.toInt()
+                val value = unsignedBytesToInt(bytes[1], bytes[0])
+            println("PublishableAddress: $value")
             return when {
                 MeshAddress.isValidGroupAddress(value) -> GroupAddress(value)
                 MeshAddress.isValidUnicastAddress(value) -> UnicastAddress(value)
