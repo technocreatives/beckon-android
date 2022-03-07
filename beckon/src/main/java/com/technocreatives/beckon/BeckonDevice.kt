@@ -38,6 +38,7 @@ interface BeckonDevice {
     suspend fun unsubscribe(list: List<FoundCharacteristic.Notify>): Either<Throwable, Unit>
 
     suspend fun requestMtu(mtu: Mtu): Either<MtuRequestError, Mtu>
+    suspend fun requestMtu(mtu: Mtu, expected: Mtu): Either<MtuRequestError, Mtu>
     fun overrideMtu(mtu: Mtu)
     fun mtu(): Mtu
 }

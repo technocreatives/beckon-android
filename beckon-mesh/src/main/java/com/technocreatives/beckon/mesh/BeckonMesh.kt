@@ -216,7 +216,7 @@ class BeckonMesh(
             .mapZ { it.mapNotNull { it.toUnprovisionedScanResult(meshApi) } }
     }
 
-    suspend fun scanForProvisioning(node: ProvisionedMeshNode): Either<BeckonError, BeckonDevice> =
+    suspend fun scanForProvisioning(node: ProvisionedMeshNode, config: ConnectionConfig): Either<BeckonError, BeckonDevice> =
         scanForProxy()
             .mapZ {
                 it.firstOrNull {
@@ -224,7 +224,7 @@ class BeckonMesh(
                     meshApi.isProxyDevice(it.scanRecord!!, node) { stopScan() }
                 }
             }.filterZ { it != null }
-            .mapEither { connectForProxy(it!!.macAddress) }
+            .mapEither { connectForProxy(it!!.macAddress, config) }
             .first()
 
 //    suspend fun scanForProvisioning(filter: (BluetoothDevice) -> Boolean): Either<BeckonError, BeckonDevice> =
@@ -265,24 +265,34 @@ class BeckonMesh(
                     )
                 }
             }
-//            .mapZ { it }
     }
 
-    suspend fun connectForProvisioning(scanResult: UnprovisionedScanResult): Either<BeckonError, BeckonDevice> =
-        meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic)
+    suspend fun connectForProvisioning(
+        scanResult: UnprovisionedScanResult,
+        config: ConnectionConfig
+    ): Either<BeckonError, BeckonDevice> =
+        meshConnect(scanResult.macAddress, MeshConstants.provisioningDataOutCharacteristic, config)
 
-    suspend fun connectForProxy(macAddress: MacAddress): Either<BeckonError, BeckonDevice> {
+    suspend fun connectForProxy(
+        macAddress: MacAddress,
+        config: ConnectionConfig
+    ): Either<BeckonError, BeckonDevice> {
         Timber.d("execute Connect for proxy $macAddress")
-        return meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic)
+        return meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic, config)
     }
 
     private suspend fun meshConnect(
         macAddress: MacAddress,
-        characteristic: Characteristic
+        characteristic: Characteristic,
+        config: ConnectionConfig
     ): Either<BeckonError, BeckonDevice> =
         either {
             val beckonDevice = beckonClient.connect(macAddress).bind()
-            beckonDevice.requestMtu(MeshConstants.maxMtu).bind()
+            if (config.expectedMtu != null) {
+                beckonDevice.requestMtu(MeshConstants.maxMtu, config.expectedMtu).bind()
+            } else {
+                beckonDevice.requestMtu(MeshConstants.maxMtu)
+            }
             beckonDevice.subscribe(characteristic).bind()
             with(meshApi) {
                 handleNotifications(beckonDevice, characteristic)

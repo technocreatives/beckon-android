@@ -5,7 +5,6 @@ import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Context
-import android.util.Log
 import arrow.core.*
 import arrow.core.computations.either
 import arrow.fx.coroutines.parTraverseEither
@@ -32,6 +31,7 @@ import kotlin.coroutines.suspendCoroutine
 
 const val STATUS_TIME_OUT = -73
 const val STATUS_FAILED_AFTER_CONNECT = -137
+const val STATUS_INVALID_REQUEST = -138
 
 // This one should be private and safe with Either
 internal class BeckonBleManager(
@@ -219,23 +219,61 @@ internal class BeckonBleManager(
                 // TODO fix
                 Unit.right()
             }
+            is BleAction.RequestMTUWithExpectation -> {
+                doRequestMtu(action.mtu.value).map { }
+            }
         }
     }
 
     // TODO figure out how to get mtu from device
     suspend fun doRequestMtu(mtu: Int): Either<MtuRequestError, Int> {
-        val result = CompletableDeferred<Either<MtuRequestError, Int>>()
-        val callback = MtuCallback { device, mtu ->
-            result.complete(mtu.right())
-        }
-        requestMtu(mtu)
-            .with(callback)
-            .fail { device, status ->
-                result.complete(MtuRequestError(device.address, status).left())
+        return suspendCancellableCoroutine { cont ->
+            val callback = MtuCallback { device, mtu ->
+                cont.resume(mtu.right())
             }
-            .invalid { result.complete(MtuRequestError(device.address, -1).left()) }
-            .enqueue()
-        return result.await()
+            requestMtu(mtu)
+                .with(callback)
+                .fail { device, status ->
+                    cont.resume(MtuRequestError(device.address, status).left())
+                }
+                .invalid {
+                    cont.resume(
+                        MtuRequestError(
+                            device.address,
+                            STATUS_INVALID_REQUEST
+                        ).left()
+                    )
+                }
+                .enqueue()
+        }
+
+    }
+
+    // TODO figure out how to get mtu from device
+    suspend fun doRequestMtu(mtu: Int, expected: Int): Either<MtuRequestError, Int> {
+        val currentMtu = getMtu()
+        Timber.d("Current Mtu = $currentMtu")
+        if (getMtu() == expected) return expected.right()
+        return suspendCancellableCoroutine { cont ->
+            val callback = MtuCallback { device, mtu ->
+                cont.resume(mtu.right())
+            }
+            requestMtu(mtu)
+                .with(callback)
+                .fail { device, status ->
+                    cont.resume(MtuRequestError(device.address, status).left())
+                }
+                .invalid {
+                    cont.resume(
+                        MtuRequestError(
+                            device.address,
+                            STATUS_INVALID_REQUEST
+                        ).left()
+                    )
+                }
+                .enqueue()
+        }
+
     }
 
     fun doOverrideMtu(mtu: Int) {
@@ -561,7 +599,15 @@ internal class BeckonBleManager(
             .fail { device, status ->
                 result.complete(ReadDataException(device.address, uuid, status).left())
             }
-            .invalid { result.complete(ReadDataException(device.address, uuid, -1).left()) }
+            .invalid {
+                result.complete(
+                    ReadDataException(
+                        device.address,
+                        uuid,
+                        STATUS_INVALID_REQUEST
+                    ).left()
+                )
+            }
             .enqueue()
         return result.await()
     }
@@ -605,7 +651,7 @@ internal class BeckonBleManager(
                         SubscribeDataException(
                             device.address,
                             uuid,
-                            -1
+                            STATUS_INVALID_REQUEST
                         ).left()
                     )
                 }

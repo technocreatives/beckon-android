@@ -66,6 +66,9 @@ internal class BeckonDeviceImpl(
     override suspend fun requestMtu(mtu: Mtu): Either<MtuRequestError, Mtu> =
         manager.doRequestMtu(mtu.value).map { Mtu(it) }
 
+    override suspend fun requestMtu(mtu: Mtu, expected: Mtu): Either<MtuRequestError, Mtu> =
+        manager.doRequestMtu(mtu.value, expected.value).map { Mtu(it) }
+
     override fun overrideMtu(mtu: Mtu) {
         manager.doOverrideMtu(mtu.value)
     }

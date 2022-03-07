@@ -6,6 +6,7 @@ import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
+import com.technocreatives.beckon.mesh.ConnectionConfig
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
@@ -30,8 +31,8 @@ class Loaded(beckonMesh: BeckonMesh, meshApi: BeckonMeshManagerApi) :
         return provisioning
     }
 
-    suspend fun connect(macAddress: MacAddress): Either<Any, Connected> = either {
-        val beckonDevice = beckonMesh.connectForProxy(macAddress).bind()
+    suspend fun connect(macAddress: MacAddress, config: ConnectionConfig): Either<Any, Connected> = either {
+        val beckonDevice = beckonMesh.connectForProxy(macAddress, config).bind()
         val connected = beckonMesh.createConnectedState(beckonDevice)
         beckonMesh.updateState(connected)
         connected
