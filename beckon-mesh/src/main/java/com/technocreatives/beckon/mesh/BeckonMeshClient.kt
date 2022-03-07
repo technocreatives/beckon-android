@@ -19,8 +19,6 @@ class BeckonMeshClient(
     private val config: BeckonMeshClientConfig,
 ) {
 
-    private val meshApi =
-        BeckonMeshManagerApi(context, repository)
     private var currentMesh: BeckonMesh? = null
 
     private suspend fun disconnect(): Either<MeshLoadError, Unit> {
@@ -38,12 +36,16 @@ class BeckonMeshClient(
             .mapLeft { DatabaseError(it) }
             .bind()
         val mesh = meshOrNull.rightIfNotNull { NoCurrentMeshFound }.bind()
+        val meshApi =
+            BeckonMeshManagerApi(context, repository)
         meshApi.load(mesh.id).bind()
         BeckonMesh(context, beckonClient, meshApi, config)
     }
 
     suspend fun load(): Either<MeshLoadError, BeckonMesh> = either {
         disconnect().bind()
+        val meshApi =
+            BeckonMeshManagerApi(context, repository)
         meshApi.load().bind()
         BeckonMesh(context, beckonClient, meshApi, config)
     }
@@ -76,8 +78,11 @@ class BeckonMeshClient(
         }
     }
 
-    private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> =
-        meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, config) }
+    private suspend fun import(mesh: MeshData): Either<MeshLoadError, BeckonMesh> {
+        val meshApi =
+            BeckonMeshManagerApi(context, repository)
+        return meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, config) }
+    }
 
     fun generateMesh(meshName: String, provisionerName: String): MeshConfig {
         val provisionerId = UUID.randomUUID()
