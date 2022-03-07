@@ -96,6 +96,7 @@ class Connected(
 
         disconnectJob = beckonMesh.execute {
             beckonDevice.onDisconnect {
+                beckonMesh.clearProxyFilter()
                 beckonMesh.updateState(Loaded(beckonMesh, meshApi))
             }
         }
@@ -203,11 +204,14 @@ class ConnectedMeshManagerCallbacks(
 }
 
 class ConnectedMessageStatusCallbacks(
-    meshApi: BeckonMeshManagerApi,
+    private val meshApi: BeckonMeshManagerApi,
     private val processor: MessageProcessor,
     private val filteredSubject: MutableSharedFlow<ProxyFilterMessage>,
 ) : AbstractMessageStatusCallbacks(meshApi) {
 
+    private fun logInstance() {
+        Timber.w("filteredMessage $filteredSubject, $meshApi, $processor")
+    }
     private val provisionerAddress = meshApi.meshNetwork().provisionerAddress!!
     private val sequenceNumberMap = mutableMapOf<Int, Int>()
 
@@ -234,6 +238,7 @@ class ConnectedMessageStatusCallbacks(
                 ProxyFilterMessage(UnicastAddress(src), AccessPayload.parse(message.accessPayload))
             GlobalScope.launch {
                 Timber.w("onMeshMessageReceived Sending filteredMessage $filteredMessage $filteredSubject")
+                logInstance()
                 filteredSubject.emit(filteredMessage)
                 Timber.w("onMeshMessageReceived Sent filteredMessage $filteredSubject")
             }
@@ -276,6 +281,7 @@ class ConnectedMessageStatusCallbacks(
             val filteredMessage = ProxyFilterMessage(UnicastAddress(src), AccessPayload.parse(it))
             GlobalScope.launch {
                 Timber.d("onUnknownPduReceived - Sending filteredMessage $filteredMessage $filteredSubject")
+                logInstance()
                 filteredSubject.emit(filteredMessage)
                 Timber.d("onUnknownPduReceived - Sent $filteredSubject")
             }

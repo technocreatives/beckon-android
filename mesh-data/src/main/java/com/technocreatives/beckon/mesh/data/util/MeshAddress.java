@@ -1,6 +1,8 @@
 package com.technocreatives.beckon.mesh.data.util;
 
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
@@ -95,6 +97,18 @@ public final class MeshAddress {
         final boolean rfu = b0 == 0xFF && b1 >= 0x00 && b1 <= 0xFB;
         final boolean allNodes = b0 == 0xFF && b1 == 0xFF;
         return groupRange && !rfu && !allNodes;
+    }
+
+    public static int unsignedBytesToInt(byte b0, byte b1) {
+        return (unsignedByteToInt(b0) + (unsignedByteToInt(b1) << 8));
+    }
+
+    public static int bytesToInt(byte[] b, final ByteOrder byteOrder) {
+        return b.length == 4 ? ByteBuffer.wrap(b).order(byteOrder).getInt() : ByteBuffer.wrap(b).order(byteOrder).getShort();
+    }
+
+    public static int unsignedByteToInt(byte b) {
+        return b & 0xFF;
     }
 
 }

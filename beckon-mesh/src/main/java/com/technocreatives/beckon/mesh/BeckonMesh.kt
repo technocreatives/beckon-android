@@ -55,6 +55,7 @@ class BeckonMesh(
     }
 
     init {
+        meshApi.proxyFilter()
         job.invokeOnCompletion { cause ->
             when (cause) {
                 null -> {
@@ -100,6 +101,10 @@ class BeckonMesh(
 
     fun proxyFilter(): ProxyFilter? =
         meshApi.proxyFilter()
+
+    internal fun clearProxyFilter() {
+        meshApi.meshNetwork().proxyFilter = null
+    }
 
     fun proxyFilterMessages(): Flow<ProxyFilterMessage> =
         filteredMessages.asSharedFlow()
