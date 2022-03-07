@@ -6,6 +6,7 @@ import arrow.core.computations.either
 import arrow.fx.coroutines.raceN
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.mesh.BeckonMesh
+import com.technocreatives.beckon.mesh.ConnectionConfig
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.message.ConfigMessage
@@ -17,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
 
-
+private val TyriLightConnectionConfig = ConnectionConfig(Mtu(69))
 private const val TIME_OUT_FOR_STEP: Long = 360000
 //private const val TIME_OUT_FOR_STEP: Long = 60
 
@@ -38,7 +39,7 @@ data class Provision(val address: MacAddress) : Step {
         val retry = ExponentialBackOffRetry(5, 360)
 
         val beckonDevice = retry {
-            connectForProvisioning(scanResult, TIME_OUT_FOR_STEP)
+            connectForProvisioning(scanResult, TIME_OUT_FOR_STEP, TyriLightConnectionConfig)
         }.bind()
 
         Timber.d("Execute Provision connected ${beckonDevice.metadata().macAddress}")
@@ -97,7 +98,7 @@ object AutoConnect : Step {
                 stopScan()
                 val retry = ExponentialBackOffRetry(5, 360)
                 retry {
-                    connectForProxy(it.macAddress)
+                    connectForProxy(it.macAddress, TyriLightConnectionConfig)
                 }
             }
             .first().bind()
@@ -164,14 +165,14 @@ data class Connect(val address: MacAddress) : Step {
                 stopScan()
                 val retry = ExponentialBackOffRetry(5, 360)
                 val result = retry {
-                    connectForProxy(scanResult.macAddress)
+                    connectForProxy(scanResult.macAddress, TyriLightConnectionConfig)
                 }
                 result.fold({
                     if (it is ConnectionError) {
                         Timber.d("Connection error, so we turn on/off BLT and try again")
                         onOffBluetooth(10000)
                         retry {
-                            connectForProxy(scanResult.macAddress)
+                            connectForProxy(scanResult.macAddress, TyriLightConnectionConfig)
                         }
                     } else {
                         result
@@ -253,12 +254,13 @@ internal suspend fun BeckonMesh.scanForProvisioning(macAddress: MacAddress, time
 
 suspend fun BeckonMesh.connectForProvisioning(
     scanResult: UnprovisionedScanResult,
-    timeout: Long
+    timeout: Long,
+    config: ConnectionConfig
 ): Either<BeckonError, BeckonDevice> =
     raceN(
         { delay(timeout) },
         {
-            connectForProvisioning(scanResult)
+            connectForProvisioning(scanResult, config)
         }
     ).mapLeft {
         // disconnect
@@ -288,14 +290,14 @@ internal suspend fun BeckonMesh.connectForProxy(
                     stopScan()
                     val retry = ExponentialBackOffRetry(5, 360) // 5 retries in max 6 minutes
                     val result = retry {
-                        connectForProxy(scanResult.macAddress)
+                        connectForProxy(scanResult.macAddress, ConnectionConfig(null))
                     }
                     result.fold({
                         if (it is ConnectionError) {
                             Timber.d("Connection error, so we turn on/off BLT and try again")
                             onOffBluetooth(60000)
                             retry {
-                                connectForProxy(scanResult.macAddress)
+                                connectForProxy(scanResult.macAddress, TyriLightConnectionConfig)
                             }
                         } else {
                             result

@@ -76,6 +76,7 @@ data class Descriptor(
 @Serializable
 sealed class BleAction {
     data class RequestMTU(val mtu: Mtu) : BleAction()
+    data class RequestMTUWithExpectation(val mtu: Mtu, val expectedMtu: Mtu) : BleAction()
     data class Read(val characteristic: Characteristic) : BleAction()
     data class Write(val data: Data, val characteristic: Characteristic) : BleAction()
     data class Subscribe(val characteristic: Characteristic) : BleAction()
