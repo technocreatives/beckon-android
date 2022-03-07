@@ -5,19 +5,39 @@ import arrow.core.computations.either
 import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
-import com.technocreatives.beckon.mesh.*
+import com.technocreatives.beckon.mesh.BeckonMesh
+import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
+import com.technocreatives.beckon.mesh.BleDisconnectError
+import com.technocreatives.beckon.mesh.MeshConstants
+import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
 import com.technocreatives.beckon.mesh.callbacks.AbstractMessageStatusCallbacks
-import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.data.AccessPayload
+import com.technocreatives.beckon.mesh.data.AppKey
+import com.technocreatives.beckon.mesh.data.NetKey
+import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
+import com.technocreatives.beckon.mesh.data.RelayRetransmit
+import com.technocreatives.beckon.mesh.data.UnassignedAddress
+import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
-import com.technocreatives.beckon.mesh.message.*
+import com.technocreatives.beckon.mesh.message.AddConfigAppKey
+import com.technocreatives.beckon.mesh.message.ConfigMessage
+import com.technocreatives.beckon.mesh.message.ConfigStatusMessage
+import com.technocreatives.beckon.mesh.message.GetCompositionData
+import com.technocreatives.beckon.mesh.message.GetDefaultTtl
+import com.technocreatives.beckon.mesh.message.MessageBearer
+import com.technocreatives.beckon.mesh.message.SetConfigNetworkTransmit
+import com.technocreatives.beckon.mesh.message.SetDefaultTtl
+import com.technocreatives.beckon.mesh.message.SetRelayConfig
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
 import com.technocreatives.beckon.mesh.scenario.RepeatRetry
 import com.technocreatives.beckon.mesh.scenario.Retry
+import com.technocreatives.beckon.mesh.toHex
+import com.technocreatives.beckon.mesh.toInt
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -54,6 +74,7 @@ class Connected(
     private var disconnectJob: Job? = null
 
     init {
+        Timber.d("LAUNCHED CONNECTED STATE $this")
         with(processor) {
             beckonMesh.execute()
         }
@@ -212,7 +233,9 @@ class ConnectedMessageStatusCallbacks(
             val filteredMessage =
                 ProxyFilterMessage(UnicastAddress(src), AccessPayload.parse(message.accessPayload))
             GlobalScope.launch {
+                Timber.w("onMeshMessageReceived Sending filteredMessage $filteredMessage $filteredSubject")
                 filteredSubject.emit(filteredMessage)
+                Timber.w("onMeshMessageReceived Sent filteredMessage $filteredSubject")
             }
         }
 
@@ -252,7 +275,9 @@ class ConnectedMessageStatusCallbacks(
         accessPayload?.let {
             val filteredMessage = ProxyFilterMessage(UnicastAddress(src), AccessPayload.parse(it))
             GlobalScope.launch {
+                Timber.d("onUnknownPduReceived - Sending filteredMessage $filteredMessage $filteredSubject")
                 filteredSubject.emit(filteredMessage)
+                Timber.d("onUnknownPduReceived - Sent $filteredSubject")
             }
         }
 
