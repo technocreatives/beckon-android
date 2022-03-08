@@ -44,14 +44,9 @@ internal class BeckonClientImpl(
     }
 
     override suspend fun stopScan() {
-        Timber.w("Execute stopScan")
-        if (beckonStore.currentState().bluetoothState == BluetoothState.ON) {
-            scanner?.stopScan()
-            scanner = null
-        } else {
-            // TODO Callback to application? Notify failure
-            Timber.e("Stopped scan but adapter is not turned on!")
-        }
+        Timber.w("Execute stopScan, bluetoothState: ${beckonStore.currentState().bluetoothState}")
+        scanner?.stopScan()
+        scanner = null
     }
 
     override suspend fun disconnectAllConnectedButNotSavedDevices(): Either<ConnectionError.DisconnectDeviceFailed, Unit> {
