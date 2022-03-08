@@ -55,7 +55,6 @@ class BeckonMesh(
     }
 
     init {
-        meshApi.proxyFilter()
         job.invokeOnCompletion { cause ->
             when (cause) {
                 null -> {
