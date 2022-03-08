@@ -96,6 +96,7 @@ class Connected(
 
         disconnectJob = beckonMesh.execute {
             beckonDevice.onDisconnect {
+                Timber.d("Clear proxy filter!")
                 beckonMesh.clearProxyFilter()
                 beckonMesh.updateState(Loaded(beckonMesh, meshApi))
             }
@@ -105,9 +106,10 @@ class Connected(
     override suspend fun isValid(): Boolean = beckonMesh.isCurrentState<Connected>()
 
     suspend fun disconnect(): Either<BleDisconnectError, Loaded> = either {
-        disconnectJob?.cancel()
 //        processor.close()
+        disconnectJob?.cancel()
         beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
+        beckonMesh.clearProxyFilter()
         val loaded = Loaded(beckonMesh, meshApi)
         beckonMesh.updateState(loaded)
         loaded
