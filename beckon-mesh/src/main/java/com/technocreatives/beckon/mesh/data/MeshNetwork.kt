@@ -122,7 +122,7 @@ fun ProvisionedMeshNode.transform(): Node {
     return Node(
         NodeId(UUID.fromString(uuid)),
         nodeName,
-        Key(deviceKey),
+        deviceKey?.let { Key(it) },
         nodeAddress,
         security,
         isConfigured,
