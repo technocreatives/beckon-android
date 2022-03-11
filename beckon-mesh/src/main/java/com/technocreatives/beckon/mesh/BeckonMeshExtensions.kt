@@ -2,7 +2,6 @@ package com.technocreatives.beckon.mesh
 
 import arrow.core.Either
 import arrow.core.computations.either
-import arrow.core.left
 import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError

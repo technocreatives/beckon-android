@@ -12,6 +12,10 @@ interface Retry {
     suspend operator fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A>
 }
 
+object NoRetry : Retry {
+    override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> = f()
+}
+
 @Deprecated("Use InstantRetry")
 data class RepeatRetry(val n: Int) : Retry {
     override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
