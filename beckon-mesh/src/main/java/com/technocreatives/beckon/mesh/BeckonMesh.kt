@@ -221,15 +221,16 @@ class BeckonMesh(
             .mapZ { it.mapNotNull { it.toUnprovisionedScanResult(meshApi) } }
     }
 
-    suspend fun scanForProvisioning(node: ProvisionedMeshNode, config: ConnectionConfig): Either<BeckonError, BeckonDevice> =
+    suspend fun scanAfterProvisioning(
+        node: ProvisionedMeshNode,
+    ): Either<BeckonError, ScanResult> =
         scanForProxy()
             .mapZ {
                 it.firstOrNull {
-//                     TODO what if device is not proxy device? We do not need to connect to the current device.
                     meshApi.isProxyDevice(it.scanRecord!!, node) { stopScan() }
                 }
             }.filterZ { it != null }
-            .mapEither { connectForProxy(it!!.macAddress, config) }
+            .mapZ { it!! }
             .first()
 
 //    suspend fun scanForProvisioning(filter: (BluetoothDevice) -> Boolean): Either<BeckonError, BeckonDevice> =
@@ -283,7 +284,9 @@ class BeckonMesh(
         config: ConnectionConfig
     ): Either<BeckonError, BeckonDevice> {
         Timber.d("execute Connect for proxy $macAddress")
-        return meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic, config)
+        delay(1300)
+        return ConnectionError.BleConnectFailed(macAddress, 111).left()
+//        return meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic, config)
     }
 
     private suspend fun meshConnect(

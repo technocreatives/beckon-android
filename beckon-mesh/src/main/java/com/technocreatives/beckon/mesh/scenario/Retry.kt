@@ -3,6 +3,8 @@ package com.technocreatives.beckon.mesh.scenario
 import arrow.core.Either
 import arrow.fx.coroutines.Schedule
 import timber.log.Timber
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
@@ -10,6 +12,7 @@ interface Retry {
     suspend operator fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A>
 }
 
+@Deprecated("Use InstantRetry")
 data class RepeatRetry(val n: Int) : Retry {
     override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
         Timber.w("Retry 1")
@@ -29,30 +32,73 @@ data class RepeatRetry(val n: Int) : Retry {
     }
 }
 
-data class ExponentialBackOffRetry(val maxRepeat: Int, val timeInSeconds: Int) : Retry {
+data class InstantRetry(val n: Int) : Retry {
     override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
-        Timber.w("ExponentialBackOffRetry 1")
-        val sc = getSchedule<E, A>(maxRepeat, timeInSeconds)
+        Timber.w("Retry 1")
+        val res = f()
+        if (res.isLeft()) {
+            Timber.w("Execute error $res")
+            for (i in 2..n) {
+                Timber.w("Retry $i")
+                val res = f()
+                if (i == n)
+                    return res
+                if (res.isRight())
+                    return res
+            }
+        }
+        return res
+    }
+}
+
+data class ConstantDelayRetry(val maxRepeat: Int, val interval: Int) : Retry {
+
+    @OptIn(ExperimentalTime::class)
+    fun <A> linear() = Schedule.spaced<A>(interval.seconds) zipLeft max(maxRepeat)
+
+    override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
+        Timber.w("ConstantDelayRetry")
+        val sc = untilRight<E, A>() zipLeft linear()
+        return sc.repeat { f() }
+    }
+
+}
+
+data class LinearRetry(val maxRepeat: Int, val interval: Int) : Retry {
+
+    @OptIn(ExperimentalTime::class)
+    fun <A> linear() = Schedule.linear<A>(interval.seconds) zipLeft max(maxRepeat)
+
+    override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
+        Timber.w("LinearRetry")
+        val sc = untilRight<E, A>() zipLeft linear()
+        return sc.repeat { f() }
+    }
+
+}
+
+data class ExponentialBackOffRetry(val maxRepeat: Int, val timeInSeconds: Int) : Retry {
+    @OptIn(ExperimentalTime::class)
+    fun <A> exp(): Schedule<A, Duration> =
+        Schedule.exponential<A>(1.seconds).whileOutput {
+            println("Exponential ${it.inWholeSeconds}")
+            Timber.w("exp while ${it.inWholeSeconds}")
+            it.inWholeSeconds < timeInSeconds.seconds.inWholeSeconds
+        } zipLeft max(maxRepeat)
+
+    override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
+        Timber.w("ExponentialBackOffRetry")
+        val sc = untilRight<E, A>() zipLeft exp()
         return sc.repeat { f() }
     }
 }
 
+private fun <A> max(max: Int) = Schedule.recurs<A>(max)
 
-@OptIn(ExperimentalTime::class)
-fun <A> exp(max: Int, totalTime: Int) = Schedule.exponential<A>(1.seconds).whileOutput {
-    println("it ${it.inWholeSeconds}")
-    Timber.w("exp while ${it.inWholeSeconds}")
-    it.inWholeSeconds < totalTime.seconds.inWholeSeconds
-} zipLeft max(max)
-
-fun <A> max(max: Int) = Schedule.recurs<A>(max)
-
-
-@OptIn(ExperimentalTime::class)
-fun <A, B> getSchedule(max: Int, totalTime: Int): ESchedule<A, B> =
-    Schedule.doWhile<Either<A, B>> {
+private fun <A, B> untilRight(): ESchedule<A, B> =
+    Schedule.doWhile {
         Timber.w("Execute result: $it")
         it.isLeft()
-    } zipLeft exp(max, totalTime)
+    }
 
-typealias ESchedule<A, B> = Schedule<Either<A, B>, Either<A, B>>
+private typealias ESchedule<A, B> = Schedule<Either<A, B>, Either<A, B>>

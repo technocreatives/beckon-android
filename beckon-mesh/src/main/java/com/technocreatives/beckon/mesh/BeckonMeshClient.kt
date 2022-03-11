@@ -84,27 +84,6 @@ class BeckonMeshClient(
         return meshApi.import(mesh).map { BeckonMesh(context, beckonClient, meshApi, config) }
     }
 
-    fun generateMesh(meshName: String, provisionerName: String): MeshConfig {
-        val provisionerId = UUID.randomUUID()
-        val m = MeshConfigHelper.generateMesh(meshName, UUID.randomUUID(), provisionerName, provisionerId)
-        val p = bla(provisionerId, provisionerName)
-        return m.copy(provisioners = listOf(p))
-    }
-
-    private fun bla(provisionerId: UUID, provisionerName: String): Provisioner {
-            val unicastRanges = listOf(AddressRange(AddressValue(0x0001), AddressValue(0x7FFF)))
-            val groupRanges = listOf(AddressRange(AddressValue(0xC000), AddressValue(0xCC9A)))
-            val sceneRanges = listOf(SceneRange(AddressValue(0x0001), AddressValue(0x3333)))
-            return Provisioner(
-                provisionerName,
-                provisionerId,
-                unicastRanges,
-                groupRanges,
-                sceneRanges,
-                true
-            )
-    }
-
     suspend fun fromJson(json: String) =
         withContext(Dispatchers.IO) {
             MeshConfigSerializer.decode(json)

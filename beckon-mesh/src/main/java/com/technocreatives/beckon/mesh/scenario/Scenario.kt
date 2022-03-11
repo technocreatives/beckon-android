@@ -186,7 +186,7 @@ data class Connect(val address: MacAddress) : Step {
 
 data class Process(
     val steps: List<Step>,
-    val retry: Retry = RepeatRetry(3),
+    val retry: Retry = InstantRetry(3),
 ) {
 
     suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {

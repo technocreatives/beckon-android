@@ -34,7 +34,7 @@ import com.technocreatives.beckon.mesh.message.SetRelayConfig
 import com.technocreatives.beckon.mesh.processor.MessageProcessor
 import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
-import com.technocreatives.beckon.mesh.scenario.RepeatRetry
+import com.technocreatives.beckon.mesh.scenario.InstantRetry
 import com.technocreatives.beckon.mesh.scenario.Retry
 import com.technocreatives.beckon.mesh.toHex
 import com.technocreatives.beckon.mesh.toInt
@@ -117,16 +117,15 @@ class Connected(
 
     suspend fun <T : ConfigStatusMessage> sendConfigMessage(message: ConfigMessage<T>): Either<SendAckMessageError, T> =
         bearer.sendConfigMessage(message)
-
-    suspend fun <T : ConfigStatusMessage> sendConfigMessage(
-        message: ConfigMessage<T>,
-        retry: Retry
-    ): Either<SendAckMessageError, T> =
-        retry {
-            bearer.sendConfigMessage(message)
-        }
-
 }
+
+suspend fun <T : ConfigStatusMessage> Connected.sendConfigMessage(
+    message: ConfigMessage<T>,
+    retry: Retry
+): Either<SendAckMessageError, T> =
+    retry {
+        bearer.sendConfigMessage(message)
+    }
 
 suspend fun Connected.setUpAppKey(
     nodeAddress: UnicastAddress,
@@ -163,7 +162,7 @@ suspend fun Connected.setUpAppKey(
 fun <T> Pair<Int, SendAckMessageError>.convert(): T = TODO()
 
 suspend fun <T : ConfigStatusMessage> Connected.execute(messages: List<ConfigMessage<T>>): Either<Pair<Int, SendAckMessageError>, Unit> {
-    return messages.traverseStep(RepeatRetry(3)) { sendConfigMessage(it) }.map {}
+    return messages.traverseStep(InstantRetry(3)) { sendConfigMessage(it) }.map {}
 }
 
 private suspend inline fun <E, A, B> List<A>.traverseStep(

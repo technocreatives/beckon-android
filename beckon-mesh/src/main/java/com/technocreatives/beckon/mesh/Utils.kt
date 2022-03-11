@@ -1,6 +1,8 @@
 package com.technocreatives.beckon.mesh
 
 import arrow.core.*
+import com.technocreatives.beckon.BeckonError
+import com.technocreatives.beckon.BeckonTimeOutError
 import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScannerSetting
 import kotlinx.coroutines.*
@@ -63,3 +65,9 @@ suspend fun <E, T> withTimeout(
     error: () -> E
 ): Either<E, T> =
     withTimeoutOrNull(timeMillis, block) ?: error().left()
+
+suspend fun <T> beckonTimeout(
+    timeMillis: Long,
+    block: suspend CoroutineScope.() -> Either<BeckonError, T>
+): Either<BeckonError, T> =
+    withTimeoutOrNull(timeMillis, block) ?: BeckonTimeOutError.left()
