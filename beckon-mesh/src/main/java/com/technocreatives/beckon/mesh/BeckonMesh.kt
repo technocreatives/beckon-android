@@ -284,9 +284,7 @@ class BeckonMesh(
         config: ConnectionConfig
     ): Either<BeckonError, BeckonDevice> {
         Timber.d("execute Connect for proxy $macAddress")
-        delay(1300)
-        return ConnectionError.BleConnectFailed(macAddress, 111).left()
-//        return meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic, config)
+        return meshConnect(macAddress, MeshConstants.proxyDataOutCharacteristic, config)
     }
 
     private suspend fun meshConnect(
