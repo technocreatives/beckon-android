@@ -2,6 +2,7 @@ package com.technocreatives.beckon.mesh.message
 
 import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
+import com.technocreatives.beckon.mesh.SendMessageError
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.toInt
@@ -20,13 +21,13 @@ data class SendVendorModelMessage(
 suspend fun Connected.sendVendorModelMessage(
     nodeAddress: PublishableAddress,
     message: SendVendorModelMessage
-): Either<SendAckMessageError, Unit> =
+): Either<SendMessageError, Unit> =
     sendVendorModelMessage(nodeAddress.value(), message)
 
 private suspend fun Connected.sendVendorModelMessage(
     address: Int,
     message: SendVendorModelMessage
-): Either<SendAckMessageError, Unit> {
+): Either<SendMessageError, Unit> {
 
     val meshMessage = VendorModelMessageUnacked(
         meshApi.meshNetwork().findAppKey(message.appKeyIndex)!!,
