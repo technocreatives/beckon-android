@@ -22,11 +22,18 @@ data class SendVendorModelMessage(
 suspend fun Connected.sendVendorModelMessage(
     nodeAddress: PublishableAddress,
     message: SendVendorModelMessage,
+): Either<SendMessageError, Unit> =
+    sendVendorModelMessage(nodeAddress.value(), message)
+
+suspend fun Connected.sendVendorModelMessage(
+    nodeAddress: PublishableAddress,
+    message: SendVendorModelMessage,
     retry: Retry,
 ): Either<SendMessageError, Unit> =
     retry {
         sendVendorModelMessage(nodeAddress.value(), message)
     }
+
 
 private suspend fun Connected.sendVendorModelMessage(
     address: Int,
