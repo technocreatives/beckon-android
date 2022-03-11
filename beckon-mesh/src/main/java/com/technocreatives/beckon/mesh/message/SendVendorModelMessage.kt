@@ -4,6 +4,7 @@ import arrow.core.Either
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.SendMessageError
 import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.scenario.Retry
 import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.toInt
 import no.nordicsemi.android.mesh.transport.VendorModelMessageAcked
@@ -20,9 +21,12 @@ data class SendVendorModelMessage(
 
 suspend fun Connected.sendVendorModelMessage(
     nodeAddress: PublishableAddress,
-    message: SendVendorModelMessage
+    message: SendVendorModelMessage,
+    retry: Retry,
 ): Either<SendMessageError, Unit> =
-    sendVendorModelMessage(nodeAddress.value(), message)
+    retry {
+        sendVendorModelMessage(nodeAddress.value(), message)
+    }
 
 private suspend fun Connected.sendVendorModelMessage(
     address: Int,
