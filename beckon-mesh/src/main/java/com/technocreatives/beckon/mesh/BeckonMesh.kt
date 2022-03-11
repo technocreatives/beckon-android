@@ -223,7 +223,7 @@ class BeckonMesh(
 
     suspend fun scanAfterProvisioning(
         node: ProvisionedMeshNode,
-    ): Either<BeckonError, ScanResult> =
+    ): Either<ScanError, ScanResult> =
         scanForProxy()
             .mapZ {
                 it.firstOrNull {
@@ -232,13 +232,6 @@ class BeckonMesh(
             }.filterZ { it != null }
             .mapZ { it!! }
             .first()
-
-//    suspend fun scanForProvisioning(filter: (BluetoothDevice) -> Boolean): Either<BeckonError, BeckonDevice> =
-//        scanForProxy(filter)
-//            .mapZ { it.firstOrNull() }
-//            .filterZ { it != null }
-//            .mapEither { connectForProxy(it!!.macAddress) }
-//            .first()
 
     private suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
         scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
