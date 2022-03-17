@@ -68,7 +68,6 @@ class BeckonMesh(
                 }
             }
         }
-
     }
 
     suspend fun register() {

@@ -1,7 +1,6 @@
 package com.technocreatives.beckon
 
-import arrow.core.Either
-import java.util.UUID
+import java.util.*
 
 @Deprecated("Use BleActionError")
 data class WriteDataException(val macAddress: String, val uuid: UUID, val status: Int) :
@@ -35,7 +34,7 @@ data class ServiceNotFound(val characteristic: Characteristic) : RequirementFail
 data class PropertyNotSupport(val characteristic: Characteristic) : RequirementFailed
 
 // todo use BeckonException instead of Throwable
-typealias BeckonResult<T> = Either<Throwable, T>
+//typealias BeckonResult<T> = Either<Throwable, T>
 
 sealed interface BeckonError {
     fun toException(): BeckonException {
