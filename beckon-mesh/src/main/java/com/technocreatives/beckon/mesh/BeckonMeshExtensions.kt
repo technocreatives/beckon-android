@@ -5,9 +5,21 @@ import arrow.core.Either
 import arrow.core.computations.either
 import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.BeckonDeviceError
 import com.technocreatives.beckon.BeckonError
+import com.technocreatives.beckon.BeckonTimeOutError
+import com.technocreatives.beckon.BleActionError
+import com.technocreatives.beckon.CharacteristicNotFound
+import com.technocreatives.beckon.ConnectionError
+import com.technocreatives.beckon.MacAddress
+import com.technocreatives.beckon.MtuRequestError
+import com.technocreatives.beckon.PropertyNotSupport
+import com.technocreatives.beckon.ReadDataException
 import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
+import com.technocreatives.beckon.ServiceNotFound
+import com.technocreatives.beckon.SubscribeDataException
+import com.technocreatives.beckon.WriteDataException
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.scenario.ConstantDelayRetry
 import com.technocreatives.beckon.mesh.scenario.Retry
@@ -37,11 +49,23 @@ suspend fun BeckonMesh.scanAndConnectAfterProvisioning(
         .bind()
 
     beckonTimeout(connectionTimeout) {
-        retry {
-            connectForProxy(scanResult.macAddress, config)
-        }
+        connectForProxy(scanResult.macAddress, config, retry)
     }.bind()
 }
+
+suspend fun BeckonMesh.connectForProxy(
+    macAddress: MacAddress,
+    config: ConnectionConfig,
+    retry: Retry
+) =
+    retry({ connectForProxy(macAddress, config) }, {
+        when (it) {
+            is CharacteristicNotFound -> false
+            is PropertyNotSupport -> false
+            is ServiceNotFound -> false
+            else -> true
+        }
+    })
 
 typealias ConnectedPredicate = (BluetoothDevice) -> Boolean
 

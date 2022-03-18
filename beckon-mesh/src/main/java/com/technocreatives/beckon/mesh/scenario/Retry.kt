@@ -4,16 +4,24 @@ import arrow.core.Either
 import arrow.fx.coroutines.Schedule
 import timber.log.Timber
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 interface Retry {
     suspend operator fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A>
+    // retry if it is left and satisfy the predicate
+    suspend operator fun <E, A> invoke(
+        f: suspend () -> Either<E, A>,
+        predicate: (E) -> Boolean
+    ): Either<E, A>
 }
 
 object NoRetry : Retry {
     override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> = f()
+    override suspend fun <E, A> invoke(
+        f: suspend () -> Either<E, A>,
+        predicate: (E) -> Boolean
+    ): Either<E, A> = f()
 }
 
 @Deprecated("Use InstantRetry")
@@ -34,10 +42,11 @@ data class RepeatRetry(val n: Int) : Retry {
         }
         return res
     }
-}
 
-data class InstantRetry(val n: Int) : Retry {
-    override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
+    override suspend fun <E, A> invoke(
+        f: suspend () -> Either<E, A>,
+        predicate: (E) -> Boolean
+    ): Either<E, A> {
         Timber.w("Retry 1")
         val res = f()
         if (res.isLeft()) {
@@ -55,6 +64,27 @@ data class InstantRetry(val n: Int) : Retry {
     }
 }
 
+data class InstantRetry(val n: Int) : Retry {
+
+    @OptIn(ExperimentalTime::class)
+    private fun <A> recur() = Schedule.recurs<A>(n)
+
+    override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
+        Timber.w("InstantRetry")
+        val sc = untilRight<E, A>() zipLeft recur()
+        return sc.repeat { f() }
+    }
+
+    override suspend fun <E, A> invoke(
+        f: suspend () -> Either<E, A>,
+        predicate: (E) -> Boolean
+    ): Either<E, A> {
+        Timber.w("InstantRetry")
+        val sc = untilRightOr<E, A>(predicate) zipLeft recur()
+        return sc.repeat { f() }
+    }
+}
+
 data class ConstantDelayRetry(val maxRepeat: Int, val interval: Int) : Retry {
 
     @OptIn(ExperimentalTime::class)
@@ -63,6 +93,15 @@ data class ConstantDelayRetry(val maxRepeat: Int, val interval: Int) : Retry {
     override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
         Timber.w("ConstantDelayRetry")
         val sc = untilRight<E, A>() zipLeft linear()
+        return sc.repeat { f() }
+    }
+
+    override suspend fun <E, A> invoke(
+        f: suspend () -> Either<E, A>,
+        predicate: (E) -> Boolean
+    ): Either<E, A> {
+        Timber.w("ConstantDelayRetry")
+        val sc = untilRightOr<E, A>(predicate) zipLeft linear()
         return sc.repeat { f() }
     }
 
@@ -76,6 +115,15 @@ data class LinearRetry(val maxRepeat: Int, val interval: Int) : Retry {
     override suspend fun <E, A> invoke(f: suspend () -> Either<E, A>): Either<E, A> {
         Timber.w("LinearRetry")
         val sc = untilRight<E, A>() zipLeft linear()
+        return sc.repeat { f() }
+    }
+
+    override suspend fun <E, A> invoke(
+        f: suspend () -> Either<E, A>,
+        predicate: (E) -> Boolean
+    ): Either<E, A> {
+        Timber.w("LinearRetry")
+        val sc = untilRightOr<E, A>(predicate) zipLeft linear()
         return sc.repeat { f() }
     }
 
@@ -95,6 +143,15 @@ data class ExponentialBackOffRetry(val maxRepeat: Int, val timeInSeconds: Int) :
         val sc = untilRight<E, A>() zipLeft exp()
         return sc.repeat { f() }
     }
+
+    override suspend fun <E, A> invoke(
+        f: suspend () -> Either<E, A>,
+        predicate: (E) -> Boolean
+    ): Either<E, A> {
+        Timber.w("ExponentialBackOffRetry")
+        val sc = untilRightOr<E, A>(predicate) zipLeft exp()
+        return sc.repeat { f() }
+    }
 }
 
 private fun <A> max(max: Int) = Schedule.recurs<A>(max)
@@ -103,6 +160,12 @@ private fun <A, B> untilRight(): ESchedule<A, B> =
     Schedule.doWhile {
         Timber.w("Execute result: $it")
         it.isLeft()
+    }
+
+private fun <A, B> untilRightOr(f: (A) -> Boolean): ESchedule<A, B> =
+    Schedule.doWhile {
+        Timber.w("Execute result: $it")
+        it.fold(f) { true }
     }
 
 private typealias ESchedule<A, B> = Schedule<Either<A, B>, Either<A, B>>
