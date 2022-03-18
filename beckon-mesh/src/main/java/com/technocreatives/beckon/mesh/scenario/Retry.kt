@@ -165,7 +165,7 @@ private fun <A, B> untilRight(): ESchedule<A, B> =
 private fun <A, B> untilRightOr(f: (A) -> Boolean): ESchedule<A, B> =
     Schedule.doWhile {
         Timber.w("Execute result: $it")
-        it.fold(f) { true }
+        it.fold(f) { false }
     }
 
 private typealias ESchedule<A, B> = Schedule<Either<A, B>, Either<A, B>>

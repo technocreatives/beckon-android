@@ -31,9 +31,7 @@ internal class BeckonClientImpl(
     private var scanner: Scanner? = null
     override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
         scanner?.stopScan()
-        if(scanner == null) {
-            scanner = ScannerImpl()
-        }
+        scanner = ScannerImpl()
         val originalScanStream = scanner!!.startScan(setting)
         return if (setting.useFilter) {
             val connected =
@@ -50,7 +48,7 @@ internal class BeckonClientImpl(
     override suspend fun stopScan() {
         Timber.w("Execute stopScan, bluetoothState: ${beckonStore.currentState().bluetoothState}")
         scanner?.stopScan()
-//        scanner = null
+        scanner = null
     }
 
     override suspend fun disconnectAllConnectedButNotSavedDevices(): Either<ConnectionError.DisconnectDeviceFailed, Unit> {
