@@ -232,7 +232,7 @@ class BeckonMesh(
             .mapZ { it!! }
             .first()
 
-    private suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
+    suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
         scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
 
     suspend fun scanForProxy(filter: (BluetoothDevice) -> Boolean): Flow<Either<ScanError, List<ScanResult>>> {
@@ -249,6 +249,26 @@ class BeckonMesh(
         return scan(scannerSetting)
             .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
             .mapZ { connectedDevices + it }
+    }
+
+    suspend fun scanForOneProxyNode(filter: (BluetoothDevice) -> Boolean): Flow<Either<ScanError, List<ScanResult>>> {
+        val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
+
+        val cds = context.bluetoothManager().connectedDevices()
+        Timber.d("All connected ble devices: $cds")
+
+        val connectedDevices = context.bluetoothManager()
+            .connectedDevices()
+            .filter { filter(it) }
+            .map { ScanResult(it, 1000, null) }
+
+        return if (connectedDevices.isNotEmpty()) {
+            flowOf(connectedDevices.right())
+        } else {
+            scan(scannerSetting)
+                .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
+        }
+
     }
 
     // scan for the device with a specific unicastAddress

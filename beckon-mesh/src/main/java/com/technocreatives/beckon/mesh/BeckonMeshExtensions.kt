@@ -7,11 +7,16 @@ import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.ScanError
+import com.technocreatives.beckon.ScanResult
+import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.scenario.ConstantDelayRetry
 import com.technocreatives.beckon.mesh.scenario.Retry
+import com.technocreatives.beckon.util.bluetoothManager
+import com.technocreatives.beckon.util.connectedDevices
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
 import com.technocreatives.beckon.util.mapZ
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import no.nordicsemi.android.mesh.transport.ProvisionedMeshNode
 import timber.log.Timber
@@ -56,7 +61,7 @@ suspend fun BeckonMesh.findProxyNode(timeout: Long): Either<BeckonError, String>
     }
 
 suspend fun BeckonMesh.findProxyNode(predicate: ConnectedPredicate): Either<BeckonError, String> =
-    scanForProxy(predicate)
+    scanForOneProxyNode(predicate)
         .mapZ { it.firstOrNull() }
         .filterZ { it != null }
         .mapZ { it!! }
@@ -68,7 +73,7 @@ suspend fun BeckonMesh.findProxyNode(predicate: ConnectedPredicate): Either<Beck
         .first()
 
 private suspend fun BeckonMesh.findProxyNode(): Either<ScanError, String> =
-    scanForProxy { false }
+    scanForOneProxyNode { false }
         .mapZ { it.firstOrNull() }
         .filterZ { it != null }
         .mapZ { it!! }
