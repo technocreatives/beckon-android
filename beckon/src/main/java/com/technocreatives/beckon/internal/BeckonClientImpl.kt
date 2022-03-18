@@ -7,6 +7,7 @@ import arrow.core.computations.either
 import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.data.DeviceRepository
+import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.redux.BeckonAction
 import com.technocreatives.beckon.redux.BeckonStore
 import com.technocreatives.beckon.util.*
@@ -29,7 +30,10 @@ internal class BeckonClientImpl(
 
     private var scanner: Scanner? = null
     override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
-        scanner = ScannerImpl()
+        scanner?.stopScan()
+        if(scanner == null) {
+            scanner = ScannerImpl()
+        }
         val originalScanStream = scanner!!.startScan(setting)
         return if (setting.useFilter) {
             val connected =
@@ -46,7 +50,7 @@ internal class BeckonClientImpl(
     override suspend fun stopScan() {
         Timber.w("Execute stopScan, bluetoothState: ${beckonStore.currentState().bluetoothState}")
         scanner?.stopScan()
-        scanner = null
+//        scanner = null
     }
 
     override suspend fun disconnectAllConnectedButNotSavedDevices(): Either<ConnectionError.DisconnectDeviceFailed, Unit> {
