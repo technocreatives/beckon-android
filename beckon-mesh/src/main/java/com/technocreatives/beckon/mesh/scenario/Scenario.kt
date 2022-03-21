@@ -89,7 +89,7 @@ data class Delay(val time: Long) : Step {
 // connect to what ever in the mesh
 object AutoConnect : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val beckonDevice = scanForProxy { false }
+        val beckonDevice = scanForProxy()
             .mapZ { it.firstOrNull() }
             .filterZ { it != null }
             .mapZ { it!! }
@@ -155,7 +155,7 @@ sealed interface StepResult {
 
 data class Connect(val address: MacAddress) : Step {
     override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val beckonDevice = scanForProxy { false }
+        val beckonDevice = scanForProxy()
             .mapZ { it.firstOrNull { it.macAddress == address } }
 //            .mapZ { it.firstOrNull() }
             .filterZ { it != null }
