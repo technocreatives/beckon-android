@@ -45,7 +45,7 @@ suspend fun BeckonMesh.scanAndConnectAfterProvisioning(
 
     val scanResult = beckonTimeout(scanTimeout) {
         scanAfterProvisioning(node)
-    }.tapLeft { stopScan() }
+    }.also { stopScan() }
         .bind()
 
     beckonTimeout(connectionTimeout) {
@@ -76,34 +76,24 @@ suspend fun BeckonMesh.findProxyNode(
 ): Either<BeckonError, String> =
     beckonTimeout(timeout) {
         findProxyNode(predicate)
-    }
+    }.also { stopScan() }
 
 // ScanError | BeckonTimeOutError
 suspend fun BeckonMesh.findProxyNode(timeout: Long): Either<BeckonError, String> =
     beckonTimeout(timeout) {
         findProxyNode()
-    }
+    }.also { stopScan() }
 
 suspend fun BeckonMesh.findProxyNode(predicate: ConnectedPredicate): Either<BeckonError, String> =
     scanForOneProxyNode(predicate)
         .mapZ { it.firstOrNull() }
         .filterZ { it != null }
-        .mapZ { it!! }
-        .mapEither {
-            Timber.d("Scenario execute try to connect to $it")
-            stopScan()
-            it.macAddress.right()
-        }
+        .mapZ { it!!.macAddress }
         .first()
 
 private suspend fun BeckonMesh.findProxyNode(): Either<ScanError, String> =
     scanForOneProxyNode { false }
         .mapZ { it.firstOrNull() }
         .filterZ { it != null }
-        .mapZ { it!! }
-        .mapEither {
-            Timber.d("Scenario execute try to connect to $it")
-            stopScan()
-            it.macAddress.right()
-        }
+        .mapZ { it!!.macAddress }
         .first()
