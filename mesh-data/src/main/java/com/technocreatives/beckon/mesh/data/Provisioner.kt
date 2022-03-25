@@ -12,9 +12,8 @@ import java.util.*
 data class Provisioner(
     @SerialName("provisionerName")
     val name: String,
-    @Serializable(with = UuidSerializer::class)
     @SerialName("UUID")
-    val uuid: UUID,
+    val uuid: NodeId,
     val allocatedUnicastRange: List<AddressRange>,
     val allocatedGroupRange: List<AddressRange>,
     val allocatedSceneRange: List<SceneRange>,
