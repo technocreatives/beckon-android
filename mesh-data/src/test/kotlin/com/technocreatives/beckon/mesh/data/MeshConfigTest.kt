@@ -20,7 +20,7 @@ class MeshConfigTest : StringSpec({
 //        val nodeUnicast = MeshConfig.nodes compose Index.list() compose Node.unicastAddress
 //        FilterIndex.list<Node>().filter()
 
-        val nodeIdOptional = listPredicate<Node> { it.uuid == NodeId(uuid) }
+        val nodeIdOptional = listPredicate<Node> { it.id == NodeId(uuid) }
 
         val provisionerUnicastOptional =
             MeshConfig.nodes compose nodeIdOptional compose Node.unicastAddress

@@ -13,7 +13,7 @@ data class Provisioner(
     @SerialName("provisionerName")
     val name: String,
     @SerialName("UUID")
-    val uuid: NodeId,
+    val id: NodeId,
     val allocatedUnicastRange: List<AddressRange>,
     val allocatedGroupRange: List<AddressRange>,
     val allocatedSceneRange: List<SceneRange>,

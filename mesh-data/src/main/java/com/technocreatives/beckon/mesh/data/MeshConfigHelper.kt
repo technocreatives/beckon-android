@@ -65,7 +65,7 @@ object MeshConfigHelper {
         val nodeNetKeys = netKeys.map { NodeNetKey(it.index, true) }
         val nodeAppKeys = appKeys.map { NodeAppKey(it.index, true) }
         return Node(
-            provisioner.uuid,
+            provisioner.id,
             provisioner.name,
             Key(generateRandomNumber()),
             UnicastAddress(1),

@@ -35,14 +35,14 @@ data class MeshConfig @OptIn(ExperimentalSerializationApi::class) constructor(
 
 @ExperimentalSerializationApi
 fun MeshConfig.nodesWithoutProvisioners(): List<Node> {
-    val provisioners = provisioners.map { it.uuid }
-    return nodes.filter { it.uuid.uuid !in provisioners }
+    val provisioners = provisioners.map { it.id }
+    return nodes.filter { it.id !in provisioners }
 }
 
 @ExperimentalSerializationApi
 fun MeshConfig.provisionerNodes(): List<Node> {
-    val provisioners = provisioners.map { it.uuid }
-    return nodes.filter { it.uuid.uuid in provisioners }
+    val provisioners = provisioners.map { it.id }
+    return nodes.filter { it.id in provisioners }
 }
 
 @Serializable

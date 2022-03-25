@@ -10,7 +10,7 @@ import java.util.*
 @optics
 data class Node(
     @SerialName("UUID")
-    val uuid: NodeId,
+    val id: NodeId,
     val name: String,
     @Serializable(with = KeySerializer::class)
     val deviceKey: Key? = null,
