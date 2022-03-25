@@ -11,16 +11,16 @@ class MeshConfigTest : StringSpec({
     val provisionerId = UUID.fromString("ecd34225-f269-42e0-aee3-097f17c558d0")
     val mesh = MeshConfigHelper.generateMesh("mesh", "provisioner")
     "provisioner unicast" {
-        val provisionerId: Optional<MeshConfig, UUID> =
+        val provisionerId: Optional<MeshConfig, NodeId> =
 
-            MeshConfig.provisioners compose Optional.listHead() compose Provisioner.uuid
+            MeshConfig.provisioners compose Optional.listHead() compose Provisioner.id
 
         val uuid = provisionerId.getOrNull(mesh)!!
 
 //        val nodeUnicast = MeshConfig.nodes compose Index.list() compose Node.unicastAddress
 //        FilterIndex.list<Node>().filter()
 
-        val nodeIdOptional = listPredicate<Node> { it.id == NodeId(uuid) }
+        val nodeIdOptional = listPredicate<Node> { it.id == uuid }
 
         val provisionerUnicastOptional =
             MeshConfig.nodes compose nodeIdOptional compose Node.unicastAddress
