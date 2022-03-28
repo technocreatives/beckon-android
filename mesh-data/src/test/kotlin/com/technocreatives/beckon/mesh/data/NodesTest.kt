@@ -29,8 +29,8 @@ class NodesTest : StringSpec({
 
     "Assert provisioners have same uuid as in nodes" {
         MeshTestConfigs.meshConfigs.forEach {
-            it.provisioners.map { it.uuid }.toSet() shouldBe it.provisionerNodes()
-                .map { it.uuid.uuid }.toSet()
+            it.provisioners.map { it.id }.toSet() shouldBe it.provisionerNodes()
+                .map { it.id }.toSet()
         }
     }
 })

@@ -17,6 +17,7 @@ object MeshConfigHelper {
         generateMesh(meshName, UUID.randomUUID(), provisionerName, UUID.randomUUID())
 
     fun generateMesh(meshName: String, meshId: UUID, provisionerName: String, provisionerId: UUID): MeshConfig {
+        val pId = NodeId(provisionerId)
         val appKeys = generateAppKeys()
         val netKeys = generateNetKeys()
         val unicastRanges = listOf(AddressRange(AddressValue(0x0001), AddressValue(0x199A)))
@@ -24,7 +25,7 @@ object MeshConfigHelper {
         val sceneRanges = listOf(SceneRange(AddressValue(0x0001), AddressValue(0x3333)))
         val provisioner = Provisioner(
             provisionerName,
-            provisionerId,
+            pId,
             unicastRanges,
             groupRanges,
             sceneRanges,
@@ -64,7 +65,7 @@ object MeshConfigHelper {
         val nodeNetKeys = netKeys.map { NodeNetKey(it.index, true) }
         val nodeAppKeys = appKeys.map { NodeAppKey(it.index, true) }
         return Node(
-            NodeId(provisioner.uuid),
+            provisioner.id,
             provisioner.name,
             Key(generateRandomNumber()),
             UnicastAddress(1),

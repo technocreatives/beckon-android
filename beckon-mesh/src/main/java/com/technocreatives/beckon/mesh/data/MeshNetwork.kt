@@ -94,7 +94,7 @@ fun Map<Int, NrfElement>.transform(nodeAddress: UnicastAddress): List<Element> =
 @SuppressLint("RestrictedApi")
 fun NrfProvisioner.transform() = Provisioner(
     provisionerName,
-    UUID.fromString(provisionerUuid),
+    NodeId(UUID.fromString(provisionerUuid)),
     allocatedUnicastRanges.map {
         AddressRange(
             AddressValue(it.lowAddress),
