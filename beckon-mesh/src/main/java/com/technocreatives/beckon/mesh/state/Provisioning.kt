@@ -169,10 +169,10 @@ class Provisioning(
             val node = provisioningEmitter.await().bind()
             Timber.d("Finished provisioning - start disconnect")
 
-            beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
-            disconnectJob?.cancel()
+//            beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
+//            disconnectJob?.cancel()
 
-            beckonMesh.updateState(Loaded(beckonMesh, meshApi))
+            beckonMesh.updateState(beckonMesh.createConnectedState(beckonDevice))
             node
         }
 
