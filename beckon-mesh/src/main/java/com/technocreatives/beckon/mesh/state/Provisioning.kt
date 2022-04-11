@@ -5,6 +5,7 @@ import arrow.core.computations.either
 import arrow.core.left
 import arrow.core.right
 import com.technocreatives.beckon.BeckonDevice
+import com.technocreatives.beckon.Mtu
 import com.technocreatives.beckon.extensions.getMaximumPacketSize
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.callbacks.AbstractMeshManagerCallbacks
@@ -13,8 +14,10 @@ import com.technocreatives.beckon.mesh.extensions.nextAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.model.UnprovisionedNode
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
+import com.technocreatives.beckon.mesh.scenario.connectForProxy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshNetwork
 import no.nordicsemi.android.mesh.MeshProvisioningStatusCallbacks
@@ -125,7 +128,7 @@ class Provisioning(
                 return beckonDevice.getMaximumPacketSize()
             }
         })
-        meshApi.setMeshStatusCallbacks(object: AbstractMessageStatusCallbacks(meshApi){
+        meshApi.setMeshStatusCallbacks(object : AbstractMessageStatusCallbacks(meshApi) {
 
         })
 
@@ -172,7 +175,15 @@ class Provisioning(
 //            beckonDevice.disconnect().mapLeft { BleDisconnectError(it) }.bind()
 //            disconnectJob?.cancel()
 
-            beckonMesh.updateState(beckonMesh.createConnectedState(beckonDevice))
+            delay(25000)
+            val bk = beckonMesh.connectForProxy(
+                beckonDevice.metadata().macAddress,
+                ConnectionConfig(Mtu(69))
+            ).mapLeft {
+                Timber.e("$it")
+                NoAvailableUnicastAddress }.bind()
+
+            beckonMesh.updateState(beckonMesh.createConnectedState(bk))
             node
         }
 
