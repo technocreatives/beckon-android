@@ -371,7 +371,7 @@ internal class BeckonBleManager(
 
                     launch {
                         // TODO Add timeout error???
-                        val delayTime = 1600L
+                        val delayTime = 4000L
                         delay(delayTime)
                         refreshDeviceCache(bluetoothGatt!!)
                         delay(delayTime)
