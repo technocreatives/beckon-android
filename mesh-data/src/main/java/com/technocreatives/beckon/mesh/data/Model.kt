@@ -1,6 +1,10 @@
 package com.technocreatives.beckon.mesh.data
 
-import com.technocreatives.beckon.mesh.data.serializer.*
+import com.technocreatives.beckon.mesh.data.serializer.IntToBooleanSerializer
+import com.technocreatives.beckon.mesh.data.serializer.ModelIdSerializer
+import com.technocreatives.beckon.mesh.data.serializer.ModelSerializer
+import com.technocreatives.beckon.mesh.data.serializer.PublicationResolutionSerializer
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.nio.ByteBuffer
@@ -100,7 +104,19 @@ data class Retransmit(
 @Serializable
 data class Period(
     val numberOfSteps: Int,
-    val resolution: Int,
+    val resolution: PublicationResolution,
 )
 
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable(with = PublicationResolutionSerializer::class)
+enum class PublicationResolution(val value: Int) {
+    RESOLUTION_100MS(0b00),
+    RESOLUTION_1S(0b01),
+    RESOLUTION_10S(0b10),
+    RESOLUTION_10M(0b11);
 
+    companion object {
+        fun valueOf(resolution: Int): PublicationResolution =
+            values().first { it.value == resolution }
+    }
+}

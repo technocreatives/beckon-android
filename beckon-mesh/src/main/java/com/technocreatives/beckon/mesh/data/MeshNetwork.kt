@@ -70,7 +70,7 @@ fun PublicationSettings.transform() = Publish(
     AppKeyIndex(appKeyIndex),
     Period(
         publicationSteps,
-        publicationResolution
+        PublicationResolution.valueOf(publicationResolution)
     ),
     credentialFlag,
     publishTtl,

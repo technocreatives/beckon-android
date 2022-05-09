@@ -62,6 +62,7 @@ data class SetRelayConfig(
 ) :
     ConfigMessage<ConfigRelayResponse>() {
     override val responseOpCode = StatusOpCode.ConfigRelaySet
+
     // TODO remove !!
     override fun toMeshMessage() = ConfigRelaySet(relay, retransmit!!.count, retransmit.interval)
     override fun fromResponse(message: MeshMessage): ConfigRelayResponse =
@@ -176,7 +177,7 @@ data class SetConfigModelPublication(
         publish.credentialsFlag,
         publish.ttl,
         publish.period.numberOfSteps,
-        publish.period.resolution,
+        publish.period.resolution.value,
         publish.retransmit.count,
         publish.retransmit.interval,
         modelId.value
@@ -229,7 +230,7 @@ internal fun ConfigModelPublicationStatus.transform() =
             index = AppKeyIndex(appKeyIndex),
             period = Period(
                 numberOfSteps = publicationSteps,
-                resolution = publicationResolution
+                resolution = PublicationResolution.valueOf(publicationResolution)
             ),
             credentialsFlag = credentialFlag,
             ttl = publishTtl,

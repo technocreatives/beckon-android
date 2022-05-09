@@ -92,7 +92,7 @@ object Processes {
                         Publish(
                             proxyGroupAddress,
                             appKey.index,
-                            Period(0, 0),
+                            Period(0, PublicationResolution.RESOLUTION_100MS),
                             false,
                             10,
                             Retransmit(0, 0),
