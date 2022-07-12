@@ -58,7 +58,7 @@ dependencies {
 
     implementation project(':beckon')
     implementation project(':mesh-data')
-    implementation("no.nordicsemi.android:3.2.4")
+    implementation("no.nordicsemi.android:mesh:3.2.4")
 //    implementation 'com.github.technocreatives:Android-nRF-Mesh-Library:eb8ba63147'
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version")
