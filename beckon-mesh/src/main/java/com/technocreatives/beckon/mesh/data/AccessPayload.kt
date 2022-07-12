@@ -47,7 +47,7 @@ sealed class OpCode {
 
     data class DoubleOctet(val byte0: Byte, val byte1: Byte) : OpCode() {
         override val octetSize: Int = 2
-        override val value: Int = MeshParserUtils.unsignedBytesToInt(byte0, byte1)
+        override val value: Int = MeshParserUtils.unsignedBytesToInt(byte1, byte0)
     }
 
     data class TripleOctet(val byte0: Byte, val byte1: Byte, val byte2: Byte) : OpCode() {
