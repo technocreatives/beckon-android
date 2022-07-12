@@ -3,12 +3,14 @@ package com.technocreatives.beckon.mesh.processor
 import arrow.core.*
 import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.mesh.*
+import com.technocreatives.beckon.mesh.data.OpCode
 import com.technocreatives.beckon.mesh.data.UnassignedAddress
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.toHex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.select
+import no.nordicsemi.android.mesh.transport.AccessMessage
 import no.nordicsemi.android.mesh.transport.MeshMessage
 import timber.log.Timber
 
@@ -143,9 +145,12 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
         while (true) {
             select<Unit> {
                 receivedAckMessageChannel.onReceive { message ->
-                    Timber.d("receivedAckMessageChannel.onReceive Map: $ackMessageQueue, opCode: ${message.opCode}, src = ${message.src}")
+                    val opCode = (message.message as? AccessMessage)?.accessPdu?.let {
+                        OpCode.parse(it).value
+                    } ?: message.opCode
+                    Timber.d("receivedAckMessageChannel.onReceive Map: $ackMessageQueue, meshMessageOpCode= ${message.opCode}, parsedOpCode = $opCode, src = ${message.src}")
                     val foundIndex =
-                        ackMessageQueue.indexOfFirst { it.isMatching(message.src, message.opCode) }
+                        ackMessageQueue.indexOfFirst { it.isMatching(message.src, opCode) }
                     Timber.d("receivedAckMessageChannel.onReceive foundIndex = $foundIndex")
                     if (foundIndex != -1) {
                         val ackEmitter = ackMessageQueue.removeAt(foundIndex)
