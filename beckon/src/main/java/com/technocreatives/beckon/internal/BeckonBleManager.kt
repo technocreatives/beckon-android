@@ -371,7 +371,9 @@ internal class BeckonBleManager(
 
                     launch {
                         // TODO Add timeout error???
-                        val delayTime = 1600L
+                        val delayTime = 4000L
+                        delay(delayTime)
+                        refreshDeviceCache(bluetoothGatt!!)
                         delay(delayTime)
                         val services = bluetoothGatt!!.services.map { it.uuid }
                         val characteristics = allCharacteristics(bluetoothGatt!!)
@@ -723,6 +725,21 @@ internal class BeckonBleManager(
         }
     }
 
+    private fun refreshDeviceCache(gatt: BluetoothGatt): Boolean {
+        var isRefreshed = false
+
+        try {
+            val localMethod = gatt.javaClass.getMethod("refresh")
+            if (localMethod != null) {
+                isRefreshed = (localMethod.invoke(gatt) as Boolean)
+                Timber.i("Gatt cache refresh successful: [%b]", isRefreshed)
+            }
+        } catch (localException: Exception) {
+            Timber.e("An exception occured while refreshing device" + localException.toString())
+        }
+
+        return isRefreshed
+    }
 }
 
 suspend fun <E, T> withTimeout(
