@@ -51,7 +51,7 @@ internal class MessageQueue(
     fun pdus() = pdus.toList()
 
     fun shouldSendMessageImmediately(beckonMessage: BeckonMessage): Boolean {
-        return sendingId == null && (messagesQueue.isEmpty() || shouldGoNext(beckonMessage))
+        return sendingId == null && shouldGoNext(beckonMessage)
     }
 
     fun process(message: BeckonMessage) {
