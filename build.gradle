@@ -5,7 +5,7 @@ buildscript {
     // all library versions
     ext.rxJava = '2.2.8'
     ext.rxAndroid = '2.1.1'
-    ext.kotlin_version = '1.6.10'
+    ext.kotlin_version = '1.7.20'
     ext.arrow_version = "1.0.1"
     ext.rxarrow = "0.13.1"
     ext.timber = '4.7.1'
