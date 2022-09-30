@@ -49,7 +49,6 @@ data class Provision(val address: MacAddress) : Step {
         val provisionedNode = provisioning.startProvisioning(unProvisionedNode).bind()
         provisionedNode
     }
-
 }
 
 data class Message(val message: ConfigMessage<*>) : Step {

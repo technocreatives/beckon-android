@@ -12,8 +12,8 @@ buildscript {
     ext.sharedPreferences = '1.1.0'
     ext.rxBindingVersion = '3.1.0'
     ext.nsScannerVersion = '1.5.0'
-    ext.nsBleVersion = '2.3.0'
-    ext.nsDfuVersion = '1.9.0'
+    ext.nsBleVersion = '2.5.1'
+    ext.nsDfuVersion = '2.2.0'
     ext.moshi = '1.13.0'
 
     ext.statemachine = '0.02'
