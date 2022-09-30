@@ -17,14 +17,14 @@ dependencies {
 
     // Arrows
     implementation("io.arrow-kt:arrow-core:$arrow_version")
-    implementation("io.arrow-kt:arrow-optics:1.0.3-alpha.1")
-    ksp("io.arrow-kt:arrow-optics-ksp-plugin:1.0.3-alpha.1")
+    implementation("io.arrow-kt:arrow-optics:1.0.3-alpha.40")
+    ksp("io.arrow-kt:arrow-optics-ksp-plugin:1.0.3-alpha.40")
 
-    testImplementation("io.kotest:kotest-property:5.1.0")
-    testImplementation("io.kotest:kotest-runner-junit5:5.1.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.1.0")
+    testImplementation("io.kotest:kotest-property:5.4.2")
+    testImplementation("io.kotest:kotest-runner-junit5:5.4.2")
+    testImplementation("io.kotest:kotest-assertions-core:5.4.2")
 
-    testImplementation("io.mockk:mockk:1.12.2")
+    testImplementation("io.mockk:mockk:1.12.5")
     testImplementation('commons-io:commons-io:2.11.0')
 
 }
