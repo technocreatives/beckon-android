@@ -7,11 +7,11 @@ apply plugin: 'kotlinx-serialization'
 group = 'com.github.technocreatives.beckon-android'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 26
-        targetSdkVersion 32
+        targetSdkVersion 33
         versionCode 1
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -69,7 +69,7 @@ dependencies {
     implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Arrows
-    implementation(platform("io.arrow-kt:arrow-stack:1.1.4-alpha.2"))
+    implementation(platform("io.arrow-kt:arrow-stack:$arrow_version"))
     implementation("io.arrow-kt:arrow-core")
     implementation("io.arrow-kt:arrow-fx-coroutines")
 
@@ -84,7 +84,7 @@ dependencies {
     testImplementation('io.kotest:kotest-assertions-core:5.4.2')
 
     testImplementation('io.mockk:mockk:1.13.2')
-    testImplementation('commons-io:commons-io:20030203.000550')
+    testImplementation('commons-io:commons-io:2.11.0')
 
 }
 
