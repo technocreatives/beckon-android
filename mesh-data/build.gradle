@@ -17,8 +17,8 @@ dependencies {
 
     // Arrows
     implementation("io.arrow-kt:arrow-core:$arrow_version")
-    implementation("io.arrow-kt:arrow-optics:1.0.3-alpha.40")
-    ksp("io.arrow-kt:arrow-optics-ksp-plugin:1.0.3-alpha.40")
+    implementation("io.arrow-kt:arrow-optics:1.1.3-alpha.46")
+    ksp("io.arrow-kt:arrow-optics-ksp-plugin:1.1.3-alpha.46")
 
     testImplementation("io.kotest:kotest-property:5.4.2")
     testImplementation("io.kotest:kotest-runner-junit5:5.4.2")
