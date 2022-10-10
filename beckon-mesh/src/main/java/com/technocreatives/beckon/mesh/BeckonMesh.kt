@@ -3,7 +3,7 @@ package com.technocreatives.beckon.mesh
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.Atomic

@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.extensions
 
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import com.technocreatives.beckon.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filter

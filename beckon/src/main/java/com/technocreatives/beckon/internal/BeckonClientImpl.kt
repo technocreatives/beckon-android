@@ -3,7 +3,7 @@ package com.technocreatives.beckon.internal
 import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.*
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.data.DeviceRepository

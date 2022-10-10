@@ -2,7 +2,7 @@ package com.technocreatives.beckon.mesh.scenario
 
 import android.bluetooth.BluetoothAdapter
 import arrow.core.*
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import arrow.fx.coroutines.raceN
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.mesh.BeckonMesh

@@ -2,7 +2,7 @@ package com.technocreatives.beckon.mesh
 
 import android.bluetooth.BluetoothDevice
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.BeckonError
 import com.technocreatives.beckon.CharacteristicNotFound

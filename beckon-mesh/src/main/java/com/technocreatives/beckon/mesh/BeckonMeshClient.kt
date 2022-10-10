@@ -3,7 +3,7 @@ package com.technocreatives.beckon.mesh
 import android.content.Context
 import androidx.core.content.edit
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import arrow.core.right
 import arrow.core.rightIfNotNull
 import com.technocreatives.beckon.BeckonClient

@@ -6,7 +6,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.Context
 import arrow.core.*
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import arrow.fx.coroutines.parTraverseEither
 import com.technocreatives.beckon.*
 import com.technocreatives.beckon.redux.BeckonAction

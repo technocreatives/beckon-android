@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.mesh.message
 
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.state.Connected

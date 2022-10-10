@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.mesh.state
 
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import com.technocreatives.beckon.BeckonDevice
 import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.BeckonMesh

@@ -2,7 +2,7 @@ package com.technocreatives.beckon.mesh
 
 import android.content.Context
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import arrow.core.identity
 import arrow.core.left
 import arrow.core.right

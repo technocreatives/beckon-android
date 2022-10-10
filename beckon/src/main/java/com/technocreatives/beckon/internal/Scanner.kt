@@ -2,7 +2,7 @@ package com.technocreatives.beckon.internal
 
 import android.os.ParcelUuid
 import arrow.core.Either
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.*

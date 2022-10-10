@@ -1,7 +1,7 @@
 package com.technocreatives.beckon.mesh.state
 
 import arrow.core.*
-import arrow.core.computations.either
+import arrow.core.continuations.either
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.data.AppKey
 import com.technocreatives.beckon.mesh.data.NetKey
