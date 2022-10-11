@@ -1,7 +1,6 @@
 package com.technocreatives.beckon.dfu
 
 import arrow.core.Either
-import com.technocreatives.beckon.dfu.internal.DfuErrorType
 import com.technocreatives.beckon.dfu.internal.DfuProgressEvent
 import kotlinx.coroutines.flow.StateFlow
 
@@ -13,13 +12,14 @@ interface DfuProcess {
 
 sealed interface AbortError {
     object AlreadyAborted : AbortError
+    object AlreadyFinished : AbortError
     object Timeout : AbortError
 }
 
 sealed interface DfuState {
-    fun finished(): Boolean = when (this) {
-        Success, Aborted, is Failed -> true
-        else -> false
+    fun isRunning(): Boolean = when (this) {
+        Success, Aborted, is Failed -> false
+        else -> true
     }
 
     object Starting : DfuState

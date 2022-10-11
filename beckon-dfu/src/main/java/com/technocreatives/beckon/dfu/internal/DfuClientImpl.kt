@@ -50,7 +50,7 @@ class DfuClientImpl(
         return newProcess.right()
     }
 
-    private suspend fun DfuProcess.finishedState() = dfuState.filter { it.finished() }.first()
+    private suspend fun DfuProcess.finishedState() = dfuState.filter { !it.isRunning() }.first()
 }
 
 

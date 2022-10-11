@@ -2,8 +2,7 @@ package com.technocreatives.beckon.dfu.internal
 
 import android.content.Context
 import arrow.core.Either
-import arrow.core.left
-import arrow.core.right
+import arrow.core.continuations.either
 import com.technocreatives.beckon.dfu.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -49,19 +48,17 @@ class DfuProcessImpl(
         }
     }
 
-    override suspend fun abort(): Either<AbortError, Unit> {
-        if (dfuServiceController.isAborted) {
-            return AbortError.AlreadyAborted.left()
-        }
+    override suspend fun abort(): Either<AbortError, Unit> = either {
+        ensure(!dfuServiceController.isAborted) { AbortError.AlreadyAborted }
+        ensure(!dfuState.value.isRunning()) { AbortError.AlreadyFinished }
 
         dfuServiceController.abort()
 
-        return withTimeoutOrNull(30000) {
+        withTimeoutOrNull(30000) {
             dfuState.filter {
                 it is DfuState.Aborted || it.isDisconnectError()
             }.first()
-            Unit.right()
-        } ?: AbortError.Timeout.left()
+        } ?: shift(AbortError.Timeout)
     }
 
     private fun DfuState.isDisconnectError(): Boolean =
