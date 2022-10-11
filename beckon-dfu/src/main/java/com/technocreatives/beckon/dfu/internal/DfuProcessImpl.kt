@@ -9,13 +9,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import no.nordicsemi.android.dfu.DfuBaseService
 import no.nordicsemi.android.dfu.DfuServiceController
 import no.nordicsemi.android.dfu.DfuServiceInitiator
 import timber.log.Timber
 
 class DfuProcessImpl(
     private val context: Context,
-    private val conf: DfuConfiguration,
+    conf: DfuConfiguration,
+    private val dfuService: Class<out DfuBaseService>
 ) : DfuProcess {
     private val coroutineContext = Job()
     private val scope = CoroutineScope(coroutineContext)
@@ -30,15 +32,15 @@ class DfuProcessImpl(
     init {
         val initiator = DfuServiceInitiator(conf.macAddress)
             .setKeepBond(conf.keepBond)
-            .setZip(conf.firmware)
             .setDeviceName(conf.name)
-            .setForeground(true)
-            .setDisableNotification(conf.customNotifications)
+            .setFirmware(conf.firmware)
+            .setForeground(conf.foreground)
             .setUnsafeExperimentalButtonlessServiceInSecureDfuEnabled(conf.unsafeExperimentalButtonlessServiceInSecureDfuEnabled)
+            .setDisableNotification(conf.customNotifications)
             .setNumberOfRetries(conf.numberOfRetries)
 
         val dfuEvents = dfuProgressEvents(context, conf.macAddress).onStart {
-            dfuServiceController = initiator.start(context, conf.dfuService)
+            dfuServiceController = initiator.start(context, dfuService)
         }
 
         scope.launch {
@@ -49,7 +51,7 @@ class DfuProcessImpl(
     }
 
     override suspend fun abort(): Either<AbortError, Unit> = either {
-        ensure(!dfuServiceController.isAborted) { AbortError.AlreadyAborted }
+        ensure(dfuServiceController.isAborted) { AbortError.AlreadyAborted }
         ensure(!dfuState.value.isRunning()) { AbortError.AlreadyFinished }
 
         dfuServiceController.abort()
@@ -64,3 +66,10 @@ class DfuProcessImpl(
     private fun DfuState.isDisconnectError(): Boolean =
         this is DfuState.Failed && error == DfuError.DeviceDisconnected
 }
+
+private fun DfuServiceInitiator.setFirmware(firmware: Firmware) =
+    when(firmware) {
+        is Firmware.Path -> setZip(firmware.path)
+        is Firmware.Uri -> setZip(firmware.uri)
+        is Firmware.AndroidRes -> setZip(firmware.resource)
+    }

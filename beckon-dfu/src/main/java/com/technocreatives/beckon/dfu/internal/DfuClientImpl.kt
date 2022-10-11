@@ -13,11 +13,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import no.nordicsemi.android.dfu.DfuBaseService
 import no.nordicsemi.android.dfu.DfuServiceInitiator
 import timber.log.Timber
 
-class DfuClientImpl(
-    private val context: Context
+internal class DfuClientImpl(
+    private val context: Context,
+    private val dfuService: Class<out DfuBaseService>
 ) : DfuClient {
     private val coroutineContext = Job()
     private val scope = CoroutineScope(coroutineContext)
@@ -30,19 +32,15 @@ class DfuClientImpl(
         DfuServiceInitiator.createDfuNotificationChannel(context)
 
         if (processes.containsKey(conf.macAddress)) {
-            Timber.d("Process is already running!")
             return StartDfuError.AlreadyInProgress.left()
         }
 
-        Timber.d("Starting DFU process")
-        val newProcess = DfuProcessImpl(context, conf)
+        val newProcess = DfuProcessImpl(context, conf, dfuService)
 
         processes[conf.macAddress] = newProcess
 
-        Timber.d("Starting to listen for response")
         scope.launch {
             val finalState = newProcess.finishedState()
-            Timber.d("DFU for ${conf.macAddress} finished with: $finalState")
             processes.remove(conf.macAddress)
         }
 
