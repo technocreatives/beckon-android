@@ -1,4 +1,4 @@
-package com.technocreatives.beckon.dfu
+package com.technocreatives.beckon.dfu.internal
 
 import android.content.Context
 import kotlinx.coroutines.channels.awaitClose
@@ -8,7 +8,7 @@ import no.nordicsemi.android.dfu.DfuProgressListener
 import no.nordicsemi.android.dfu.DfuServiceListenerHelper
 import timber.log.Timber
 
-fun dfuProgressEvents(context: Context, macAddress: String): Flow<DfuProgressEvent> {
+internal fun dfuProgressEvents(context: Context, macAddress: String): Flow<DfuProgressEvent> {
     var listener: DfuProgressListener
     return callbackFlow {
         listener = object : DfuProgressListener {
