@@ -1,5 +1,4 @@
-include ':beckon', ':beckon-mesh'
+include ':beckon', ':beckon-mesh', 'beckon-dfu'
 // ':app', ':beckon-rx2',
 
 include ':mesh-data'
-include ':beckon-dfu'
