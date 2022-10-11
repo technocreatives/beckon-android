@@ -3,11 +3,12 @@ package com.technocreatives.beckon.dfu.internal
 import no.nordicsemi.android.dfu.DfuBaseService
 
 sealed class DfuProgressEvent {
-    object NotStarted : DfuProgressEvent()
-    object Connecting : DfuProgressEvent()
     object Connected : DfuProgressEvent()
     object Starting : DfuProgressEvent()
+    object EnablingDfuMode : DfuProgressEvent()
     object Started : DfuProgressEvent()
+    object Connecting : DfuProgressEvent()
+
     object Disconnecting : DfuProgressEvent()
     object Disconnected : DfuProgressEvent()
 
@@ -22,7 +23,7 @@ sealed class DfuProgressEvent {
     ) :
         DfuProgressEvent()
 
-    object EnablingDfuMode : DfuProgressEvent()
+
     object Complete : DfuProgressEvent()
     object Abort : DfuProgressEvent()
     data class Error(val error: Int, val errorType: DfuErrorType, val message: String?) :

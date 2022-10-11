@@ -4,6 +4,7 @@ import android.content.Context
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.onEach
 import no.nordicsemi.android.dfu.DfuProgressListener
 import no.nordicsemi.android.dfu.DfuServiceListenerHelper
 import timber.log.Timber
@@ -13,42 +14,34 @@ internal fun dfuProgressEvents(context: Context, macAddress: String): Flow<DfuPr
     return callbackFlow {
         listener = object : DfuProgressListener {
             override fun onDeviceConnecting(deviceAddress: String) {
-                Timber.d("onDeviceConnecting")
                 trySend(DfuProgressEvent.Connecting)
             }
 
             override fun onDfuProcessStarted(deviceAddress: String) {
-                Timber.d("onDfuProcessStarted")
                 trySend(DfuProgressEvent.Started)
             }
 
             override fun onDeviceDisconnecting(deviceAddress: String?) {
-                Timber.d("onDeviceDisconnecting")
                 trySend(DfuProgressEvent.Disconnecting)
             }
 
             override fun onDeviceDisconnected(deviceAddress: String) {
-                Timber.d("onDeviceDisconnected")
                 trySend(DfuProgressEvent.Disconnected)
             }
 
             override fun onDeviceConnected(deviceAddress: String) {
-                Timber.d("onDeviceConnected")
                 trySend(DfuProgressEvent.Connected)
             }
 
             override fun onEnablingDfuMode(deviceAddress: String) {
-                Timber.d("onEnablingDfuMode")
                 trySend(DfuProgressEvent.EnablingDfuMode)
             }
 
             override fun onFirmwareValidating(deviceAddress: String) {
-                Timber.d("onFirmwareValidating")
                 trySend(DfuProgressEvent.FirmwareValidating)
             }
 
             override fun onDfuProcessStarting(deviceAddress: String) {
-                Timber.d("onDfuProcessStarting")
                 trySend(DfuProgressEvent.Starting)
             }
 
@@ -60,7 +53,6 @@ internal fun dfuProgressEvents(context: Context, macAddress: String): Flow<DfuPr
                 currentPart: Int,
                 partsTotal: Int
             ) {
-                Timber.d("onProgressChanged")
                 trySend(
                     DfuProgressEvent.Uploading(
                         percent,
@@ -73,13 +65,11 @@ internal fun dfuProgressEvents(context: Context, macAddress: String): Flow<DfuPr
             }
 
             override fun onDfuCompleted(deviceAddress: String) {
-                Timber.d("onDfuCompleted")
                 trySend(DfuProgressEvent.Complete)
                 channel.close()
             }
 
             override fun onDfuAborted(deviceAddress: String) {
-                Timber.d("onDfuAborted")
                 trySend(DfuProgressEvent.Abort)
                 channel.close()
             }
@@ -90,7 +80,6 @@ internal fun dfuProgressEvents(context: Context, macAddress: String): Flow<DfuPr
                 errorType: Int,
                 message: String?
             ) {
-                Timber.d("onError")
                 trySend(
                     DfuProgressEvent.Error(
                         error,
@@ -116,5 +105,7 @@ internal fun dfuProgressEvents(context: Context, macAddress: String): Flow<DfuPr
                 listener
             )
         }
+    }.onEach {
+        Timber.d("DfuProgressEvent: $it")
     }
 }

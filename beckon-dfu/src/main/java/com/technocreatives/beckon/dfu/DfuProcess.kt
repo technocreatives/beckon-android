@@ -22,12 +22,9 @@ sealed interface DfuState {
         else -> false
     }
 
-    // Initial connection to the state.
-    object Connecting : DfuState
-
-    object Preparing : DfuState
+    object Starting : DfuState
+    object EnablingBootloader : DfuState
     data class Uploading(val percent: Int, val currentPart: Int, val totalParts: Int) : DfuState
-    object Disconnected : DfuState
 
     object Success : DfuState
     object Aborted : DfuState
@@ -37,6 +34,6 @@ sealed interface DfuState {
 sealed interface DfuError {
     object BluetoothOff : DfuError
     object DeviceDisconnected : DfuError
-    data class Unknown(val error: Int, val errorType: DfuErrorType, val message: String?) : DfuError
+    data class Unknown(val error: DfuProgressEvent.Error) : DfuError
     data class InvalidState(val state: DfuState, val event: DfuProgressEvent) : DfuError
 }
