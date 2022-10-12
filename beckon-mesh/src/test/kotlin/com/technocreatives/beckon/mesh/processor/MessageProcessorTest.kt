@@ -1,14 +1,11 @@
 package com.technocreatives.beckon.mesh.processor
 
-import arrow.core.Either
 import arrow.core.right
-import com.technocreatives.beckon.mesh.SendMessageError
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import no.nordicsemi.android.mesh.transport.MeshMessage

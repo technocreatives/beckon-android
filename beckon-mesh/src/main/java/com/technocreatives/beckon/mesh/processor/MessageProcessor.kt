@@ -249,7 +249,7 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
                     Timber.d("Current processing message $bm")
                     bm?.let { bk ->
                         bk.sender.sendMessageCompleted()
-                        val result = queue.pdus().traverseEither { pduSender.sendPdu(it) }.map { }
+                        val result = queue.pdus().traverse { pduSender.sendPdu(it) }.map { }
                         queue.clearProcessing()
                         launch {
                             pduSenderResultChannel.send(

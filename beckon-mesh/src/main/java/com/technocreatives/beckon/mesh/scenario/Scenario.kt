@@ -22,6 +22,26 @@ private val TyriLightConnectionConfig = ConnectionConfig(Mtu(69))
 private const val TIME_OUT_FOR_STEP: Long = 360000
 //private const val TIME_OUT_FOR_STEP: Long = 60
 
+sealed interface Step1 {
+
+    object AutoConnect : Step1
+    data class Connect(val address: MacAddress) : Step1
+    data class ConnectAfterProvisioning(val address: Int) : Step1
+    object Disconnect : Step1
+
+    data class CreateGroup(val address: GroupAddress) : Step1
+    data class Provision(val address: MacAddress) : Step1
+    data class Message(val message: ConfigMessage<*>) : Step1
+    data class UnAckMessage(val message: ConfigMessage<*>) : Step1
+
+    object OnOffBluetooth : Step1
+    data class Delay(val time: Long) : Step1
+}
+
+class Processor(val beckonMesh: BeckonMesh) {
+    fun process(step1: Step1): Either<Any, Unit> = TODO()
+}
+
 sealed interface Step {
     suspend fun BeckonMesh.execute(): Either<Any, Unit>
     suspend fun BeckonMesh.execute1(): Either<StepError, StepResult> =
@@ -211,7 +231,7 @@ data class Scenario(val processes: List<Process>) {
         Timber.d("Scenario execute start with ${processes.size} processes")
         val start = System.nanoTime()
         disconnect().bind()
-        val results = processes.traverseEither { with(it) { execute() } }.bind()
+        val results = processes.traverse { with(it) { execute() } }.bind()
         val end = System.nanoTime()
         Timber.d("Scenario execute end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
     }
