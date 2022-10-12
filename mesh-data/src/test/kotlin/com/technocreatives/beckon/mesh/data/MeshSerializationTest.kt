@@ -40,6 +40,13 @@ class MeshSerializationTest : StringSpec({
         mesh shouldBe anotherMesh
     }
 
+    "networksExclusion" {
+        val mesh = MeshTestConfigs.readMesh("iosWithNetworkExclusions.json")
+        mesh.networkExclusions.size shouldBe 1
+        mesh.networkExclusions[0].ivIndex shouldBe 0
+        mesh.networkExclusions[0].addresses shouldBe listOf(UnicastAddress(1))
+    }
+
 //    "Default mesh with Nrf tool" {
 //        val mesh = Mesh.generateMesh("nRF Mesh Network", "nRF Mesh Provisioner")
 //        val json = format.encodeToString(mesh)
