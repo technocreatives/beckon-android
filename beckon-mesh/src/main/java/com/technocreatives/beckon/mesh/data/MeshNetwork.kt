@@ -31,7 +31,7 @@ fun MeshNetwork.transform() = MeshConfig(
     nodes.map { it.transform() },
     groups.map { it.transform() },
     emptyList(), // TODO support scene
-    emptyList() // TODO support NetworkExclusion
+    networkExclusions = networkExclusions.map { it.transform() }
 )
 
 fun MeshNetwork.findAppKey(index: AppKeyIndex) =
@@ -180,3 +180,8 @@ fun Int.toSubscriptionAddress(model: NrfMeshModel): SubscriptionAddress =
 
 fun MeshNetwork.proxyFilter(): ProxyFilter? =
     proxyFilter?.transform()
+
+fun Map.Entry<Int, List<Int>>.transform(): NetworkExclusion = NetworkExclusion(
+    key,
+    value.map { UnicastAddress(it) }
+)
