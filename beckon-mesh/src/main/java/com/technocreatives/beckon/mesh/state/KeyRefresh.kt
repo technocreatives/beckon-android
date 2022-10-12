@@ -86,7 +86,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey): Either<Any, Any> = either {
 
     val updateMessage = ConfigNetKeyUpdate(updatedKey)
     val e =
-        nodes.traverseEither { bearer.updateConfigNetKey(it.unicastAddress.value, updateMessage) }
+        nodes.traverse { bearer.updateConfigNetKey(it.unicastAddress.value, updateMessage) }
             .bind()
     Timber.d("======== updateConfigNetKey: ${e.map { it.isSuccessful }}")
 
