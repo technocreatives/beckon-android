@@ -108,8 +108,14 @@ private fun DfuState.Uploading.reduce(event: DfuProgressEvent): DfuState {
         DfuProgressEvent.Abort -> DfuState.Aborted
         is DfuProgressEvent.Error -> event.toDfuStateError()
 
-        DfuProgressEvent.Starting,
         DfuProgressEvent.Started,
+        DfuProgressEvent.Starting -> {
+            if (currentPart < totalParts && percent == 100) {
+                this
+            } else {
+                DfuState.Failed(DfuError.InvalidState(this, event))
+            }
+        }
         DfuProgressEvent.EnablingDfuMode -> DfuState.Failed(DfuError.InvalidState(this, event))
         else -> this
     }
