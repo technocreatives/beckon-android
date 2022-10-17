@@ -8,8 +8,10 @@ import com.technocreatives.beckon.*
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.ConnectionConfig
 import com.technocreatives.beckon.mesh.SendAckMessageError
+import com.technocreatives.beckon.mesh.data.FilterType
 import com.technocreatives.beckon.mesh.data.GroupAddress
 import com.technocreatives.beckon.mesh.message.ConfigMessage
+import com.technocreatives.beckon.mesh.message.setAddressesToProxy
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.util.filterZ
 import com.technocreatives.beckon.util.mapEither
@@ -123,6 +125,14 @@ object AutoConnect : Step {
             .first().bind()
         startConnectedState(beckonDevice).bind()
     }
+}
+
+object SetProxyFilter : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
+        val connected = connectedState().bind()
+        connected.setAddressesToProxy(FilterType.INCLUSION)
+    }
+
 }
 
 data class ConnectAfterProvisioning(val address: Int) : Step {
