@@ -3,12 +3,27 @@ package com.technocreatives.beckon.mesh.scenario
 import arrow.core.Either
 import arrow.core.continuations.either
 import com.technocreatives.beckon.mesh.BeckonMesh
+import com.technocreatives.beckon.mesh.data.PublishableAddress
+import com.technocreatives.beckon.mesh.message.SendVendorModelMessage
+import com.technocreatives.beckon.mesh.message.sendVendorModelMessageAck
+import com.technocreatives.beckon.mesh.state.Connected
+import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus
 
 sealed interface Test {
-    data class AckMessage(val message: Message, val assert: (AckMessage) -> Boolean) : Test
+
+    data class VendorMessage(
+        val address: PublishableAddress,
+        val message: SendVendorModelMessage,
+        val responseOpCode: Int,
+        val assert: Assertion<VendorModelMessageStatus>
+    ) : Test
 }
 
-data class TestCase(val before: Scenario, val test: Test, val after: Scenario)
+interface Assertion<T> {
+    fun assert(t: T): Either<AssertionFailed, Unit>
+}
+
+data class TestCase(val before: Scenario, val after: Scenario, val test: Test)
 
 class TestRunner(val beckonMesh: BeckonMesh) {
     suspend fun run(case: TestCase) =
@@ -18,5 +33,27 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             with(case.after) { beckonMesh.execute() }.bind()
         }
 
-    private suspend fun runTest(test: Test): Either<Any, Unit> = TODO()
+    private suspend fun runTest(test: Test): Either<Any, Unit> = either {
+        val connected = beckonMesh.connectedState().bind()
+        when (test) {
+            is Test.VendorMessage -> connected.runTest(test)
+        }
+    }
+
+    private suspend fun Connected.runTest(test: Test.VendorMessage): Either<TestFailed, Unit> =
+        either {
+            val respond =
+                sendVendorModelMessageAck(test.address, test.message, test.responseOpCode)
+                    .mapLeft { TestFailed.ExecutionError(it) }
+                    .bind()
+            test.assert.assert(respond).bind()
+        }
+}
+
+sealed interface TestFailed {
+    data class ExecutionError(val error: Any) : TestFailed
+}
+
+sealed interface AssertionFailed : TestFailed {
+
 }

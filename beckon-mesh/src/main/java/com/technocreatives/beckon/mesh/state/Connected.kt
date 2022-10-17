@@ -159,8 +159,6 @@ suspend fun Connected.setUpAppKey(
     Timber.d("addConfigAppKey Status $appKeyAddStatus")
 }
 
-fun <T> Pair<Int, SendAckMessageError>.convert(): T = TODO()
-
 suspend fun <T : ConfigStatusMessage> Connected.execute(messages: List<ConfigMessage<T>>): Either<Pair<Int, SendAckMessageError>, Unit> {
     return messages.traverseStep(InstantRetry(3)) { sendConfigMessage(it) }.map {}
 }
@@ -217,7 +215,7 @@ class ConnectedMessageStatusCallbacks(
     private val sequenceNumberMap = mutableMapOf<Int, Int>()
 
     private fun verifySequenceNumber(src: Int, sequenceNumber: Int): Boolean =
-        if (sequenceNumber <= sequenceNumberMap[src] ?: -1) false
+        if (sequenceNumber <= (sequenceNumberMap[src] ?: -1)) false
         else {
             sequenceNumberMap[src] = sequenceNumber
             true
@@ -244,10 +242,6 @@ class ConnectedMessageStatusCallbacks(
                 Timber.w("onMeshMessageReceived Sent filteredMessage $filteredSubject")
             }
         }
-
-    }
-
-    private suspend fun sendFilteredMessage(src: Int, message: MeshMessage) {
 
     }
 
