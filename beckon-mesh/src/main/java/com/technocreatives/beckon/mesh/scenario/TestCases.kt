@@ -2,12 +2,14 @@ package com.technocreatives.beckon.mesh.scenario
 
 import arrow.core.Either
 import arrow.core.continuations.either
+import arrow.core.right
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.data.PublishableAddress
 import com.technocreatives.beckon.mesh.message.SendVendorModelMessage
 import com.technocreatives.beckon.mesh.message.sendVendorModelMessageAck
 import com.technocreatives.beckon.mesh.state.Connected
 import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus
+import timber.log.Timber
 
 sealed interface Test {
 
@@ -17,6 +19,9 @@ sealed interface Test {
         val responseOpCode: Int,
         val assert: Assertion<VendorModelMessageStatus>
     ) : Test
+
+    object Empty : Test
+
 }
 
 interface Assertion<T> {
@@ -28,15 +33,20 @@ data class TestCase(val before: Scenario, val after: Scenario, val test: Test)
 class TestRunner(val beckonMesh: BeckonMesh) {
     suspend fun run(case: TestCase) =
         either {
+            Timber.d("Setup")
             with(case.before) { beckonMesh.execute() }.bind()
+            Timber.d("Running test")
             runTest(case.test).bind()
+            Timber.d("After")
             with(case.after) { beckonMesh.execute() }.bind()
         }
 
     private suspend fun runTest(test: Test): Either<Any, Unit> = either {
+        Timber.d("Running test $test")
         val connected = beckonMesh.connectedState().bind()
         when (test) {
             is Test.VendorMessage -> connected.runTest(test)
+            Test.Empty -> Unit.right()
         }
     }
 
@@ -54,6 +64,4 @@ sealed interface TestFailed {
     data class ExecutionError(val error: Any) : TestFailed
 }
 
-sealed interface AssertionFailed : TestFailed {
-
-}
+sealed interface AssertionFailed : TestFailed

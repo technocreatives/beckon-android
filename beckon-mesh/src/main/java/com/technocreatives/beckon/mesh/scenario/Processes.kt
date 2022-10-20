@@ -102,6 +102,62 @@ object Processes {
                 )
             )
                     + vendorSteps
+        )
+
+    fun provisionVendorDeviceAndThenDisconnect(
+        macAddress: MacAddress,
+        nodeAddress: UnicastAddress,
+        netKey: NetKey,
+        appKey: AppKey,
+        allLightsGroup: GroupAddress,
+        vendorModelId: ModelId,
+        proxyGroupAddress: GroupAddress,
+        vendorSteps: List<Step> = emptyList()
+    ): Process =
+        Process(
+            listOf(
+                Provision(macAddress),
+                ConnectAfterProvisioning(nodeAddress.value),
+                Message(GetCompositionData(nodeAddress.value)),
+                Message(GetDefaultTtl(nodeAddress.value)),
+                Message(SetRelayConfig(nodeAddress.value, retransmit = RelayRetransmit(7, 2))),
+// Should be used according to docs:
+// Message(SetConfigNetworkTransmit(nodeAddress.value, 1, 5)),
+                Message(SetConfigNetworkTransmit(nodeAddress.value, 7, 11)),
+                Message(AddConfigAppKey(nodeAddress.value, netKey, appKey)),
+                Message(
+                    BindAppKeyToModel(
+                        nodeAddress.value,
+                        nodeAddress,
+                        vendorModelId,
+                        appKey.index
+                    )
+                ),
+                Message(
+                    AddConfigModelSubscription(
+                        nodeAddress.value,
+                        nodeAddress.value,
+                        allLightsGroup.value,
+                        vendorModelId.value
+                    )
+                ),
+                Message(
+                    SetConfigModelPublication(
+                        nodeAddress.value,
+                        UnicastAddress(nodeAddress.value),
+                        Publish(
+                            proxyGroupAddress,
+                            appKey.index,
+                            Period(0, PublicationResolution.RESOLUTION_100MS),
+                            false,
+                            10,
+                            Retransmit(0, 0),
+                        ),
+                        vendorModelId,
+                    )
+                )
+            )
+                    + vendorSteps
                     + listOf(Disconnect, Delay(10000))
         )
 
