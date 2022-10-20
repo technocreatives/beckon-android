@@ -10,6 +10,7 @@ import com.technocreatives.beckon.mesh.ConnectionConfig
 import com.technocreatives.beckon.mesh.SendAckMessageError
 import com.technocreatives.beckon.mesh.data.FilterType
 import com.technocreatives.beckon.mesh.data.GroupAddress
+import com.technocreatives.beckon.mesh.data.PublishableAddress
 import com.technocreatives.beckon.mesh.message.ConfigMessage
 import com.technocreatives.beckon.mesh.message.setAddressesToProxy
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
@@ -24,30 +25,8 @@ private val TyriLightConnectionConfig = ConnectionConfig(Mtu(69))
 private const val TIME_OUT_FOR_STEP: Long = 360000
 //private const val TIME_OUT_FOR_STEP: Long = 60
 
-sealed interface Step1 {
-
-    object AutoConnect : Step1
-    data class Connect(val address: MacAddress) : Step1
-    data class ConnectAfterProvisioning(val address: Int) : Step1
-    object Disconnect : Step1
-
-    data class CreateGroup(val address: GroupAddress) : Step1
-    data class Provision(val address: MacAddress) : Step1
-    data class Message(val message: ConfigMessage<*>) : Step1
-    data class UnAckMessage(val message: ConfigMessage<*>) : Step1
-
-    object OnOffBluetooth : Step1
-    data class Delay(val time: Long) : Step1
-}
-
-class Processor(val beckonMesh: BeckonMesh) {
-    fun process(step1: Step1): Either<Any, Unit> = TODO()
-}
-
 sealed interface Step {
     suspend fun BeckonMesh.execute(): Either<Any, Unit>
-    suspend fun BeckonMesh.execute1(): Either<StepError, StepResult> =
-        StepError.ConnectStepError.left()
 }
 
 data class Provision(val address: MacAddress) : Step {
@@ -57,7 +36,9 @@ data class Provision(val address: MacAddress) : Step {
         val scanResult = scanForProvisioning(address, TIME_OUT_FOR_STEP).bind()
 
         Timber.d("Execute Provision $address scanResult: $scanResult")
+
         stopScan()
+
         val retry = ExponentialBackOffRetry(5, 360)
 
         val beckonDevice = retry {
@@ -68,8 +49,7 @@ data class Provision(val address: MacAddress) : Step {
 
         val provisioning = startProvisioning(beckonDevice).bind()
         val unProvisionedNode = provisioning.identify(scanResult, 5).bind()
-        val provisionedNode = provisioning.startProvisioning(unProvisionedNode).bind()
-        provisionedNode
+        provisioning.startProvisioning(unProvisionedNode).bind()
     }
 }
 
@@ -127,12 +107,9 @@ object AutoConnect : Step {
     }
 }
 
-object SetProxyFilter : Step {
-    override suspend fun BeckonMesh.execute(): Either<Any, Unit> = either {
-        val connected = connectedState().bind()
-        connected.setAddressesToProxy(FilterType.INCLUSION)
-    }
-
+data class SetProxyFilter(val addresses: List<PublishableAddress>) : Step {
+    override suspend fun BeckonMesh.execute(): Either<Any, Unit> =
+        connectedState().flatMap { it.setAddressesToProxy(FilterType.INCLUSION, addresses) }
 }
 
 data class ConnectAfterProvisioning(val address: Int) : Step {
@@ -226,14 +203,14 @@ data class Process(
         Timber.d("Process end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
     }
 
-    suspend fun BeckonMesh.execute1(): Either<StepError, List<StepResult>> = either {
-        Timber.d("Process start with ${steps.size} steps")
-        val start = System.nanoTime()
-        val results = steps.traverseStep(retry) { with(it) { execute1() } }.bind()
-        val end = System.nanoTime()
-        Timber.d("Process end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
-        results
-    }
+//    suspend fun BeckonMesh.execute1(): Either<StepError, List<StepResult>> = either {
+//        Timber.d("Process start with ${steps.size} steps")
+//        val start = System.nanoTime()
+//        val results = steps.traverseStep(retry) { with(it) { execute1() } }.bind()
+//        val end = System.nanoTime()
+//        Timber.d("Process end with result=$results, in ${(end - start) / 1_000_000_000} seconds")
+//        results
+//    }
 }
 
 data class Scenario(val processes: List<Process>) {
