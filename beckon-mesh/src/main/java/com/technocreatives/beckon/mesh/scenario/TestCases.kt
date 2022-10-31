@@ -6,6 +6,7 @@ import arrow.core.right
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.data.PublishableAddress
 import com.technocreatives.beckon.mesh.message.SendVendorModelMessage
+import com.technocreatives.beckon.mesh.message.sendVendorModelMessage
 import com.technocreatives.beckon.mesh.message.sendVendorModelMessageAck
 import com.technocreatives.beckon.mesh.state.Connected
 import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus
@@ -13,12 +14,18 @@ import timber.log.Timber
 
 sealed interface Test {
 
-    data class VendorMessage(
+    data class VendorMessageAck(
         val address: PublishableAddress,
         val message: SendVendorModelMessage,
         val responseOpCode: Int,
         val assert: Assertion<VendorModelMessageStatus>
     ) : Test
+
+    data class VendorMessage(
+        val address: PublishableAddress,
+        val message: SendVendorModelMessage,
+    ) : Test
+
 
     object Empty : Test
 
@@ -45,12 +52,13 @@ class TestRunner(val beckonMesh: BeckonMesh) {
         Timber.d("Running test $test")
         val connected = beckonMesh.connectedState().bind()
         when (test) {
-            is Test.VendorMessage -> connected.runTest(test)
+            is Test.VendorMessageAck -> connected.runTest(test)
+            is Test.VendorMessage -> TODO()
             Test.Empty -> Unit.right()
         }
     }
 
-    private suspend fun Connected.runTest(test: Test.VendorMessage): Either<TestFailed, Unit> =
+    private suspend fun Connected.runTest(test: Test.VendorMessageAck): Either<TestFailed, Unit> =
         either {
             val respond =
                 sendVendorModelMessageAck(test.address, test.message, test.responseOpCode)
@@ -58,6 +66,16 @@ class TestRunner(val beckonMesh: BeckonMesh) {
                     .bind()
             test.assert.assert(respond).bind()
         }
+
+    private suspend fun Connected.runTest(test: Test.VendorMessage): Either<TestFailed, Unit> =
+        either {
+            val respond =
+                sendVendorModelMessage(test.address, test.message)
+                    .mapLeft { TestFailed.ExecutionError(it) }
+                    .bind()
+            beckonMesh.states()
+        }
+
 }
 
 sealed interface TestFailed {
