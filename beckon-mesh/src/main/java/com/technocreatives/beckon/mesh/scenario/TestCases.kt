@@ -1,11 +1,9 @@
 package com.technocreatives.beckon.mesh.scenario
 
-import arrow.core.Either
+import arrow.core.*
 import arrow.core.continuations.either
-import arrow.core.right
-import arrow.core.traverse
-import arrow.fx.coroutines.metered
 import arrow.fx.coroutines.parZip
+import arrow.typeclasses.Semigroup
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.data.PublishableAddress
@@ -18,6 +16,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.withTimeoutOrNull
 import no.nordicsemi.android.mesh.transport.VendorModelMessageStatus
 import timber.log.Timber
+import kotlin.experimental.ExperimentalTypeInference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -46,13 +45,37 @@ interface Assertion<T> {
 
 data class TestCase(val before: Scenario, val after: Scenario, val tests: List<Test>)
 
+@PublishedApi
+internal fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int =
+    if (this is Collection<*>) this.size else default
+
+@OptIn(ExperimentalTypeInference::class)
+@OverloadResolutionByLambdaReturnType
+public inline fun <E, A, B> Iterable<A>.mapAccumulating(
+    f: (A) -> Either<E, B>
+): Either<Nel<E>, List<B>> =
+    Semigroup.nonEmptyList<E>().run {
+        fold(Either.Right(ArrayList<B>(collectionSizeOrDefault(10))) as Either<Nel<E>, MutableList<B>>) { acc, a ->
+            when (val res = f(a)) {
+                is Either.Right -> when (acc) {
+                    is Either.Right -> acc.also { it.value.add(res.value) }
+                    is Either.Left -> acc
+                }
+                is Either.Left -> when (acc) {
+                    is Either.Right -> nonEmptyListOf(res.value).left()
+                    is Either.Left -> acc.value.combine(nonEmptyListOf(res.value)).left()
+                }
+            }
+        }
+    }
+
 class TestRunner(val beckonMesh: BeckonMesh) {
     suspend fun run(case: TestCase) =
         either {
             Timber.d("Setup")
             with(case.before) { beckonMesh.execute() }.bind()
             Timber.d("Running test")
-            case.tests.traverse { runTest(it) }.bind()
+            val result = case.tests.mapAccumulating { runTest(it) }.bind()
             Timber.d("After")
             with(case.after) { beckonMesh.execute() }.bind()
         }
@@ -81,7 +104,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
 
             val result = parZip(
                 {
-                    beckonMesh.proxyFilterMessages().take(test.expected.size + 1)
+                    beckonMesh.proxyFilterMessages().take(test.expected.size)
                         .collectUntil(30.seconds)
                 },
                 {
@@ -94,17 +117,16 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             Timber.d("ProxyFilterMessages $result")
 
             ensure(result.toSet() == test.expected) {
+                Timber.w("Failed $result")
                 TestFailed.NotEqual(
+                    test,
                     test.expected,
                     result.toSet()
                 )
             }
         }
-
 }
 
-
-// timeout
 suspend fun <A> Flow<A>.collectUntil(duration: Duration): List<A> {
     val result = mutableListOf<A>()
     withTimeoutOrNull(duration) { collect { result.add(it) } }
@@ -113,7 +135,7 @@ suspend fun <A> Flow<A>.collectUntil(duration: Duration): List<A> {
 
 sealed interface TestFailed {
     data class ExecutionError(val error: Any) : TestFailed
-    data class NotEqual<T>(val expected: T, val actual: T) : TestFailed
+    data class NotEqual<T>(val test: Test, val expected: T, val actual: T) : TestFailed
 }
 
 sealed interface AssertionFailed : TestFailed

@@ -13,7 +13,7 @@ object Processes {
         val lastAddress = addresses[addresses.size - 1]
         return Process(
             Connect(lastAddress)
-                .prependTo(addresses.mapIndexed { index, _ ->
+                .prependTo(List(addresses.size) { index ->
                     Message(ResetNode(index + 2))
                 })
         )

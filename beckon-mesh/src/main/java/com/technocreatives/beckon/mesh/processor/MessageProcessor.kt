@@ -243,7 +243,7 @@ class MessageProcessor(private val pduSender: PduSender, private val timeout: Lo
                     }
                 }
 
-                processedMessageChannel.onReceive { message ->
+                processedMessageChannel.onReceive { _ ->
                     Timber.d("processedMessageChannel.onReceive $queue")
                     val bm = queue.getCurrentProcessingMessage()
                     Timber.d("Current processing message $bm")
