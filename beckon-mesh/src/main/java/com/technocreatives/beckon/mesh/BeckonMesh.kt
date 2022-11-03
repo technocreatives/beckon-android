@@ -237,10 +237,9 @@ class BeckonMesh(
 
     suspend fun scanForProxy(): Flow<Either<ScanError, List<ScanResult>>> =
         scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+            .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
 
     suspend fun scanForProxy(filter: (BluetoothDevice) -> Boolean): Flow<Either<ScanError, List<ScanResult>>> {
-        val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
-
         val cds = context.bluetoothManager().connectedDevices()
         Timber.d("All connected ble devices: $cds")
 
@@ -252,10 +251,8 @@ class BeckonMesh(
         return if (connectedDevices.isNotEmpty()) {
             flowOf(connectedDevices.right())
         } else {
-            scan(scannerSetting)
-                .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
+            scanForProxy()
         }
-
     }
 
     // scan for the device with a specific unicastAddress
