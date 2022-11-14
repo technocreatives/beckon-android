@@ -7,6 +7,7 @@ import arrow.typeclasses.Semigroup
 import com.technocreatives.beckon.mesh.BeckonMesh
 import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.data.PublishableAddress
+import com.technocreatives.beckon.mesh.data.UnicastAddress
 import com.technocreatives.beckon.mesh.message.SendVendorModelMessage
 import com.technocreatives.beckon.mesh.message.sendVendorModelMessage
 import com.technocreatives.beckon.mesh.message.sendVendorModelMessageAck
@@ -35,13 +36,18 @@ sealed interface Test {
         val expected: Set<ProxyFilterMessage>
     ) : Test
 
+    data class SingleVendorMessage(
+        val address: UnicastAddress,
+        val message: SendVendorModelMessage,
+        val assert: Assertion<ProxyFilterMessage>,
+    ) : Test
+
     object Empty : Test
 
 }
 
 interface Assertion<T> {
     fun assert(t: T): Either<AssertionFailed, Unit>
-    fun <R>assertMap(t: Set<T>, f: (T) -> R): Either<AssertionFailed, Unit>
 }
 
 sealed interface TestResult {
@@ -91,9 +97,28 @@ class TestRunner(val beckonMesh: BeckonMesh) {
         when (test) {
             is Test.VendorMessageAck -> connected.runTest(test).bind()
             is Test.VendorMessage -> connected.runTest(test).bind()
+            is Test.SingleVendorMessage -> connected.runTest(test).bind()
             Test.Empty -> Unit.right()
         }
     }
+
+    private suspend fun Connected.runTest(test: Test.SingleVendorMessage): Either<TestFailed, Unit> =
+        either {
+            val result: ProxyFilterMessage = parZip(
+                {
+                    beckonMesh.proxyFilterMessages().take(1)
+                        .collectUntil(30.seconds)
+                },
+                {
+                    sendVendorModelMessage(test.address, test.message)
+                        .mapLeft { TestFailed.ExecutionError(it) }
+                        .bind()
+                }
+            ) { r, _ -> r[0] }
+
+            test.assert.assert(result).bind()
+
+        }
 
     private suspend fun Connected.runTest(test: Test.VendorMessageAck): Either<TestFailed, Unit> =
         either {
@@ -107,7 +132,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
     private suspend fun Connected.runTest(test: Test.VendorMessage): Either<TestFailed, Unit> =
         either {
 
-            val result = parZip(
+            val result: List<ProxyFilterMessage> = parZip(
                 {
                     beckonMesh.proxyFilterMessages().take(test.expected.size)
                         .collectUntil(30.seconds)
@@ -143,4 +168,8 @@ sealed interface TestFailed {
     data class NotEqual<T>(val test: Test, val expected: T, val actual: T) : TestFailed
 }
 
-sealed interface AssertionFailed : TestFailed
+sealed interface AssertionFailed : TestFailed {
+    // some description
+    data class NotEqual<T>(val expected: T, val actual: T) : AssertionFailed
+}
+
