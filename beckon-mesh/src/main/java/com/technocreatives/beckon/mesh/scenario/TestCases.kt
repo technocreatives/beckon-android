@@ -41,6 +41,11 @@ sealed interface Test {
 
 interface Assertion<T> {
     fun assert(t: T): Either<AssertionFailed, Unit>
+    fun <R>assertMap(t: Set<T>, f: (T) -> R): Either<AssertionFailed, Unit>
+}
+
+sealed interface TestResult {
+    
 }
 
 data class TestCase(val before: Scenario, val after: Scenario, val tests: List<Test>)
