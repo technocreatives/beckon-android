@@ -42,8 +42,11 @@ sealed interface Test {
         val assert: Assertion<ProxyFilterMessage>,
     ) : Test
 
-    object Empty : Test
+    data class MultipleVendorMessage(
+        val vendorMessages: List<SingleVendorMessage>
+    ) : Test
 
+    object Empty : Test
 }
 
 interface Assertion<T> {
@@ -86,10 +89,12 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             Timber.d("Setup")
             with(case.before) { beckonMesh.execute() }.bind()
             Timber.d("Running test")
-            val result = case.tests.mapAccumulating { runTest(it) }.bind()
+            case.tests.mapAccumulating { runTest(it) }.bind()
             Timber.d("After")
             with(case.after) { beckonMesh.execute() }.bind()
         }
+
+
 
     private suspend fun runTest(test: Test): Either<Any, Unit> = either {
         Timber.d("Running test $test")
@@ -98,6 +103,9 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             is Test.VendorMessageAck -> connected.runTest(test).bind()
             is Test.VendorMessage -> connected.runTest(test).bind()
             is Test.SingleVendorMessage -> connected.runTest(test).bind()
+            is Test.MultipleVendorMessage -> {
+                test.vendorMessages.mapAccumulating { connected.runTest(it) }.bind()
+            }
             Test.Empty -> Unit.right()
         }
     }
