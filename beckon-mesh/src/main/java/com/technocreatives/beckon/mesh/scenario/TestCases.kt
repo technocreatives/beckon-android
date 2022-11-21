@@ -94,8 +94,6 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             with(case.after) { beckonMesh.execute() }.bind()
         }
 
-
-
     private suspend fun runTest(test: Test): Either<Any, Unit> = either {
         Timber.d("Running test $test")
         val connected = beckonMesh.connectedState().bind()
@@ -103,9 +101,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             is Test.VendorMessageAck -> connected.runTest(test).bind()
             is Test.VendorMessage -> connected.runTest(test).bind()
             is Test.SingleVendorMessage -> connected.runTest(test).bind()
-            is Test.MultipleVendorMessage -> {
-                test.vendorMessages.mapAccumulating { connected.runTest(it) }.bind()
-            }
+            is Test.MultipleVendorMessage -> test.vendorMessages.mapAccumulating { connected.runTest(it) }.bind()
             Test.Empty -> Unit.right()
         }
     }
