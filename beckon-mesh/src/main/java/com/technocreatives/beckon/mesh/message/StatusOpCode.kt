@@ -1,5 +1,6 @@
 package com.technocreatives.beckon.mesh.message
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Serializer
@@ -12,6 +13,7 @@ import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes
 import no.nordicsemi.android.mesh.opcodes.ProxyConfigMessageOpCodes
 import no.nordicsemi.android.mesh.transport.*
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializer(forClass = StatusOpCode::class)
 object StatusOpCodeSerializer : KSerializer<StatusOpCode> {
 
