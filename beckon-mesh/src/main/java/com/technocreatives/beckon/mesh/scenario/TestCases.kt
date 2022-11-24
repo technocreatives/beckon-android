@@ -43,18 +43,16 @@ sealed interface Test {
     ) : Test
 
     data class MultipleVendorMessage(
-        val vendorMessages: List<SingleVendorMessage>
+        val vendorMessages: List<Test>
     ) : Test
 
     object Empty : Test
+
+    data class SetPhysicalPowerState(val address: String, val isOn: Boolean) : Test
 }
 
 interface Assertion<T> {
     fun assert(t: T): Either<AssertionFailed, Unit>
-}
-
-sealed interface TestResult {
-    
 }
 
 data class TestCase(val before: Scenario, val after: Scenario, val tests: List<Test>)
@@ -94,17 +92,23 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             with(case.after) { beckonMesh.execute() }.bind()
         }
 
-    private suspend fun runTest(test: Test): Either<Any, Unit> = either {
+    private suspend fun runTest(test: Test): Either<TestFailed, Unit> = either {
         Timber.d("Running test $test")
-        val connected = beckonMesh.connectedState().bind()
+        val connected =
+            beckonMesh.connectedState().mapLeft { TestFailed.NotInConnectedSTate }.bind()
         when (test) {
             is Test.VendorMessageAck -> connected.runTest(test).bind()
             is Test.VendorMessage -> connected.runTest(test).bind()
             is Test.SingleVendorMessage -> connected.runTest(test).bind()
-            is Test.MultipleVendorMessage -> test.vendorMessages.mapAccumulating { connected.runTest(it) }.bind()
+            is Test.MultipleVendorMessage -> connected.runTest(test).bind()
             Test.Empty -> Unit.right()
+            is Test.SetPhysicalPowerState -> TODO() // MQTT.publish
         }
     }
+
+    private suspend fun Connected.runTest(test: Test.MultipleVendorMessage): Either<TestFailed, Unit> =
+        test.vendorMessages.mapAccumulating { runTest(it) }
+            .bimap({ TestFailed.MultipleFailed(it) }) {}
 
     private suspend fun Connected.runTest(test: Test.SingleVendorMessage): Either<TestFailed, Unit> =
         either {
@@ -170,6 +174,8 @@ suspend fun <A> Flow<A>.collectUntil(duration: Duration): List<A> {
 sealed interface TestFailed {
     data class ExecutionError(val error: Any) : TestFailed
     data class NotEqual<T>(val test: Test, val expected: T, val actual: T) : TestFailed
+    data class MultipleFailed(val fails: Nel<TestFailed>) : TestFailed
+    object NotInConnectedSTate : TestFailed
 }
 
 sealed interface AssertionFailed : TestFailed {

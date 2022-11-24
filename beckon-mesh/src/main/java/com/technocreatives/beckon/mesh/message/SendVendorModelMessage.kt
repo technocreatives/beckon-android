@@ -34,7 +34,6 @@ suspend fun Connected.sendVendorModelMessage(
         sendVendorModelMessage(nodeAddress.value(), message)
     }
 
-
 private suspend fun Connected.sendVendorModelMessage(
     address: Int,
     message: SendVendorModelMessage
