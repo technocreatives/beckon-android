@@ -48,7 +48,8 @@ sealed interface Test {
 
     object Empty : Test
 
-    data class SetPhysicalPowerState(val address: String, val isOn: Boolean) : Test
+    data class Action(val execute: suspend () -> Either<TestFailed, Unit>) : Test
+
 }
 
 interface Assertion<T> {
@@ -102,7 +103,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             is Test.SingleVendorMessage -> connected.runTest(test).bind()
             is Test.MultipleVendorMessage -> connected.runTest(test).bind()
             Test.Empty -> Unit.right()
-            is Test.SetPhysicalPowerState -> TODO() // MQTT.publish
+            is Test.Action -> test.execute()
         }
     }
 
