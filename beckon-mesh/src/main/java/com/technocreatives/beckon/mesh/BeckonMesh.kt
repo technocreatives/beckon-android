@@ -248,11 +248,9 @@ class BeckonMesh(
             .filter { filter(it) }
             .map { ScanResult(it, 1000, null) }
 
-        return if (connectedDevices.isNotEmpty()) {
-            flowOf(connectedDevices.right())
-        } else {
-            scanForProxy()
-        }
+        return scanForProxy()
+            .onStart { emitAll(flowOf(connectedDevices.right())) }
+
     }
 
     // scan for the device with a specific unicastAddress
