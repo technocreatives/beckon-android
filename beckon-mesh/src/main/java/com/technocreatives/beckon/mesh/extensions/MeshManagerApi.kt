@@ -7,8 +7,11 @@ import arrow.core.right
 import com.technocreatives.beckon.mesh.NoAllocatedUnicastRange
 import com.technocreatives.beckon.mesh.NoAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.ProvisioningError
+import com.technocreatives.beckon.mesh.data.NetworkId
+import com.technocreatives.beckon.mesh.data.netKeys
+import com.technocreatives.beckon.mesh.data.transform
 import com.technocreatives.beckon.mesh.model.MeshScanResult
-import com.technocreatives.beckon.mesh.model.NetworkId
+import com.technocreatives.beckon.mesh.toHex
 import kotlinx.coroutines.CompletableDeferred
 import no.nordicsemi.android.mesh.MeshBeacon
 import no.nordicsemi.android.mesh.MeshManagerApi
@@ -57,6 +60,12 @@ fun MeshManagerApi.isNodeInTheMesh(
 ): Boolean {
     Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
     val record = scanRecord.transform()
+    Timber.e("NetworkID in Hex: ${record.networkId?.value?.toHex()}")
+    val networkIds = meshNetwork!!.netKeys().map { it.networkId() }.joinToString(separator = "; ") { it.value.toHex() }
+    Timber.d("NetworkId from meshData: $networkIds")
+    record.networkId?.let {
+        Timber.d("Match with meshdata ${meshNetwork!!.transform().isNetworkIdMatch(it)}")
+    }
     return record.networkId != null && networkIdMatches(record.networkId)
 }
 
@@ -64,10 +73,7 @@ fun MeshManagerApi.networkIdMatches(id: NetworkId): Boolean =
     meshNetwork!!.netKeys.any { it.isMatch(id) }
 
 fun NetworkKey.isMatch(id: NetworkId): Boolean =
-    Arrays.equals(
-        SecureUtils.calculateK3(key),
-        id.value
-    ) || Arrays.equals(SecureUtils.calculateK3(oldKey), id.value)
+    transform().isNetworkIdMatch(id)
 
 fun MeshManagerApi.isNodeInTheMesh(
     scanRecord: ScanRecord,
