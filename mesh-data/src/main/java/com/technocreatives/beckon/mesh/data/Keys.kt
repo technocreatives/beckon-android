@@ -42,6 +42,8 @@ data class NetKey(
         const val USE_NEW_KEYS = 2 //Normal operation
         const val REVOKE_OLD_KEYS = 3 //Key Distribution
     }
+
+
 }
 
 

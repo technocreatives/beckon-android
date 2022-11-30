@@ -4,10 +4,11 @@ import android.os.ParcelUuid
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.NoAllocatedUnicastRange
 import com.technocreatives.beckon.mesh.NoAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.ProvisioningError
+import com.technocreatives.beckon.mesh.model.MeshScanResult
+import com.technocreatives.beckon.mesh.model.NetworkId
 import kotlinx.coroutines.CompletableDeferred
 import no.nordicsemi.android.mesh.MeshBeacon
 import no.nordicsemi.android.mesh.MeshManagerApi
@@ -55,13 +56,18 @@ fun MeshManagerApi.isNodeInTheMesh(
     scanRecord: ScanRecord,
 ): Boolean {
     Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
-    val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
-    val networkIdMatches = networkIdMatches(serviceData)
-    val isAdvertisingWithNetworkIdentity = isAdvertisingWithNetworkIdentity(serviceData)
-//    val isAdvertisedWithNodeIdentity = isAdvertisedWithNodeIdentity(serviceData)
-    Timber.d("${scanRecord.deviceName} -> networkIdMatches=$networkIdMatches, isAdvertisingWithNetworkIdentity=$isAdvertisingWithNetworkIdentity")
-    return networkIdMatches && isAdvertisingWithNetworkIdentity
+    val record = scanRecord.transform()
+    return record.networkId != null && networkIdMatches(record.networkId)
 }
+
+fun MeshManagerApi.networkIdMatches(id: NetworkId): Boolean =
+    meshNetwork!!.netKeys.any { it.isMatch(id) }
+
+fun NetworkKey.isMatch(id: NetworkId): Boolean =
+    Arrays.equals(
+        SecureUtils.calculateK3(key),
+        id.value
+    ) || Arrays.equals(SecureUtils.calculateK3(oldKey), id.value)
 
 fun MeshManagerApi.isNodeInTheMesh(
     scanRecord: ScanRecord,
@@ -70,14 +76,13 @@ fun MeshManagerApi.isNodeInTheMesh(
     Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
     val serviceData = scanRecord.getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
     val isAdvertisedWithNodeIdentity = isAdvertisedWithNodeIdentity(serviceData)
-    return if(isAdvertisedWithNodeIdentity) {
+    return if (isAdvertisedWithNodeIdentity) {
         val networkIdMatches = nodeIdentityMatches(serviceData, address)
         Timber.d("${scanRecord.deviceName} -> networkIdMatches=$networkIdMatches, isAdvertisedWithNodeIdentity=$isAdvertisedWithNodeIdentity")
         networkIdMatches
     } else {
         false
     }
-
 }
 
 
@@ -139,6 +144,38 @@ fun MeshManagerApi.nodeIdentityMatches(serviceData: ByteArray?, unicastAddress: 
     return false
 }
 
+fun ScanRecord.transform(): MeshScanResult {
+    val serviceData = getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
+    val networkId = serviceData?.getAdvertisedNetworkId()?.let { NetworkId(it) }
+    return MeshScanResult(this, networkId)
+}
+
+fun isAdvertisingWithNetworkIdentity(serviceData: ByteArray?): Boolean {
+    return serviceData != null && serviceData.size == 9 && serviceData[ADVERTISED_NETWORK_ID_OFFSET - 1].toInt() == ADVERTISEMENT_TYPE_NETWORK_ID
+}
+
+/**
+ * Returns the advertised network identity
+ *
+ * @param serviceData advertised service data
+ * @return returns the advertised network identity
+ */
+private fun ByteArray.getAdvertisedNetworkId(): ByteArray? {
+    if (!isAdvertisingWithNetworkIdentity(this)) return null
+    val advertisedNetworkID =
+        ByteBuffer.allocate(ADVERTISED_NETWORK_ID_LENGTH).order(
+            ByteOrder.BIG_ENDIAN
+        )
+    advertisedNetworkID.put(
+        this,
+        ADVERTISED_NETWORK_ID_OFFSET,
+        ADVERTISED_HASH_LENGTH
+    )
+    return advertisedNetworkID.array()
+}
+
+private const val ADVERTISEMENT_TYPE_NETWORK_ID = 0x00
+private const val ADVERTISEMENT_TYPE_NODE_IDENTITY = 0x01
 
 private val ADVERTISED_HASH_OFFSET: Int =
     1 // Offset of the hash contained in the advertisement service data
@@ -151,6 +188,11 @@ private val ADVERTISED_RANDOM_OFFSET: Int =
 
 private const val ADVERTISED_RANDOM_LENGTH =
     8 //Length of the hash contained in the advertisement service data
+
+private const val ADVERTISED_NETWORK_ID_OFFSET =
+    1 //Offset of the network id contained in the advertisement service data
+private const val ADVERTISED_NETWORK_ID_LENGTH =
+    8 //Length of the network id contained in the advertisement service data
 
 
 private fun getAdvertisedHash(serviceData: ByteArray?): ByteArray? {
