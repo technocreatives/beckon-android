@@ -1,6 +1,7 @@
 package com.technocreatives.beckon.mesh.data.util
 
 
+import com.technocreatives.beckon.mesh.data.Key
 import org.bouncycastle.crypto.BlockCipher
 import org.bouncycastle.crypto.CipherParameters
 import org.bouncycastle.crypto.InvalidCipherTextException
@@ -131,7 +132,7 @@ object SecureUtils {
         return calculateCMAC(data, SALT_KEY)
     }
 
-    fun calculateCMAC(data: ByteArray, key: ByteArray?): ByteArray {
+    fun calculateCMAC(data: ByteArray, key: ByteArray): ByteArray {
         val cmac = ByteArray(16)
         val cipherParameters: CipherParameters = KeyParameter(key)
         val blockCipher: BlockCipher = AESEngine()
@@ -214,7 +215,7 @@ object SecureUtils {
         return ccm
     }
 
-    fun calculateK1(ecdh: ByteArray, confirmationSalt: ByteArray?, text: ByteArray): ByteArray {
+    fun calculateK1(ecdh: ByteArray, confirmationSalt: ByteArray, text: ByteArray): ByteArray {
         return calculateCMAC(text, calculateCMAC(ecdh, confirmationSalt))
     }
 
@@ -224,8 +225,7 @@ object SecureUtils {
      * @param data network key
      * @param p    master input
      */
-    fun calculateK2(data: ByteArray?, p: ByteArray?): K2Output? {
-        if (data == null || p == null) return null
+    fun calculateK2(data: ByteArray, p: ByteArray): K2Output {
         val salt = calculateSalt(SMK2)
         val t = calculateCMAC(data, salt)
         val t0 = byteArrayOf()
@@ -234,7 +234,7 @@ object SecureUtils {
         inputBufferT0.put(p)
         inputBufferT0.put(0x01.toByte())
         val t1 = calculateCMAC(inputBufferT0.array(), t)
-        val nid: Byte = (t1[15] and 0x7F).toByte()
+        val nid: Byte = t1[15] and 0x7F
         val inputBufferT1 = ByteBuffer.allocate(t1.size + p.size + 1)
         inputBufferT1.put(t1)
         inputBufferT1.put(p)
@@ -285,7 +285,7 @@ object SecureUtils {
         val result = calculateCMAC(cmacInput, t)
 
         //Only the least siginificant 6 bytes are returned
-        return (result[15] and 0x3F).toByte()
+        return result[15] and 0x3F
     }
 
     /**
@@ -294,14 +294,13 @@ object SecureUtils {
      * @param n network key
      * @return hash value
      */
-    fun calculateIdentityKey(n: ByteArray?): ByteArray? {
-        if (n == null) return null
+    fun calculateIdentityKey(key: Key): Key {
         val salt = calculateSalt(NKIK)
         val buffer = ByteBuffer.allocate(ID128.size + 1)
         buffer.put(ID128)
         buffer.put(0x01.toByte())
         val p = buffer.array()
-        return calculateK1(n, salt, p)
+        return Key(calculateK1(key.value, salt, p))
     }
 
     /**
@@ -378,7 +377,7 @@ object SecureUtils {
      * @param src         unicast address of the node
      * @return hash value
      */
-    fun calculateHash(identityKey: ByteArray?, random: ByteArray, src: ByteArray): ByteArray {
+    fun calculateHash(identityKey: ByteArray, random: ByteArray, src: ByteArray): ByteArray {
         val length = HASH_PADDING.size + random.size + src.size
         val bufferHashInput = ByteBuffer.allocate(length).order(ByteOrder.BIG_ENDIAN)
         bufferHashInput.put(HASH_PADDING)
@@ -391,7 +390,7 @@ object SecureUtils {
         return buffer.array()
     }
 
-    fun encryptWithAES(data: ByteArray, key: ByteArray?): ByteArray {
+    fun encryptWithAES(data: ByteArray, key: ByteArray): ByteArray {
         val encrypted = ByteArray(data.size)
         val cipherParameters: CipherParameters = KeyParameter(key)
         val engine = AESLightEngine()

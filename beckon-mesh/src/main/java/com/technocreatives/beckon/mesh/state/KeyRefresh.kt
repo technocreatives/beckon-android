@@ -7,8 +7,8 @@ import com.technocreatives.beckon.mesh.data.AppKey
 import com.technocreatives.beckon.mesh.data.NetKey
 import com.technocreatives.beckon.mesh.data.Node
 import com.technocreatives.beckon.mesh.data.UnicastAddress
+import com.technocreatives.beckon.mesh.data.util.toHex
 import com.technocreatives.beckon.mesh.extensions.info
-import com.technocreatives.beckon.mesh.extensions.toHex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nordicsemi.android.mesh.ApplicationKey
@@ -96,7 +96,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey): Either<Any, Any> = either {
     val useNewKeyMessage =
         ConfigKeyRefreshPhaseSet(k1, NetworkKey.USE_NEW_KEYS)
     val e2 =
-        nodes.traverseEither {
+        nodes.traverse {
             bearer.setConfigKeyRefreshPhase(
                 it.unicastAddress.value,
                 useNewKeyMessage
@@ -111,7 +111,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey): Either<Any, Any> = either {
     val revokeOldKeysMessage =
         ConfigKeyRefreshPhaseSet(k2, NetworkKey.REVOKE_OLD_KEYS)
     val e3 =
-        nodes.traverseEither {
+        nodes.traverse {
             bearer.setConfigKeyRefreshPhase(
                 it.unicastAddress.value,
                 revokeOldKeysMessage
@@ -139,7 +139,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey, appKey: AppKey): Either<Any,
 
         val updateMessage = ConfigNetKeyUpdate(updatedKey)
         val e =
-            nodes.traverseEither {
+            nodes.traverse {
                 bearer.updateConfigNetKey(
                     it.unicastAddress.value,
                     updateMessage
@@ -159,7 +159,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey, appKey: AppKey): Either<Any,
         val useNewKeyMessage =
             ConfigKeyRefreshPhaseSet(k1, NetworkKey.USE_NEW_KEYS)
         val e2 =
-            nodes.traverseEither {
+            nodes.traverse {
                 bearer.setConfigKeyRefreshPhase(
                     it.unicastAddress.value,
                     useNewKeyMessage
@@ -174,7 +174,7 @@ suspend fun Connected.netKeyRefresh(netKey: NetKey, appKey: AppKey): Either<Any,
         val revokeOldKeysMessage =
             ConfigKeyRefreshPhaseSet(k2, NetworkKey.REVOKE_OLD_KEYS)
         val e3 =
-            nodes.traverseEither {
+            nodes.traverse {
                 bearer.setConfigKeyRefreshPhase(
                     it.unicastAddress.value,
                     revokeOldKeysMessage
@@ -200,7 +200,7 @@ suspend fun Connected.appKeyRefresh(appKey: AppKey, nodes: List<Node>): Either<A
 
         val updateAppKeyMessage = ConfigAppKeyUpdate(updatedAppKey)
         val e1 =
-            nodes.traverseEither {
+            nodes.traverse {
                 bearer.updateConfigAppKey(
                     it.unicastAddress.value,
                     updateAppKeyMessage

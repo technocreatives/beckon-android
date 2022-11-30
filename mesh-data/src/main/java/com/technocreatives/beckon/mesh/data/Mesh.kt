@@ -3,6 +3,7 @@ package com.technocreatives.beckon.mesh.data
 import arrow.optics.optics
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.UuidSerializer
+import com.technocreatives.beckon.mesh.data.util.toHex
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -34,6 +35,10 @@ data class MeshConfig @OptIn(ExperimentalSerializationApi::class) constructor(
 
     fun isNetworkIdMatch(id: NetworkId): Boolean =
         netKeys.any { it.isNetworkIdMatch(id) }
+
+    fun networkIds(): List<NetworkId> =
+        netKeys.map { it.networkId() }
+
 }
 
 @ExperimentalSerializationApi
