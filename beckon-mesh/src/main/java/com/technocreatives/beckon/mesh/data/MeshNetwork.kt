@@ -143,11 +143,11 @@ fun ProvisionedMeshNode.transform(): Node {
 }
 
 fun NetworkTransmitSettings.transform() = NetworkTransmit(
-    networkTransmitCount, networkIntervalSteps
+    transmissionCount, networkTransmissionInterval
 )
 
 fun RelaySettings.transform() = RelayRetransmit(
-    relayTransmitCount, relayIntervalSteps
+    totalTransmissionsCount, retransmissionIntervals
 )
 
 fun NrfFeatures.transform() = Features(
