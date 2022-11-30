@@ -5,14 +5,14 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Element(
-    @Transient val address: UnicastAddress = UnicastAddress(0),
-    val name: String = "", // TODO ios is missing
+    val name: String?,
     val index: ElementIndex,
     @Serializable(with = HexToIntSerializer::class)
-    val location: Int,
+    val location: Int, // TODO ElementLocationAddress 4 char hex
     val models: List<Model>,
 )
 
+// TODO must be value of 0-255
 @Serializable
 @JvmInline
 value class ElementIndex(val value: Int)

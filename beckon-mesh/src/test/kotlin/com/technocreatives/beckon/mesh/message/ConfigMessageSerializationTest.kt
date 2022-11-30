@@ -44,9 +44,9 @@ class ConfigMessageSerializationTest : StringSpec({
                 1, UnicastAddress(2), Publish(
                     GroupAddress(1),
                     AppKeyIndex(1),
+                    127,
                     Period(1, PublicationResolution.valueOf(0)),
                     false,
-                    127,
                     Retransmit(1, 1)
 
 

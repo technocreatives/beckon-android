@@ -12,7 +12,6 @@ class MeshConfigTest : StringSpec({
     val mesh = MeshConfigHelper.generateMesh("mesh", "provisioner")
     "provisioner unicast" {
         val provisionerId: Optional<MeshConfig, NodeId> =
-
             MeshConfig.provisioners compose Optional.listHead() compose Provisioner.id
 
         val uuid = provisionerId.getOrNull(mesh)!!

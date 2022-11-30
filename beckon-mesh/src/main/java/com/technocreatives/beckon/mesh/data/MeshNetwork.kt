@@ -25,9 +25,9 @@ fun MeshNetwork.transform() = MeshConfig(
     meshName,
     timestamp,
     isPartial,
+    provisioners.map { it.transform() },
     netKeys(),
     appKeys(),
-    provisioners.map { it.transform() },
     nodes.map { it.transform() },
     groups.map { it.transform() },
     emptyList(), // TODO support scene
@@ -54,7 +54,13 @@ fun ApplicationKey.transform(): AppKey = AppKey(
 )
 
 fun NetworkKey.transform(): NetKey = NetKey(
-    name, NetKeyIndex(keyIndex), Key(key), oldKey?.let { Key(it) }, phase, isMinSecurity, timestamp
+    name,
+    NetKeyIndex(keyIndex),
+    phase,
+    Key(key),
+    isMinSecurity,
+    oldKey?.let { Key(it) },
+    timestamp
 )
 
 fun NrfMeshModel.transform(): Model =
@@ -68,12 +74,12 @@ fun NrfMeshModel.transform(): Model =
 fun PublicationSettings.transform() = Publish(
     GroupAddress(publishAddress),
     AppKeyIndex(appKeyIndex),
+    publishTtl,
     Period(
         publicationSteps,
         PublicationResolution.valueOf(publicationResolution)
     ),
     credentialFlag,
-    publishTtl,
     Retransmit(
         publishRetransmitCount,
         retransmissionInterval
@@ -81,7 +87,6 @@ fun PublicationSettings.transform() = Publish(
 )
 
 fun NrfElement.transform(index: ElementIndex) = Element(
-    UnicastAddress(elementAddress),
     name,
     index,
     locationDescriptor,
@@ -121,11 +126,12 @@ fun ProvisionedMeshNode.transform(): Node {
 
     return Node(
         NodeId(UUID.fromString(uuid)),
-        nodeName,
-        deviceKey?.let { Key(it) },
         nodeAddress,
+        deviceKey?.let { Key(it) },
         security,
+        addedNetKeys.map { it.toNetKey() },
         isConfigured,
+        nodeName,
         companyIdentifier = companyIdentifier,
         productIdentifier = productIdentifier,
         versionIdentifier = versionIdentifier,
@@ -133,13 +139,13 @@ fun ProvisionedMeshNode.transform(): Node {
         nodeFeatures?.transform(),
         secureNetworkBeacon = isSecureNetworkBeaconSupported,
         ttl,
-        isExcluded,
         networkTransmitSettings?.transform(),
         relaySettings?.transform(),
-        addedNetKeys.map { it.toNetKey() },
         addedAppKeys.map { it.toAppKey() },
         elements.transform(nodeAddress),
-        sequenceNumber,
+        isExcluded,
+        null,
+        null
     )
 }
 

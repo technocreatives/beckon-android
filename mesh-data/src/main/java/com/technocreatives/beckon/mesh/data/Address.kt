@@ -30,4 +30,4 @@ value class GroupAddress(@Serializable(with = HexToIntSerializer::class) val val
 value class UnicastAddress(
     @Serializable(with = HexToIntSerializer::class)
     val value: Int
-) : PublishableAddress
+) : PublishableAddress // TODO Can be SubscriptionAddress as well

@@ -7,10 +7,12 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.Instant
 
+// This can only have a value of 0-4095
 @Serializable
 @JvmInline
 value class NetKeyIndex(val value: Int)
 
+// This can only have a value of 0-4095
 @Serializable
 @JvmInline
 value class AppKeyIndex(val value: Int)
@@ -19,14 +21,14 @@ value class AppKeyIndex(val value: Int)
 data class NetKey(
     val name: String,
     val index: NetKeyIndex,
+    val phase: Int = NORMAL_OPERATION,
     @Serializable(with = KeySerializer::class)
     val key: Key,
-    @Serializable(with = KeySerializer::class)
-    val oldKey: Key? = null,
-    val phase: Int = NORMAL_OPERATION,
     @SerialName("minSecurity")
     @Serializable(with = NetKeySecuritySerializer::class)
     val isSecurity: Boolean = false,
+    @Serializable(with = KeySerializer::class)
+    val oldKey: Key? = null,
     @Serializable(with = OffsetDateTimeToLongSerializer::class)
     val timestamp: Long = Instant.now().toEpochMilli(),
 ) {

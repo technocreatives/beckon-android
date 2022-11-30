@@ -7,11 +7,19 @@ import kotlinx.serialization.json.Json
 
 object MeshConfigSerializer {
 
-    private val default = Json { encodeDefaults = true; explicitNulls = false }
-    private val prettyFormat =
-        Json {
-            encodeDefaults = true; explicitNulls = false; prettyPrint = true
-        }
+    private val default = Json {
+        encodeDefaults = true
+        explicitNulls = false
+        ignoreUnknownKeys = true
+
+    }
+
+    private val prettyFormat = Json {
+        encodeDefaults = true
+        explicitNulls = false
+        ignoreUnknownKeys = true
+        prettyPrint = true
+    }
 
     fun decode(string: String): Either<Throwable, MeshConfig> = Either.catch {
         default.decodeFromString(string)

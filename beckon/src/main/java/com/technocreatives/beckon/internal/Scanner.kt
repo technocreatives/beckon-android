@@ -10,9 +10,11 @@ import com.technocreatives.beckon.DeviceFilter
 import com.technocreatives.beckon.ScanError
 import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.support.v18.scanner.BluetoothLeScannerCompat
 import no.nordicsemi.android.support.v18.scanner.ScanCallback
