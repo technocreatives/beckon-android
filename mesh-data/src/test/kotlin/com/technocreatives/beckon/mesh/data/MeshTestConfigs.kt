@@ -7,15 +7,14 @@ import java.io.File
 object MeshTestConfigs {
     private const val meshBasePath = "/mesh/"
 
-    val meshConfigJsons: List<String> by lazy {
+    val meshConfigJsons: Map<String, String> by lazy {
         val meshFolder = File(javaClass.getResource(meshBasePath).file)
         meshFolder.listFiles()!!
-            .toList()
-            .map(File::readText)
+            .toList().associate { it.name to it.readText() }
     }
     val meshConfigs by lazy {
         meshConfigJsons
-            .map { it.asMeshConfig() }
+            .map { it.value.asMeshConfig() }
     }
 
     private val format = Json { encodeDefaults = true }

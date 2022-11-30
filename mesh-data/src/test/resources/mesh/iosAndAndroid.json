@@ -1,0 +1,335 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "id": "http://www.bluetooth.com/specifications/assigned-numbers/mesh-profile/cdb-schema.json#",
+  "version": "1.0.0",
+  "meshUUID": "3777a832-e315-4596-895d-39638c17ffc3",
+  "meshName": "DFuTest",
+  "timestamp": "2022-11-25T15:04:41.594Z",
+  "partial": false,
+  "netKeys": [
+    {
+      "name": "NetKey 1",
+      "index": 0,
+      "key": "CD63D071913894AEF748377FB5BC174A",
+      "phase": 0,
+      "minSecurity": "insecure",
+      "timestamp": "1970-01-01T00:00Z"
+    }
+  ],
+  "appKeys": [
+    {
+      "name": "AppKey 1",
+      "index": 0,
+      "boundNetKey": 0,
+      "key": "2AA1F9A11F7E21C1E40A2D97601B3EA2"
+    }
+  ],
+  "provisioners": [
+    {
+      "provisionerName": "Tyri Provisioner",
+      "UUID": "c0987749-6403-48f9-b4b1-59f760ede5e9",
+      "allocatedUnicastRange": [
+        {
+          "lowAddress": "0001",
+          "highAddress": "1FFF"
+        },
+        {
+          "lowAddress": "2000",
+          "highAddress": "6FFF"
+        }
+      ],
+      "allocatedGroupRange": [
+        {
+          "lowAddress": "E000",
+          "highAddress": "EFFF"
+        },
+        {
+          "lowAddress": "C000",
+          "highAddress": "DFFF"
+        }
+      ],
+      "allocatedSceneRange": [
+        {
+          "firstScene": "0001",
+          "lastScene": "3333"
+        }
+      ],
+      "isLastSelected": true
+    }
+  ],
+  "nodes": [
+    {
+      "UUID": "c0987749-6403-48f9-b4b1-59f760ede5e9",
+      "name": "Tyri Provisioner",
+      "deviceKey": "56E3C43383CF5A24E25D14EDF835D4B0",
+      "unicastAddress": "2000",
+      "security": "insecure",
+      "configComplete": true,
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 2,
+        "relay": 2
+      },
+      "defaultTTL": 5,
+      "excluded": false,
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "elements": [
+        {
+          "address": "2002",
+          "name": "Element: 0x2001",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0001",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0003",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "1205",
+              "bind": [],
+              "subscribe": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "UUID": "a78d03ef-a704-428c-afa3-cc429a135f71",
+      "name": "TYRI_LC_a32f",
+      "deviceKey": "FA68A1430D052AC1DF04E6607D7CB384",
+      "unicastAddress": "0001",
+      "security": "secure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "007E",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 0,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 8,
+        "interval": 11
+      },
+      "relayRetransmit": {
+        "count": 8,
+        "interval": 2
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0001",
+          "name": "Element: 0x0001",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "E001"
+              ],
+              "publish": {
+                "address": "E000",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 100
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "UUID": "31d10c70-e0b2-4788-9748-b06497ca86ee",
+      "name": "TYRI_LC_48d7",
+      "deviceKey": "D45DB2A240B102E1C140BA3FBC5800C4",
+      "unicastAddress": "0002",
+      "security": "insecure",
+      "configComplete": false,
+      "cid": "0806",
+      "pid": "0010",
+      "vid": "007E",
+      "crpl": "0040",
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 1,
+        "relay": 1
+      },
+      "defaultTTL": 4,
+      "excluded": false,
+      "networkTransmit": {
+        "count": 7,
+        "interval": 11
+      },
+      "relayRetransmit": {
+        "count": 7,
+        "interval": 2
+      },
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "elements": [
+        {
+          "address": "0002",
+          "name": "Element: 0x0002",
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "modelId": "0000",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "0002",
+              "bind": [],
+              "subscribe": []
+            },
+            {
+              "modelId": "08061000",
+              "bind": [
+                0
+              ],
+              "subscribe": [
+                "E001"
+              ],
+              "publish": {
+                "address": "E000",
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 100
+                },
+                "credentials": 0,
+                "ttl": 10,
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "groups": [
+    {
+      "name": "allProvisionersGroup",
+      "address": "E000",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "allSensorGroup",
+      "address": "E002",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "allLightsGroup",
+      "address": "E001",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "remoteGroupUp",
+      "address": "E100",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "remoteGroupDown",
+      "address": "E103",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "remoteGroupLeft",
+      "address": "E101",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "remoteGroupRight",
+      "address": "E102",
+      "parentAddress": "0000"
+    },
+    {
+      "name": "ghj",
+      "address": "C000",
+      "parentAddress": "0000"
+    }
+  ],
+  "scenes": [],
+  "networkExclusions": []
+}

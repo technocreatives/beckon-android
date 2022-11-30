@@ -21,6 +21,8 @@ data class NetKey(
     val index: NetKeyIndex,
     @Serializable(with = KeySerializer::class)
     val key: Key,
+    @Serializable(with = KeySerializer::class)
+    val oldKey: Key? = null,
     val phase: Int = NORMAL_OPERATION,
     @SerialName("minSecurity")
     @Serializable(with = NetKeySecuritySerializer::class)
@@ -50,6 +52,8 @@ data class AppKey(
 
     @Serializable(with = KeySerializer::class)
     val key: Key,
+    @Serializable(with = KeySerializer::class)
+    val oldKey: Key? = null,
 )
 
 

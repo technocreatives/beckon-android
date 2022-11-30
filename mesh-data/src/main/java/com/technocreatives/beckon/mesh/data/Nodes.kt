@@ -4,6 +4,7 @@ import arrow.optics.optics
 import com.technocreatives.beckon.mesh.data.serializer.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import java.util.*
 
 @Serializable
@@ -15,6 +16,7 @@ data class Node(
     @Serializable(with = KeySerializer::class)
     val deviceKey: Key? = null,
     val unicastAddress: UnicastAddress,
+    // TODO Should be enum
     @Serializable(with = NodeSecuritySerializer::class)
     val security: Int,
     @SerialName("configComplete")
@@ -31,17 +33,39 @@ data class Node(
     @Serializable(with = HexToIntSerializer::class)
     val crpl: Int? = null,
     val features: Features? = null,
-    val defaultTTL: Int,
+    val secureNetworkBeacon: Boolean? = null,
+    val defaultTTL: Int? = null,
     val excluded: Boolean,
     val networkTransmit: NetworkTransmit? = null,
     val relayRetransmit: RelayRetransmit? = null,
     val netKeys: List<NodeNetKey> = emptyList(),
     val appKeys: List<NodeAppKey> = emptyList(),
     val elements: List<Element> = emptyList(),
+
+
     @Transient val sequenceNumber: Int = 0,
+    val heartbeatPub: HeartbeatPub? = null,
+    val heartbeatSub: HeartbeatSub? = null
 ) {
     companion object
 }
+
+// TODO Review this class according to spec
+@Serializable
+data class HeartbeatPub(
+    val address: PublishableAddress,
+    val period: Int,
+    val ttl: Int,
+    val index: Int,
+    val features: Features?
+)
+
+// TODO Review this class according to spec
+@Serializable
+data class HeartbeatSub(
+    val source: UnicastAddress,
+    val destination: UnicastAddress
+)
 
 @Serializable
 @JvmInline
@@ -134,11 +158,11 @@ data class TransmitData(
     }
     companion object {
         fun decodeNetworkTransmissionInterval(interval: Int): Int {
-            require(!(interval >= 10 && interval <= 320 && interval % 10 != 0)) { "Network Transmission Interval must be 10-320 ms with a step of 10 ms" }
+            require(!(interval in 10..320 && interval % 10 != 0)) { "Network Transmission Interval must be 10-320 ms with a step of 10 ms" }
             return interval / 10 - 1
         }
         fun decodeRelayRetransmitInterval(interval: Int): Int {
-            require(!(interval >= 10 && interval <= 320 && interval % 10 != 0)) { "Relay Retransmit Interval must be in range of 10-320 ms." }
+            require(!(interval in 10..320 && interval % 10 != 0)) { "Relay Retransmit Interval must be in range of 10-320 ms." }
             return interval / 10 - 1
         }
     }

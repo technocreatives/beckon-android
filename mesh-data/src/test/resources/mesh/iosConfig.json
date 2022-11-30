@@ -141,7 +141,6 @@
                 ],
                 "modelId" : "0000",
                 "subscribe" : [
-  
                 ]
               },
               {
@@ -194,7 +193,6 @@
           {
             "index" : 0,
             "updated" : false
-  
           }
         ],
         "defaultTTL" : 4,

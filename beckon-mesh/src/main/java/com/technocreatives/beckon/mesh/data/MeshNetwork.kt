@@ -54,7 +54,7 @@ fun ApplicationKey.transform(): AppKey = AppKey(
 )
 
 fun NetworkKey.transform(): NetKey = NetKey(
-    name, NetKeyIndex(keyIndex), Key(key), phase, isMinSecurity, timestamp
+    name, NetKeyIndex(keyIndex), Key(key), oldKey?.let { Key(it) }, phase, isMinSecurity, timestamp
 )
 
 fun NrfMeshModel.transform(): Model =
@@ -131,6 +131,7 @@ fun ProvisionedMeshNode.transform(): Node {
         versionIdentifier = versionIdentifier,
         crpl = crpl,
         nodeFeatures?.transform(),
+        secureNetworkBeacon = isSecureNetworkBeaconSupported,
         ttl,
         isExcluded,
         networkTransmitSettings?.transform(),

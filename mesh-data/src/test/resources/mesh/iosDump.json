@@ -1,0 +1,241 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "appKeys": [
+    {
+      "boundNetKey": 0,
+      "index": 0,
+      "key": "EFCACCF088C1BC980437FA6F821F5B06",
+      "name": "AppKey 1"
+    }
+  ],
+  "groups": [
+    {
+      "address": "E000",
+      "name": "allProvisionersGroup",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E002",
+      "name": "allSensorGroup",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E001",
+      "name": "allLightsGroup",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E100",
+      "name": "remoteGroupUp",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E103",
+      "name": "remoteGroupDown",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E101",
+      "name": "remoteGroupLeft",
+      "parentAddress": "0000"
+    },
+    {
+      "address": "E102",
+      "name": "remoteGroupRight",
+      "parentAddress": "0000"
+    }
+  ],
+  "id": "http:\\/\\/www.bluetooth.com\\/specifications\\/assigned-numbers\\/mesh-profile\\/cdb-schema.json#",
+  "meshName": "Meah",
+  "meshUUID": "665840CF-086A-4C8E-AC45-4B144B6D131D",
+  "netKeys": [
+    {
+      "index": 0,
+      "key": "0B91A84233F92FBC1B7779521828F415",
+      "minSecurity": "insecure",
+      "name": "NetKey 1",
+      "phase": 0,
+      "timestamp": "2000-01-01T00:00:00Z"
+    }
+  ],
+  "nodes": [
+    {
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "configComplete": true,
+      "defaultTTL": 5,
+      "deviceKey": "0E3EB6C4CF93E63C4D2B05DDA86B6C3C",
+      "elements": [
+        {
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "bind": [],
+              "modelId": "0000",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "0001",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "0002",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "0003",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "1205",
+              "subscribe": []
+            }
+          ]
+        }
+      ],
+      "excluded": false,
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 2,
+        "relay": 2
+      },
+      "name": "Tyri Provisioner",
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": true
+        }
+      ],
+      "security": "insecure",
+      "unicastAddress": "2000",
+      "UUID": "9FA42C1B-4CFB-4D7D-879D-3568B528EE60"
+    },
+    {
+      "appKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "cid": "0806",
+      "configComplete": false,
+      "crpl": "0040",
+      "defaultTTL": 4,
+      "deviceKey": "A9DD54A9E1B2A130F3BCF7CFAAFB0E03",
+      "elements": [
+        {
+          "index": 0,
+          "location": "0000",
+          "models": [
+            {
+              "bind": [],
+              "modelId": "0000",
+              "subscribe": []
+            },
+            {
+              "bind": [],
+              "modelId": "0002",
+              "subscribe": []
+            },
+            {
+              "bind": [
+                0
+              ],
+              "modelId": "08061000",
+              "publish": {
+                "address": "E000",
+                "credentials": 0,
+                "index": 0,
+                "period": {
+                  "numberOfSteps": 0,
+                  "resolution": 100
+                },
+                "retransmit": {
+                  "count": 0,
+                  "interval": 50
+                },
+                "ttl": 10
+              },
+              "subscribe": [
+                "E001"
+              ]
+            }
+          ]
+        }
+      ],
+      "excluded": false,
+      "features": {
+        "friend": 2,
+        "lowPower": 2,
+        "proxy": 0,
+        "relay": 1
+      },
+      "name": "TYRI_LC_5ff9",
+      "netKeys": [
+        {
+          "index": 0,
+          "updated": false
+        }
+      ],
+      "networkTransmit": {
+        "count": 8,
+        "interval": 120
+      },
+      "pid": "0010",
+      "relayRetransmit": {
+        "count": 8,
+        "interval": 30
+      },
+      "security": "secure",
+      "unicastAddress": "0001",
+      "UUID": "935DA354-188F-4CCC-B95F-3ED0FB0ED510",
+      "vid": "008D"
+    }
+  ],
+  "partial": false,
+  "provisioners": [
+    {
+      "allocatedGroupRange": [
+        {
+          "highAddress": "EFFF",
+          "lowAddress": "E000"
+        },
+        {
+          "highAddress": "DFFF",
+          "lowAddress": "C000"
+        }
+      ],
+      "allocatedSceneRange": [
+        {
+          "firstScene": "0001",
+          "lastScene": "3333"
+        }
+      ],
+      "allocatedUnicastRange": [
+        {
+          "highAddress": "1FFF",
+          "lowAddress": "0001"
+        },
+        {
+          "highAddress": "6FFF",
+          "lowAddress": "2000"
+        }
+      ],
+      "provisionerName": "Tyri Provisioner",
+      "UUID": "9FA42C1B-4CFB-4D7D-879D-3568B528EE60"
+    }
+  ],
+  "scenes": [],
+  "timestamp": "2022-11-28T12:21:04Z",
+  "version": "1.0.0"
+}
