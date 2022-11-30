@@ -3,9 +3,11 @@ package com.technocreatives.beckon.mesh.data
 import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
 import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.NetKeySecuritySerializer
+import com.technocreatives.beckon.mesh.data.util.SecureUtils
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.time.Instant
+import java.util.*
 
 // This can only have a value of 0-4095
 @Serializable
@@ -22,8 +24,8 @@ data class NetKey(
     val name: String,
     val index: NetKeyIndex,
     val phase: Int = NORMAL_OPERATION,
-    @Serializable(with = KeySerializer::class)
     val key: Key,
+    val oldKey: Key? = null,
     @SerialName("minSecurity")
     @Serializable(with = NetKeySecuritySerializer::class)
     val isSecurity: Boolean = false,
@@ -43,10 +45,14 @@ data class NetKey(
         const val REVOKE_OLD_KEYS = 3 //Key Distribution
     }
 
+    fun networkId() = toNetworkId(key)
+    fun oldNetworkId() = oldKey?.let { toNetworkId(it) }
 
+    fun isNetworkIdMatch(id: NetworkId): Boolean =
+       networkId().equal(id) || oldNetworkId()?.equal(id) ?: false
+
+    private fun toNetworkId(key: Key) = NetworkId(SecureUtils.calculateK3(key.value))
 }
-
-
 
 @Serializable
 data class AppKey(
@@ -54,14 +60,12 @@ data class AppKey(
     val index: AppKeyIndex,
     val boundNetKey: NetKeyIndex,
 
-    @Serializable(with = KeySerializer::class)
     val key: Key,
-    @Serializable(with = KeySerializer::class)
     val oldKey: Key? = null,
 )
 
 
-@Serializable
+@Serializable(with = KeySerializer::class)
 data class Key(val value: ByteArray) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

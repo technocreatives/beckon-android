@@ -7,8 +7,20 @@ import arrow.core.continuations.either
 import arrow.core.right
 import arrow.core.rightIfNotNull
 import com.technocreatives.beckon.BeckonClient
+import com.technocreatives.beckon.ScanError
+import com.technocreatives.beckon.ScanResult
+import com.technocreatives.beckon.ScannerSetting
+import com.technocreatives.beckon.extensions.scan
+import com.technocreatives.beckon.extensions.scanSingle
 import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.extensions.transform
+import com.technocreatives.beckon.util.filterMapZ
+import com.technocreatives.beckon.util.filterZ
+import com.technocreatives.beckon.util.mapZ
+import com.technocreatives.beckon.util.scanZ
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 import java.util.*
 
@@ -112,4 +124,14 @@ class BeckonMeshClient(
         sharedPreferences.edit(commit = true) {
             this.putString("mesh_uuid", id.toString())
         }
+
+    private suspend fun scanSingle(scannerSetting: ScannerSetting): Flow<Either<ScanError, NetworkId>> {
+        return beckonClient.scanSingle(scannerSetting)
+            .filterMapZ { it.scanRecord?.transform()?.networkId }
+            .distinctUntilChanged()
+    }
+
+    private suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<NetworkId>>> =
+        scanSingle(scannerSetting)
+            .scanZ(emptyList()) { list, id -> list + id }
 }

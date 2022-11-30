@@ -31,6 +31,9 @@ data class MeshConfig @OptIn(ExperimentalSerializationApi::class) constructor(
     val networkExclusions: List<NetworkExclusion> = emptyList(),
 ) {
     companion object
+
+    fun isNetworkIdMatch(id: NetworkId): Boolean =
+        netKeys.any { it.isNetworkIdMatch(id) }
 }
 
 @ExperimentalSerializationApi

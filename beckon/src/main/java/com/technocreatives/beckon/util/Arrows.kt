@@ -1,25 +1,12 @@
 package com.technocreatives.beckon.util
 
-import arrow.core.Either
-import arrow.core.Nel
-import arrow.core.Validated
-import arrow.core.flatMap
-import arrow.core.getOrElse
-import arrow.core.left
-import arrow.core.nonEmptyListOf
-import arrow.core.right
-import arrow.core.sequenceValidated
+import arrow.core.*
 import arrow.typeclasses.Semigroup
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flatMapConcat
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.*
 
 fun <E, A> List<Validated<E, A>>.parallelValidate(): Validated<Nel<E>, List<A>> {
     return this.map { it.mapLeft { nonEmptyListOf(it) } }
-        .sequenceValidated(Semigroup.nonEmptyList())
+        .sequence(Semigroup.nonEmptyList())
 }
 
 typealias FlowZ<E, A> = Flow<Either<E, A>>
@@ -51,11 +38,23 @@ inline fun <E, T> Flow<Either<E, T>>.filterZ(crossinline f: suspend (T) -> Boole
         either.fold({ true }, { f(it) })
     }
 
+inline fun <T, R> Flow<T>.filterMap(crossinline f: suspend (T) -> R?): Flow<R> =
+    transform { value ->
+        val result = f(value)
+        if (result != null) return@transform emit(result)
+    }
+
+
+inline fun <E, T, R> Flow<Either<E, T>>.filterMapZ(crossinline f: suspend (T) -> R?): Flow<Either<E, R>> =
+    filterMap { either ->
+        either.fold({ it.left() }, { f(it)?.let { it.right() } })
+    }
+
 // @OptIn(ExperimentalTypeInference::class)
 // @BuilderInference
-fun <E, T, R> Flow<Either<E, T>>.scanZ(
+suspend inline fun <E, T, R> Flow<Either<E, T>>.scanZ(
     initialValue: R,
-    operation: suspend (accumulator: R, value: T) -> R
+    crossinline operation: suspend (accumulator: R, value: T) -> R
 ): Flow<Either<E, R>> {
     return scan(
         initialValue.right() as Either<E, R>

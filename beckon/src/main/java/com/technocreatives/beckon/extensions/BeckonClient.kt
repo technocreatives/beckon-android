@@ -11,6 +11,7 @@ import com.technocreatives.beckon.util.scanZ
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.runBlocking
@@ -32,6 +33,27 @@ suspend fun BeckonClient.scan(
     }
     return startScan(setting)
         .scanZ(emptyList(), builder)
+        .onEach {
+            if (it.isLeft()) {
+                stopScan()
+            }
+        }
+}
+
+/**
+ * startScan
+ * Stop scan when error happen or when job is completed
+ */
+suspend fun BeckonClient.scanSingle(
+    setting: ScannerSetting,
+): Flow<Either<ScanError, ScanResult>> {
+    coroutineContext[Job]?.invokeOnCompletion {
+        runBlocking {
+            stopScan()
+        }
+    }
+    return startScan(setting)
+        .distinctUntilChanged()
         .onEach {
             if (it.isLeft()) {
                 stopScan()
