@@ -5,8 +5,8 @@ import com.technocreatives.beckon.BeckonActionError
 import com.technocreatives.beckon.mesh.*
 import com.technocreatives.beckon.mesh.data.OpCode
 import com.technocreatives.beckon.mesh.data.UnassignedAddress
+import com.technocreatives.beckon.mesh.data.util.toHex
 import com.technocreatives.beckon.mesh.extensions.info
-import com.technocreatives.beckon.mesh.extensions.toHex
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.select

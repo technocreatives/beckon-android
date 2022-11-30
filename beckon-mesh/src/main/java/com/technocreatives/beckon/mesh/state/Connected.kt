@@ -19,6 +19,7 @@ import com.technocreatives.beckon.mesh.data.ProxyFilterMessage
 import com.technocreatives.beckon.mesh.data.RelayRetransmit
 import com.technocreatives.beckon.mesh.data.UnassignedAddress
 import com.technocreatives.beckon.mesh.data.UnicastAddress
+import com.technocreatives.beckon.mesh.data.util.toHex
 import com.technocreatives.beckon.mesh.extensions.info
 import com.technocreatives.beckon.mesh.extensions.onDisconnect
 import com.technocreatives.beckon.mesh.extensions.sequenceNumber
@@ -36,7 +37,6 @@ import com.technocreatives.beckon.mesh.processor.Pdu
 import com.technocreatives.beckon.mesh.processor.PduSender
 import com.technocreatives.beckon.mesh.scenario.InstantRetry
 import com.technocreatives.beckon.mesh.scenario.Retry
-import com.technocreatives.beckon.mesh.toHex
 import com.technocreatives.beckon.mesh.toInt
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job

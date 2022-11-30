@@ -2,7 +2,7 @@ package com.technocreatives.beckon.mesh.callbacks
 
 import androidx.annotation.CallSuper
 import com.technocreatives.beckon.mesh.BeckonMeshManagerApi
-import com.technocreatives.beckon.mesh.extensions.toHex
+import com.technocreatives.beckon.mesh.data.util.toHex
 import kotlinx.coroutines.runBlocking
 import no.nordicsemi.android.mesh.MeshStatusCallbacks
 import no.nordicsemi.android.mesh.opcodes.ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS

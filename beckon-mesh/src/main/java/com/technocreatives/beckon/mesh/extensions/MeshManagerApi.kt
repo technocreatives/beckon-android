@@ -10,8 +10,8 @@ import com.technocreatives.beckon.mesh.ProvisioningError
 import com.technocreatives.beckon.mesh.data.NetworkId
 import com.technocreatives.beckon.mesh.data.netKeys
 import com.technocreatives.beckon.mesh.data.transform
+import com.technocreatives.beckon.mesh.data.util.toHex
 import com.technocreatives.beckon.mesh.model.MeshScanResult
-import com.technocreatives.beckon.mesh.toHex
 import kotlinx.coroutines.CompletableDeferred
 import no.nordicsemi.android.mesh.MeshBeacon
 import no.nordicsemi.android.mesh.MeshManagerApi

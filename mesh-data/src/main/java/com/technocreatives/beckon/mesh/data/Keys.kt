@@ -1,8 +1,8 @@
 package com.technocreatives.beckon.mesh.data
 
 import com.technocreatives.beckon.mesh.data.serializer.KeySerializer
-import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.serializer.NetKeySecuritySerializer
+import com.technocreatives.beckon.mesh.data.serializer.OffsetDateTimeToLongSerializer
 import com.technocreatives.beckon.mesh.data.util.SecureUtils
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -45,6 +45,7 @@ data class NetKey(
         const val REVOKE_OLD_KEYS = 3 //Key Distribution
     }
 
+    fun identityKey(): Key = SecureUtils.calculateIdentityKey(key)
     fun networkId() = toNetworkId(key)
     fun oldNetworkId() = oldKey?.let { toNetworkId(it) }
 
