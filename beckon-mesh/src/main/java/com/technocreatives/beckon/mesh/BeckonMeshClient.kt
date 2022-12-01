@@ -8,15 +8,13 @@ import arrow.core.right
 import arrow.core.rightIfNotNull
 import com.technocreatives.beckon.BeckonClient
 import com.technocreatives.beckon.ScanError
-import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.ScannerSetting
-import com.technocreatives.beckon.extensions.scan
 import com.technocreatives.beckon.extensions.scanSingle
-import com.technocreatives.beckon.mesh.data.*
+import com.technocreatives.beckon.mesh.data.MeshConfig
+import com.technocreatives.beckon.mesh.data.MeshConfigSerializer
+import com.technocreatives.beckon.mesh.data.NetworkId
 import com.technocreatives.beckon.mesh.extensions.transform
 import com.technocreatives.beckon.util.filterMapZ
-import com.technocreatives.beckon.util.filterZ
-import com.technocreatives.beckon.util.mapZ
 import com.technocreatives.beckon.util.scanZ
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -125,13 +123,20 @@ class BeckonMeshClient(
             this.putString("mesh_uuid", id.toString())
         }
 
-    private suspend fun scanSingle(scannerSetting: ScannerSetting): Flow<Either<ScanError, NetworkId>> {
+    suspend fun scanSingle(): Flow<Either<ScanError, NetworkId>> =
+        scanSingle(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+
+    suspend fun scan(): Flow<Either<ScanError, List<NetworkId>>> =
+        scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+
+
+    suspend fun scanSingle(scannerSetting: ScannerSetting): Flow<Either<ScanError, NetworkId>> {
         return beckonClient.scanSingle(scannerSetting)
             .filterMapZ { it.scanRecord?.transform()?.networkId }
             .distinctUntilChanged()
     }
 
-    private suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<NetworkId>>> =
+    suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<NetworkId>>> =
         scanSingle(scannerSetting)
             .scanZ(emptyList()) { list, id -> list + id }
 }
