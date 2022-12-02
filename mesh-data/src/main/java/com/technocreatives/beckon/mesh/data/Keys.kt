@@ -25,11 +25,9 @@ data class NetKey(
     val index: NetKeyIndex,
     val phase: Int = NORMAL_OPERATION,
     val key: Key,
-    val oldKey: Key? = null,
     @SerialName("minSecurity")
     @Serializable(with = NetKeySecuritySerializer::class)
     val isSecurity: Boolean = false,
-    @Serializable(with = KeySerializer::class)
     val oldKey: Key? = null,
     @Serializable(with = OffsetDateTimeToLongSerializer::class)
     val timestamp: Long = Instant.now().toEpochMilli(),
@@ -50,7 +48,7 @@ data class NetKey(
     fun oldNetworkId() = oldKey?.let { toNetworkId(it) }
 
     fun isNetworkIdMatch(id: NetworkId): Boolean =
-       networkId().equal(id) || oldNetworkId()?.equal(id) ?: false
+       networkId().isEqual(id) || oldNetworkId()?.isEqual(id) ?: false
 
     private fun toNetworkId(key: Key) = NetworkId(SecureUtils.calculateK3(key.value))
 }

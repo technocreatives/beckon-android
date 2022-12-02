@@ -7,14 +7,14 @@ import kotlinx.serialization.Serializable
 @JvmInline
 @Serializable(with = NetworkIdSerializer::class)
 value class NetworkId(val value: ByteArray) {
-    fun equal(other: NetworkId) =
+
+    fun isEqual(other: NetworkId) =
         value.contentEquals(other.value)
 
     fun toHex() =
         value.toHex()
 
-    override fun toString(): String {
-        return "NetworkId(value=${toHex()})"
-    }
+    override fun toString(): String =
+        "NetworkId(value=${toHex()})"
 
 }
