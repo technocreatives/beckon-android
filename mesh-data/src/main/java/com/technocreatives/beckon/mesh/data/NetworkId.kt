@@ -4,17 +4,26 @@ import com.technocreatives.beckon.mesh.data.serializer.NetworkIdSerializer
 import com.technocreatives.beckon.mesh.data.util.toHex
 import kotlinx.serialization.Serializable
 
-@JvmInline
 @Serializable(with = NetworkIdSerializer::class)
-value class NetworkId(val value: ByteArray) {
+data class NetworkId(val value: ByteArray) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
 
-    fun isEqual(other: NetworkId) =
-        value.contentEquals(other.value)
+        other as Key
+
+        if (!value.contentEquals(other.value)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return value.contentHashCode()
+    }
 
     fun toHex() =
         value.toHex()
 
     override fun toString(): String =
         "NetworkId(value=${toHex()})"
-
 }
