@@ -14,19 +14,19 @@ import java.util.*
 @Serializable(with = ModelSerializer::class)
 sealed interface Model {
     val modelId: ModelId
-    val bind: List<AppKeyIndex>
     val subscribe: List<SubscriptionAddress>
     val publish: Publish?
+    val bind: List<AppKeyIndex>
     fun toSerialization() = ModelData(
-        modelId, bind, subscribe, publish
+        modelId, subscribe, publish, bind
     )
 }
 
 data class VendorModel(
     override val modelId: ModelId,
-    override val bind: List<AppKeyIndex> = emptyList(),
     override val subscribe: List<SubscriptionAddress> = emptyList(),
-    override val publish: Publish? = null
+    override val publish: Publish? = null,
+    override val bind: List<AppKeyIndex> = emptyList()
 ) : Model {
 
     val buffer by lazy {
@@ -40,17 +40,17 @@ data class VendorModel(
 
 data class SigModel(
     override val modelId: ModelId,
-    override val bind: List<AppKeyIndex> = emptyList(),
     override val subscribe: List<SubscriptionAddress> = emptyList(),
-    override val publish: Publish? = null
+    override val publish: Publish? = null,
+    override val bind: List<AppKeyIndex> = emptyList()
 ) : Model
 
 @Serializable
 data class ModelData(
     val modelId: ModelId,
-    val bind: List<AppKeyIndex> = emptyList(),
     val subscribe: List<SubscriptionAddress> = emptyList(),
-    val publish: Publish? = null
+    val publish: Publish? = null,
+    val bind: List<AppKeyIndex> = emptyList()
 ) {
     private fun isVendorModel() = modelId.value < Short.MIN_VALUE || modelId.value > Short.MAX_VALUE
 
@@ -61,11 +61,11 @@ data class ModelData(
     }
 
     private fun toSigModel() = SigModel(
-        modelId, bind, subscribe, publish
+        modelId, subscribe, publish, bind
     )
 
     private fun toVendorModel() = VendorModel(
-        modelId, bind, subscribe, publish
+        modelId, subscribe, publish, bind
     )
 }
 
@@ -87,23 +87,23 @@ value class ModelId(val value: Int) {
 data class Publish(
     val address: GroupAddress, // TODO Addressable
     val index: AppKeyIndex,
+    val ttl: Int, // TODO Should be TTL type, must have range 0-127
     val period: Period,
     @SerialName("credentials")
     @Serializable(with = IntToBooleanSerializer::class)
-    val credentialsFlag: Boolean,
-    val ttl: Int,
+    val credentialsFlag: Boolean, // TODO Probably should be enum MANAGED_FLOODING_SECURITY_MATERIAL (0) or FRIENDSHIP_SECURITY_MATERIAL (1)
     val retransmit: Retransmit
 )
 
 @Serializable
 data class Retransmit(
-    val count: Int,
-    val interval: Int
+    val count: Int, // TODO must be 0-7
+    val interval: Int // TODO must be 50-1600 with resolution of 50
 )
 
 @Serializable
 data class Period(
-    val numberOfSteps: Int,
+    val numberOfSteps: Int, // TODO Must be 0-63
     val resolution: PublicationResolution,
 )
 

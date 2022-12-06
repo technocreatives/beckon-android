@@ -12,19 +12,19 @@ import java.util.*
 @optics
 data class MeshConfig @OptIn(ExperimentalSerializationApi::class) constructor(
     @SerialName("\$schema")
-    val schema: String,
-    val id: String,
+    val schema: String, // TODO URL
+    val id: String, // TODO URL
     val version: String,
     @Serializable(with = UuidSerializer::class)
     @SerialName("meshUUID")
     val meshUuid: UUID,
     val meshName: String,
     @Serializable(with = OffsetDateTimeToLongSerializer::class)
-    val timestamp: Long,
+    val timestamp: Long, // TODO Verify format to spec
     val partial: Boolean,
+    val provisioners: List<Provisioner>,
     val netKeys: List<NetKey> = emptyList(),
     val appKeys: List<AppKey> = emptyList(),
-    val provisioners: List<Provisioner>,
     val nodes: List<Node> = emptyList(),
     val groups: List<Group> = emptyList(),
     val scenes: List<Scene> = emptyList(),

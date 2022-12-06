@@ -6,6 +6,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Group(
     val name: String,
-    val address: GroupAddress,
-    val parentAddress: GroupAddress = GroupAddress(Constants.UnassignedAddress),
+    val address: GroupAddress, // TODO Can also be virtual label UUID
+    val parentAddress: GroupAddress = GroupAddress(Constants.UnassignedAddress), // TODO Unassinged, Group or Virutal label UUID and shall not be same as address property
 )

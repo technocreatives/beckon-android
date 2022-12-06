@@ -5,6 +5,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Scene(
     val name: String,
-    val number: Int,
+    val number: Int, // TODO create SceneNumber
     val addresses: List<UnicastAddress>
 )

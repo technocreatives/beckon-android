@@ -14,8 +14,8 @@ data class Provisioner(
     val name: String,
     @SerialName("UUID")
     val id: NodeId,
-    val allocatedUnicastRange: List<AddressRange>,
-    val allocatedGroupRange: List<AddressRange>,
+    val allocatedUnicastRange: List<AddressRange>, // TODO Should be special kind of range where 0x0001 to 0x7FFF is allowed
+    val allocatedGroupRange: List<AddressRange>,// TODO Should be special kind of range where 0xC000 to 0xFFFF is allowed
     val allocatedSceneRange: List<SceneRange>,
     @Transient val isLastSelected: Boolean = false,
 ) {

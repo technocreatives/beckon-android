@@ -1,7 +1,6 @@
 package com.technocreatives.beckon.mesh.data
 
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
+import arrow.core.computations.ResultEffect.bind
 import java.io.File
 
 object MeshTestConfigs {
@@ -17,9 +16,7 @@ object MeshTestConfigs {
             .map { it.value.asMeshConfig() }
     }
 
-    private val format = Json { encodeDefaults = true }
-
-    private fun String.asMeshConfig(): MeshConfig = format.decodeFromString(this)
+    private fun String.asMeshConfig(): MeshConfig = MeshConfigSerializer.decode(this).bind()
 
     fun readMesh(meshName: String): MeshConfig {
         val meshFile = File(javaClass.getResource(meshBasePath + meshName).file)

@@ -40,9 +40,9 @@ object MeshConfigHelper {
             meshName,
             Instant.now().toEpochMilli(),
             false,
+            listOf(provisioner),
             netKeys,
             appKeys,
-            listOf(provisioner),
             listOf(provisionerNode)
         )
     }
@@ -56,7 +56,6 @@ object MeshConfigHelper {
             SigModel(ModelId(Constants.CONFIGURATION_CLIENT.toInt()))
         val unicast = UnicastAddress(1)
         val element = Element(
-            unicast,
             "Element 0x0001",
             ElementIndex(0),
             location = 0,
@@ -66,23 +65,22 @@ object MeshConfigHelper {
         val nodeAppKeys = appKeys.map { NodeAppKey(it.index, true) }
         return Node(
             provisioner.id,
-            provisioner.name,
-            Key(generateRandomNumber()),
             UnicastAddress(1),
+            Key(generateRandomNumber()),
             security = 0,
+            netKeys = nodeNetKeys,
             isConfigured = true,
+            provisioner.name,
             defaultTTL = 5,
             features = Features.Unsupported(),
             excluded = false,
-            sequenceNumber = 0,
             elements = listOf(element),
-            netKeys = nodeNetKeys,
             appKeys = nodeAppKeys,
         )
     }
 
     private fun generateNetKeys(): List<NetKey> =
-        listOf(NetKey("NetKey 1", NetKeyIndex(0), Key(generateRandomNumber())))
+        listOf(NetKey("NetKey 1", NetKeyIndex(0), key = Key(generateRandomNumber())))
 
     private fun generateAppKeys() =
         listOf(
@@ -106,6 +104,6 @@ object MeshConfigHelper {
         NetKey(
             "NetKey $netKeyIndex",
             NetKeyIndex(netKeyIndex),
-            Key(generateRandomNumber())
+            key = Key(generateRandomNumber())
         )
 }
