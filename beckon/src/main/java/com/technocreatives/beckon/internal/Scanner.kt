@@ -32,68 +32,68 @@ internal class ScannerImpl : Scanner {
     private val scanner = BluetoothLeScannerCompat.getScanner()
 
     private var callback: ScanCallback? = null
-    private var scanSubject: MutableSharedFlow<Either<ScanError, ScanResult>>? = null
+
     override suspend fun startScan(setting: ScannerSetting): Flow<Either<ScanError, ScanResult>> {
         stopScan()
         Timber.d("Scanner start scanning with setting $setting")
-        scanSubject = MutableSharedFlow()
-        callback = object : ScanCallback() {
-            override fun onScanFailed(errorCode: Int) {
-                Timber.w("onScanFailed $errorCode")
-                // scanSubject?.onNext(ScanError.ScanFailed(errorCode).left())
-                runBlocking {
-                    scanSubject?.emit(ScanError.ScanFailed(errorCode).left())
-                }
-            }
+//        scanSubject = MutableSharedFlow()
+        return callbackFlow {
 
-            override fun onScanResult(callbackType: Int, result: BleScanResult) {
-                Timber.d("onScanResult $callbackType $result")
-                runBlocking {
-                    scanSubject?.emit(
+            callback = object : ScanCallback() {
+                override fun onScanFailed(errorCode: Int) {
+                    Timber.w("onScanFailed $errorCode")
+
+                    val result = trySend(ScanError.ScanFailed(errorCode).left())
+                    Timber.w("trySend onScanFailed $result")
+                }
+
+                override fun onScanResult(callbackType: Int, result: BleScanResult) {
+                    Timber.d("onScanResult $callbackType $result")
+                    val result = trySend(
                         ScanResult(
                             result.device,
                             result.rssi,
                             result.scanRecord
                         ).right()
                     )
+                    Timber.w("trySend onScanResult $result")
                 }
-            }
 
-            override fun onBatchScanResults(results: MutableList<BleScanResult>) {
-                Timber.d("onBatchScanResults $results")
-                results.forEach { result ->
-                    runBlocking {
-                        scanSubject?.let {
-                            it.emit(
-                                ScanResult(
-                                    result.device,
-                                    result.rssi,
-                                    result.scanRecord
-                                ).right()
-                            )
-                        }
+                override fun onBatchScanResults(results: MutableList<BleScanResult>) {
+                    Timber.d("onBatchScanResults $results")
+                    results.forEach { result ->
+                        val result = trySend(
+                            ScanResult(
+                                result.device,
+                                result.rssi,
+                                result.scanRecord
+                            ).right()
+
+                        )
+                        Timber.w("trySend onBatchScanResults $result")
                     }
                 }
             }
+
+            val scanFilters = setting.filters.map { it.toScanFilter() }
+            scanner.startScan(scanFilters, setting.settings, callback!!)
+
+            awaitClose {
+                scanner.stopScan(callback!!)
+            }
         }
-
-        val scanFilters = setting.filters.map { it.toScanFilter() }
-        scanner.startScan(scanFilters, setting.settings, callback!!)
-
-        return scanSubject!!.asSharedFlow()
     }
 
     override suspend fun stopScan() {
         Timber.d("ScannerImpl stopScan")
-        scanSubject?.let {
-            scanSubject = null
-        }
+
         callback?.let {
             Timber.d("Scanner stop scanning cleaning callback")
             scanner.stopScan(it)
         }
         callback = null
     }
+
 }
 
 fun DeviceFilter.toScanFilter(): ScanFilter {
