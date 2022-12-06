@@ -42,7 +42,6 @@ internal class ScannerImpl : Scanner {
             callback = object : ScanCallback() {
                 override fun onScanFailed(errorCode: Int) {
                     Timber.w("onScanFailed $errorCode")
-
                     val result = trySend(ScanError.ScanFailed(errorCode).left())
                     Timber.w("trySend onScanFailed $result")
                 }

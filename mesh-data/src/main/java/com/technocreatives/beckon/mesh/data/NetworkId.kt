@@ -10,7 +10,7 @@ data class NetworkId(val value: ByteArray) {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Key
+        other as NetworkId
 
         if (!value.contentEquals(other.value)) return false
 
