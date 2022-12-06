@@ -45,6 +45,11 @@ sealed interface Test {
         val assert: Assertion<ProxyFilterMessage>,
     ) : Test
 
+    data class AssertOnly(
+        val expectedSize: Int,
+        val assert: Assertion<List<ProxyFilterMessage>>
+    ) : Test
+
     data class MultipleVendorMessage(
         val vendorMessages: List<Test>
     ) : Test
@@ -112,6 +117,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             is Test.Action -> test.execute()
             is Test.Repeat -> List(test.times) { runTest(test.test) }.mapAccumulating { it }
                 .bimap({ TestFailed.MultipleFailed(it) }) {}.bind()
+            is Test.AssertOnly -> connected.runTest(test).bind()
         }
     }
 
@@ -132,6 +138,13 @@ class TestRunner(val beckonMesh: BeckonMesh) {
 
             test.assert.assert(result).bind()
 
+        }
+
+    private suspend fun Connected.runTest(test: Test.AssertOnly): Either<TestFailed, Unit> =
+        either {
+            val result: List<ProxyFilterMessage> = beckonMesh.proxyFilterMessages().take(test.expectedSize).collectUntil(30.seconds)
+
+            test.assert.assert(result).bind()
         }
 
     private suspend fun Connected.runTest(test: Test.VendorMessageAck): Either<TestFailed, Unit> =
@@ -174,14 +187,20 @@ suspend fun <A> Flow<A>.collectUntil(duration: Duration): List<A> {
 }
 
 sealed interface TestFailed {
-    data class ExecutionError(val error: Any) : TestFailed
+    data class ExecutionError(val error: Any?) : TestFailed
     data class NotEqual<T>(val test: Test, val actual: T) : TestFailed
     data class MultipleFailed(val fails: Nel<TestFailed>) : TestFailed
     object NotInConnectedSTate : TestFailed
 }
 
+sealed interface MqttConnectError : TestFailed {
+    object TokenNullError: MqttConnectError
+    data class ConnectFailed(val throwable: Throwable?): MqttConnectError
+    data class DisconnectFailed(val throwable: Throwable?): MqttConnectError
+}
+
 sealed interface AssertionFailed : TestFailed {
-    // some description
     data class NotEqual<T>(val expected: T, val actual: T) : AssertionFailed
+    data class MultipleFailed(val fails: Nel<TestFailed>) : AssertionFailed
 }
 
