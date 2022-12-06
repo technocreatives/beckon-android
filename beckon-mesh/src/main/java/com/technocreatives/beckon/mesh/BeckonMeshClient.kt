@@ -137,7 +137,7 @@ class BeckonMeshClient(
     suspend fun scanSingle(scannerSetting: ScannerSetting): Flow<Either<ScanError, NetworkId>> {
         return beckonClient.scanSingle(scannerSetting)
             .filterMapZ { it.scanRecord?.transform()?.networkId }
-            .distinctUntilChanged { old, new -> old.zip(new).map { it.first.isEqual(it.second) } == true.right() }
+            .distinctUntilChanged()
     }
 
     suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<NetworkId>>> =

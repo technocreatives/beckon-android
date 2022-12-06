@@ -48,7 +48,7 @@ data class NetKey(
     fun oldNetworkId() = oldKey?.let { toNetworkId(it) }
 
     fun isNetworkIdMatch(id: NetworkId): Boolean =
-       networkId().isEqual(id) || oldNetworkId()?.isEqual(id) ?: false
+       networkId() == id || oldNetworkId() == id
 
     private fun toNetworkId(key: Key) = NetworkId(SecureUtils.calculateK3(key.value))
 }
