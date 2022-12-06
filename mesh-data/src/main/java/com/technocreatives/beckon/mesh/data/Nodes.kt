@@ -104,66 +104,14 @@ data class Features(
     }
 }
 
-@Serializable(with = NetworkTransmitSerializer::class)
+@Serializable
 data class NetworkTransmit(
     val count: Int, // TODO must be 1-8
     val interval: Int // TODO must be 10-320
-) {
-    fun toData() = TransmitData(count, interval)
-}
+)
 
-@Serializable(with = RelayRetransmitSerializer::class)
+@Serializable
 data class RelayRetransmit(
     val count: Int, // TODO must be 1-8
     val interval: Int // TODO must be 10-320
-) {
-    fun toData() = TransmitData(count, interval)
-}
-
-@Serializable
-data class TransmitData(
-    val count: Int,
-    val interval: Int
-) {
-    // from Nrf Mesh library NodeDeserializer
-    fun toNetworkTransmit(): NetworkTransmit? {
-        return if (count != 0 && interval != 0) {
-            // Some versions of nRF Mesh lib for Android were exporting interval
-            // as number of steps, not the interval, therefore we can try to fix that.
-            return if (interval % 10 != 0 && interval <= 32) {
-                // Interval that was exported as intervalSteps are imported as it is.
-                NetworkTransmit(count, interval)
-            } else if (interval % 10 == 0) {
-                // Interval that was exported as intervalSteps are decoded to intervalSteps.
-                val steps = decodeNetworkTransmissionInterval(interval)
-                NetworkTransmit(count, steps)
-            } else null
-        } else null
-    }
-
-    // from Nrf Mesh library NodeDeserializer
-    fun toRelayRetransmit(): RelayRetransmit? {
-        return if (count != 0 && interval != 0) {
-            // Some versions of nRF Mesh lib for Android were exporting interval
-            // as number of steps, not the interval, therefore we can try to fix that.
-            if (interval % 10 != 0 && interval <= 32) {
-                // Interval that was exported as intervalSteps are imported as it is.
-                RelayRetransmit(count, interval)
-            } else if (interval % 10 == 0) {
-                // Interval that was exported as intervalSteps are imported as it is.
-                val steps = decodeRelayRetransmitInterval(interval)
-                RelayRetransmit(count, steps)
-            } else null
-        } else null
-    }
-    companion object {
-        fun decodeNetworkTransmissionInterval(interval: Int): Int {
-            require(!(interval in 10..320 && interval % 10 != 0)) { "Network Transmission Interval must be 10-320 ms with a step of 10 ms" }
-            return interval / 10 - 1
-        }
-        fun decodeRelayRetransmitInterval(interval: Int): Int {
-            require(!(interval in 10..320 && interval % 10 != 0)) { "Relay Retransmit Interval must be in range of 10-320 ms." }
-            return interval / 10 - 1
-        }
-    }
-}
+)
