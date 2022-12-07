@@ -118,7 +118,6 @@ fun NrfProvisioner.transform() = Provisioner(
             AddressValue(it.lastScene)
         )
     },
-    isLastSelected,
 )
 
 fun ProvisionedMeshNode.transform(): Node {
@@ -158,7 +157,7 @@ fun RelaySettings.transform() = RelayRetransmit(
 )
 
 fun NrfFeatures.transform() = Features(
-    friend, lowPower, proxy, relay
+    relay, proxy, lowPower, friend
 )
 
 @SuppressLint("RestrictedApi")
