@@ -29,7 +29,6 @@ object MeshConfigHelper {
             unicastRanges,
             groupRanges,
             sceneRanges,
-            true
         )
         val provisionerNode = generateProvisionerNode(provisioner, appKeys, netKeys)
         return MeshConfig(
