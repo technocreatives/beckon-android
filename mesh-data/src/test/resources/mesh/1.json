@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "meshUUID": "1C3D6D30-635B-49A9-A21C-11FCCDD2C9FB",
   "meshName": "nRF Mesh Network",
-  "timestamp": "2021-08-30T13:58:27+02",
+  "timestamp": "2021-08-30T13:58:27+02:00",
   "partial": false,
   "netKeys": [
     {
@@ -13,7 +13,7 @@
       "key": "48696A7D5E0296CF39A20E24E4C611F1",
       "phase": 0,
       "minSecurity": "insecure",
-      "timestamp": "2021-08-30T13:56:35+02"
+      "timestamp": "2021-08-30T13:56:35+02:00"
     }
   ],
   "appKeys": [

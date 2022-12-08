@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "meshUUID": "5C0D9AC7-A0F9-4BC9-982D-BD60000638DB",
   "meshName": "nRF Mesh Network",
-  "timestamp": "2021-09-02T10:58:32+02",
+  "timestamp": "2021-09-02T10:58:32+02:00",
   "partial": false,
   "netKeys": [
     {
@@ -13,7 +13,7 @@
       "key": "4B055CC4349DEA43C9DFF2A3A5EC5C6E",
       "phase": 0,
       "minSecurity": "insecure",
-      "timestamp": "2021-09-02T10:55:10+02"
+      "timestamp": "2021-09-02T10:55:10+02:00"
     },
     {
       "name": "Network Key 2",
@@ -21,7 +21,7 @@
       "key": "ED40CE2737BDDDF9D08313492E756BAE",
       "phase": 0,
       "minSecurity": "insecure",
-      "timestamp": "2021-09-02T10:58:16+02"
+      "timestamp": "2021-09-02T10:58:16+02:00"
     },
     {
       "name": "Network Key 3",
@@ -29,7 +29,7 @@
       "key": "09A5330A4379A856D6DFF54E5B9805D4",
       "phase": 0,
       "minSecurity": "insecure",
-      "timestamp": "2021-09-02T10:58:24+02"
+      "timestamp": "2021-09-02T10:58:24+02:00"
     }
   ],
   "appKeys": [

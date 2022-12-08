@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "meshUUID": "3777a832-e315-4596-895d-39638c17ffc3",
   "meshName": "DFuTest",
-  "timestamp": "2022-11-25T15:04:41.594Z",
+  "timestamp": "2022-11-25T15:04:41Z",
   "partial": false,
   "netKeys": [
     {
@@ -13,7 +13,7 @@
       "key": "CD63D071913894AEF748377FB5BC174A",
       "phase": 0,
       "minSecurity": "insecure",
-      "timestamp": "1970-01-01T00:00Z"
+      "timestamp": "1970-01-01T00:00:37Z"
     }
   ],
   "appKeys": [

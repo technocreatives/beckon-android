@@ -25,8 +25,10 @@ class MeshSerializationTest : StringSpec({
     }
     "mesh decode & encode" {
         MeshTestConfigs.meshConfigJsons
+            .filter { it.key.contains("ios") }
             .forEach {
                 println("Testing ${it.key}")
+                println("Testing ${it.value}")
                 val mesh = serializer.decode(it.value).bind()
                 val json = serializer.encode(mesh)
                 val anotherMesh = serializer.decode(json).bind()

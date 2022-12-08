@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "meshUUID": "eea32ef7-4312-4dbd-93e7-5572b6aadc52",
   "meshName": "ccccc",
-  "timestamp": "2022-02-16T14:55:43.754Z",
+  "timestamp": "2022-02-16T14:55:43Z",
   "partial": false,
   "netKeys": [
     {
@@ -13,7 +13,7 @@
       "key": "9C9356EDD4BA17080098533CA8858A04",
       "phase": 0,
       "minSecurity": "insecure",
-      "timestamp": "1970-01-01T00:00Z"
+      "timestamp": "1970-01-01T00:00:00Z"
     }
   ],
   "appKeys": [

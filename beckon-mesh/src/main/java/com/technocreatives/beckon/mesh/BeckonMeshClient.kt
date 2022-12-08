@@ -16,10 +16,12 @@ import com.technocreatives.beckon.mesh.data.MeshConfigSerializer
 import com.technocreatives.beckon.mesh.data.NetworkId
 import com.technocreatives.beckon.mesh.extensions.transform
 import com.technocreatives.beckon.util.filterMapZ
+import com.technocreatives.beckon.util.mapZ
 import com.technocreatives.beckon.util.scanZ
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.util.*
 
@@ -137,10 +139,10 @@ class BeckonMeshClient(
     suspend fun scanSingle(scannerSetting: ScannerSetting): Flow<Either<ScanError, NetworkId>> {
         return beckonClient.scanSingle(scannerSetting)
             .filterMapZ { it.scanRecord?.transform()?.networkId }
-            .distinctUntilChanged()
     }
 
     suspend fun scan(scannerSetting: ScannerSetting): Flow<Either<ScanError, List<NetworkId>>> =
         scanSingle(scannerSetting)
-            .scanZ(emptyList()) { list, id -> list + id }
+            .scanZ(emptySet<NetworkId>()) { list, id -> list + id }
+            .mapZ { it.toList() }
 }
