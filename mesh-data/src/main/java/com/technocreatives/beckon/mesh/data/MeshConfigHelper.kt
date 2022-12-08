@@ -37,7 +37,7 @@ object MeshConfigHelper {
             VERSION,
             meshId,
             meshName,
-            Instant.now().toEpochMilli(),
+            Instant.now().epochSecond * 1000,
             false,
             listOf(provisioner),
             netKeys,

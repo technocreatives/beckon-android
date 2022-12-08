@@ -30,7 +30,7 @@ data class NetKey(
     val isSecurity: Boolean = false,
     val oldKey: Key? = null,
     @Serializable(with = OffsetDateTimeToLongSerializer::class)
-    val timestamp: Long = Instant.now().toEpochMilli(),
+    val timestamp: Long = Instant.now().epochSecond * 1000,
 ) {
     companion object {
         // Key refresh phases
