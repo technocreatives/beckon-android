@@ -78,7 +78,9 @@ internal class ScannerImpl : Scanner {
             scanner.startScan(scanFilters, setting.settings, callback!!)
 
             awaitClose {
-                scanner.stopScan(callback!!)
+                callback?.let {
+                    scanner.stopScan(it)
+                }
             }
         }
     }
