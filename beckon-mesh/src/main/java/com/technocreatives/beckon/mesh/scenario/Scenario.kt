@@ -279,7 +279,7 @@ internal suspend fun BeckonMesh.connectForProxy(
     raceN(
         { delay(timeout) },
         {
-            scanForProxy(address)
+            scanForNodeIdentity(address)
                 .mapZ { it.firstOrNull() }
                 .filterZ { it != null }
                 .mapZ { it!! }
