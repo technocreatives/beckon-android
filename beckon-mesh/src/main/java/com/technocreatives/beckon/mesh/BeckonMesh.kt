@@ -227,6 +227,7 @@ class BeckonMesh(
     ): Either<ScanError, ScanResult> =
         scanForNodeIdentity(node.unicastAddress)
             .mapZ { it.firstOrNull() }
+            .filterZ { it != null }
             .mapZ { it!! }
             .first()
 
