@@ -13,7 +13,6 @@ import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.internal.toUuid
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
-import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.state.Connected
@@ -226,12 +225,9 @@ class BeckonMesh(
     suspend fun scanAfterProvisioning(
         node: ProvisionedMeshNode,
     ): Either<ScanError, ScanResult> =
-        scanForProxy()
-            .mapZ {
-                it.firstOrNull {
-                    meshApi.isProxyDevice(it.scanRecord!!, node) { stopScan() }
-                }
-            }.filterZ { it != null }
+        scanForNodeIdentity(node.unicastAddress)
+            .mapZ { it.firstOrNull() }
+            .filterZ { it != null }
             .mapZ { it!! }
             .first()
 
@@ -254,7 +250,7 @@ class BeckonMesh(
     }
 
     // scan for the device with a specific unicastAddress
-    suspend fun scanForProxy(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
+    suspend fun scanForNodeIdentity(address: Int): Flow<Either<ScanError, List<ScanResult>>> {
         val scannerSetting = scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID)
         return scan(scannerSetting)
             .mapZ {
