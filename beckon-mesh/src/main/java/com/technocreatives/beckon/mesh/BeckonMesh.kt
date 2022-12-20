@@ -226,12 +226,8 @@ class BeckonMesh(
     suspend fun scanAfterProvisioning(
         node: ProvisionedMeshNode,
     ): Either<ScanError, ScanResult> =
-        scanForProxy()
-            .mapZ {
-                it.firstOrNull {
-                    meshApi.isProxyDevice(it.scanRecord!!, node) { stopScan() }
-                }
-            }.filterZ { it != null }
+        scanForProxy(node.unicastAddress)
+            .mapZ { it.firstOrNull() }
             .mapZ { it!! }
             .first()
 
