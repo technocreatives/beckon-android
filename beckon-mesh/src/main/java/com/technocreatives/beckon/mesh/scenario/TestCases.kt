@@ -56,7 +56,7 @@ sealed interface Test {
 
     data class Action(val execute: suspend () -> Either<TestFailed, Unit>) : Test
 
-    data class Repeat(val times: Int, val test: Test) : Test
+    data class Repeat(val times: Int, val test: SuccessRate) : Test
 
     object Empty : Test
 }
@@ -77,7 +77,7 @@ internal fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int =
 
 @OptIn(ExperimentalTypeInference::class)
 @OverloadResolutionByLambdaReturnType
-public inline fun <E, A, B> Iterable<A>.mapAccumulating(
+inline fun <E, A, B> Iterable<A>.mapAccumulating(
     f: (A) -> Either<E, B>
 ): Either<Nel<E>, List<B>> = Semigroup.nonEmptyList<E>().run {
     fold(Either.Right(ArrayList<B>(collectionSizeOrDefault(10))) as Either<Nel<E>, MutableList<B>>) { acc, a ->
@@ -112,7 +112,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             is Test.VendorMessageAck -> connected.runTest(test).bind()
             is Test.SuccessRate -> connected.runTest(test).bind()
             is Test.SingleVendorMessage -> connected.runTest(test).bind()
-            is Test.MultipleVendorMessage -> connected.runTest(test).bind()
+            is Test.MultipleVendorMessage -> runTest(test).bind()
             Test.Empty -> Unit.right()
             is Test.Action -> test.execute()
             is Test.Repeat -> List(test.times) { runTest(test.test) }.mapAccumulating { it }
@@ -121,7 +121,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
         }
     }
 
-    private suspend fun Connected.runTest(test: Test.MultipleVendorMessage): Either<TestFailed, Unit> =
+    private suspend fun runTest(test: Test.MultipleVendorMessage): Either<TestFailed, Unit> =
         test.vendorMessages.mapAccumulating { runTest(it) }
             .bimap({ TestFailed.MultipleFailed(it) }) {}
 
@@ -169,10 +169,10 @@ class TestRunner(val beckonMesh: BeckonMesh) {
                 ).mapLeft { TestFailed.ExecutionError(it) }.bind()
             }) { r, _ -> r }
 
-            Timber.d("ProxyFilterMessages $result")
+            Timber.d("STEP -> ProxyFilterMessages $result ---> SIZE: ${result.size} ---> ${test.expected.expectedSize()}")
 
             ensure(result.size >= test.expected.expectedSize()) {
-                Timber.w("Failed $result")
+                Timber.w("STEP -> Failed $result ---> SIZE: ${result.size} ---> ${test.expected.expectedSize()}")
                 TestFailed.NotEqual(
                     test, result
                 )
