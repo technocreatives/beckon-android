@@ -50,13 +50,13 @@ sealed interface Test {
         val assert: Assertion<List<ProxyFilterMessage>>
     ) : Test
 
-    data class MultipleVendorMessage(
-        val vendorMessages: List<Test>
+    data class MultipleTests(
+        val tests: List<Test>
     ) : Test
 
-    data class Action(val execute: suspend () -> Either<TestFailed, Unit>) : Test
+    data class Action(val execute: suspend () -> Either<ActionFailed, Unit>) : Test
 
-    data class Repeat(val times: Int, val test: SuccessRate) : Test
+    data class Repeat(val times: Int, val test: Test) : Test
 
     object Empty : Test
 }
@@ -112,7 +112,7 @@ class TestRunner(val beckonMesh: BeckonMesh) {
             is Test.VendorMessageAck -> connected.runTest(test).bind()
             is Test.SuccessRate -> connected.runTest(test).bind()
             is Test.SingleVendorMessage -> connected.runTest(test).bind()
-            is Test.MultipleVendorMessage -> runTest(test).bind()
+            is Test.MultipleTests -> runTest(test).bind()
             Test.Empty -> Unit.right()
             is Test.Action -> test.execute()
             is Test.Repeat -> List(test.times) { runTest(test.test) }.mapAccumulating { it }
@@ -121,8 +121,8 @@ class TestRunner(val beckonMesh: BeckonMesh) {
         }
     }
 
-    private suspend fun runTest(test: Test.MultipleVendorMessage): Either<TestFailed, Unit> =
-        test.vendorMessages.mapAccumulating { runTest(it) }
+    private suspend fun runTest(test: Test.MultipleTests): Either<TestFailed, Unit> =
+        test.tests.mapAccumulating { runTest(it) }
             .bimap({ TestFailed.MultipleFailed(it) }) {}
 
     private suspend fun Connected.runTest(test: Test.SingleVendorMessage): Either<TestFailed, Unit> =
@@ -193,11 +193,7 @@ sealed interface TestFailed {
     object NotInConnectedSTate : TestFailed
 }
 
-sealed interface MqttConnectError : TestFailed {
-    object TokenNullError: MqttConnectError
-    data class ConnectFailed(val throwable: Throwable?): MqttConnectError
-    data class DisconnectFailed(val throwable: Throwable?): MqttConnectError
-}
+class ActionFailed(val throwable: Throwable?): TestFailed
 
 sealed interface AssertionFailed : TestFailed {
     data class NotEqual<T>(val expected: T, val actual: T) : AssertionFailed
