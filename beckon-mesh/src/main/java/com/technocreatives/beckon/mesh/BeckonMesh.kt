@@ -4,6 +4,8 @@ import android.bluetooth.BluetoothDevice
 import android.content.Context
 import arrow.core.Either
 import arrow.core.continuations.either
+import arrow.core.continuations.either.eager
+import arrow.core.continuations.ensureNotNull
 import arrow.core.left
 import arrow.core.right
 import arrow.fx.coroutines.Atomic
@@ -13,13 +15,17 @@ import com.technocreatives.beckon.extensions.subscribe
 import com.technocreatives.beckon.internal.toUuid
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
+import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.state.Loaded
 import com.technocreatives.beckon.mesh.state.MeshState
 import com.technocreatives.beckon.mesh.state.Provisioning
-import com.technocreatives.beckon.util.*
+import com.technocreatives.beckon.util.bluetoothManager
+import com.technocreatives.beckon.util.connectedDevices
+import com.technocreatives.beckon.util.filterZ
+import com.technocreatives.beckon.util.mapZ
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import no.nordicsemi.android.mesh.ApplicationKey
@@ -121,18 +127,13 @@ class BeckonMesh(
         }.mapLeft { IllegalArgumentException("${it.message} - $name, $address") }
     }
 
-    // todo fix error
-    fun deleteGroup(address: Int): Either<DeleteGroupError, Unit> {
+    fun deleteGroup(address: Int): Either<DeleteGroupError, Unit> = eager {
         val network = meshApi.meshNetwork()
         val meshGroup = network.groups.firstOrNull { group -> group.address == address }
-            ?: return DeleteGroupError.GroupDoesNotExist.left()
 
-        if (network.getElements(meshGroup).isNotEmpty()) {
-            return DeleteGroupError.GroupHasElements.left()
-        }
-
-        network.removeGroup(meshGroup)
-        return Unit.right()
+        ensureNotNull(meshGroup) { DeleteGroupError.GroupDoesNotExist }
+        ensure(network.getElements(meshGroup).isNotEmpty()) { DeleteGroupError.GroupHasElements }
+        ensure(network.removeGroup(meshGroup)) { throw IllegalStateException("removeGroup returned false for $meshGroup") }
     }
 
     fun deleteNode(nodeId: NodeId): Boolean {
@@ -141,6 +142,27 @@ class BeckonMesh(
             network.deleteNode(it)
         } ?: false
     }
+
+    fun renameMesh(name: String) {
+        meshApi.meshNetwork().meshName = name
+    }
+
+    fun renameGroup(groupAddress: GroupAddress, name: String): Either<RenameGroupError, Unit> =
+        eager {
+            ensure(name.isNotBlank()) { RenameGroupError.NewNameIsBlank(name) }
+
+            val network = meshApi.meshNetwork()
+
+            val meshGroup =
+                network.groups.firstOrNull { group -> group.address == groupAddress.value }
+
+            ensureNotNull(meshGroup) { RenameGroupError.GroupDoesNotExist }
+            meshGroup.name = name
+
+            ensure(
+                meshApi.meshNetwork().updateGroup(meshGroup)
+            ) { throw IllegalStateException("updateGroup returned false for $meshGroup") }
+        }
 
     suspend fun updateState(state: MeshState) {
         Timber.d("updateState $state")
@@ -301,4 +323,9 @@ class BeckonMesh(
 sealed interface DeleteGroupError {
     object GroupDoesNotExist : DeleteGroupError
     object GroupHasElements : DeleteGroupError
+}
+
+sealed interface RenameGroupError {
+    object GroupDoesNotExist : RenameGroupError
+    data class NewNameIsBlank(val name: String) : RenameGroupError
 }
