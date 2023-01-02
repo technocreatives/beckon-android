@@ -5,7 +5,6 @@ import com.technocreatives.beckon.MacAddress
 import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.message.*
 
-
 object Processes {
 
     fun unProvisionAll(addresses: List<MacAddress>): Process {
@@ -148,9 +147,9 @@ object Processes {
                         Publish(
                             proxyGroupAddress,
                             appKey.index,
+                            10,
                             Period(0, PublicationResolution.RESOLUTION_100MS),
                             false,
-                            10,
                             Retransmit(0, 0),
                         ),
                         vendorModelId,
