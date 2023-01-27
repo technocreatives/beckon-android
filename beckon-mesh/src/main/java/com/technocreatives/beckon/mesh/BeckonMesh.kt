@@ -17,6 +17,7 @@ import com.technocreatives.beckon.mesh.data.*
 import com.technocreatives.beckon.mesh.extensions.isNodeInTheMesh
 import com.technocreatives.beckon.mesh.extensions.isProxyDevice
 import com.technocreatives.beckon.mesh.extensions.toUnprovisionedScanResult
+import com.technocreatives.beckon.mesh.model.ProxyScanResult
 import com.technocreatives.beckon.mesh.model.UnprovisionedScanResult
 import com.technocreatives.beckon.mesh.state.Connected
 import com.technocreatives.beckon.mesh.state.Loaded
@@ -257,7 +258,12 @@ class BeckonMesh(
         scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
             .mapZ { it.filter { it.scanRecord != null && meshApi.isNodeInTheMesh(it.scanRecord!!) } }
 
-    suspend fun scanForProxy(filter: (BluetoothDevice) -> Boolean): Flow<Either<ScanError, List<ScanResult>>> {
+    suspend fun scanForWithData(): Flow<Either<ScanError, List<ProxyScanResult>>> = TODO()
+//        scan(scanSetting(MeshConstants.MESH_PROXY_SERVICE_UUID))
+//            .mapZ { it.map { it.transform() } }
+//            .filterZ { it.filterNotNull() }
+
+        suspend fun scanForProxy(filter: (BluetoothDevice) -> Boolean): Flow<Either<ScanError, List<ScanResult>>> {
         val cds = context.bluetoothManager().connectedDevices()
         Timber.d("All connected ble devices: $cds")
 

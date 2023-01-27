@@ -4,6 +4,7 @@ import android.os.ParcelUuid
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.technocreatives.beckon.ScanResult
 import com.technocreatives.beckon.mesh.NoAllocatedUnicastRange
 import com.technocreatives.beckon.mesh.NoAvailableUnicastAddress
 import com.technocreatives.beckon.mesh.ProvisioningError
@@ -11,7 +12,7 @@ import com.technocreatives.beckon.mesh.data.NetworkId
 import com.technocreatives.beckon.mesh.data.netKeys
 import com.technocreatives.beckon.mesh.data.transform
 import com.technocreatives.beckon.mesh.data.util.toHex
-import com.technocreatives.beckon.mesh.model.MeshScanResult
+import com.technocreatives.beckon.mesh.model.ProxyScanResult
 import kotlinx.coroutines.CompletableDeferred
 import no.nordicsemi.android.mesh.MeshBeacon
 import no.nordicsemi.android.mesh.MeshManagerApi
@@ -26,6 +27,30 @@ import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
+
+sealed interface ProxyAdvertisedData {
+    data class Network(val id: NetworkId) : ProxyAdvertisedData
+    data class Node(val hash: ByteArray, val random: ByteArray) : ProxyAdvertisedData {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Node
+
+            if (!hash.contentEquals(other.hash)) return false
+            if (!random.contentEquals(other.random)) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = hash.contentHashCode()
+            result = 31 * result + random.contentHashCode()
+            return result
+        }
+
+    }
+}
 
 fun MeshManagerApi.meshBeacon(bytes: ByteArray): MeshBeacon? =
     getMeshBeaconData(bytes)?.let {
@@ -59,9 +84,10 @@ fun MeshManagerApi.isNodeInTheMesh(
     scanRecord: ScanRecord,
 ): Boolean {
     Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
-    val record = scanRecord.transform()
+    val record = scanRecord.transform1()
     Timber.e("NetworkID in Hex: ${record.networkId?.value?.toHex()}")
-    val networkIds = meshNetwork!!.netKeys().map { it.networkId() }.joinToString(separator = "; ") { it.value.toHex() }
+    val networkIds = meshNetwork!!.netKeys().map { it.networkId() }
+        .joinToString(separator = "; ") { it.value.toHex() }
     Timber.d("NetworkId from meshData: $networkIds")
     record.networkId?.let {
         Timber.d("Match with meshdata ${meshNetwork!!.transform().isNetworkIdMatch(it)}")
@@ -123,6 +149,7 @@ fun MeshManagerApi.nodeIdentityMatches(serviceData: ByteArray?, unicastAddress: 
     //If there is no advertised random return false as this is used to generate the hash to match against the advertised
     val random: ByteArray = try {
         getAdvertisedRandom(serviceData) ?: return false
+
     } catch (ex: Exception) {
         Timber.e(ex, "getAdvertisedRandom exception ${serviceData?.toHex()}")
         return false
@@ -150,10 +177,27 @@ fun MeshManagerApi.nodeIdentityMatches(serviceData: ByteArray?, unicastAddress: 
     return false
 }
 
-fun ScanRecord.transform(): MeshScanResult {
+fun ScanResult.transform(): ProxyScanResult? =
+    scanRecord?.transform1()?.let {
+        ProxyScanResult(macAddress, name, it)
+    }
+
+fun ScanRecord.transform1(): ProxyAdvertisedData? {
     val serviceData = getServiceData(ParcelUuid(MeshManagerApi.MESH_PROXY_UUID))
-    val networkId = serviceData?.getAdvertisedNetworkId()?.let { NetworkId(it) }
-    return MeshScanResult(this, networkId)
+
+    return if (!isAdvertisingWithNetworkIdentity(serviceData)) {
+        serviceData?.getAdvertisedNetworkId()?.let { NetworkId(it) }?.let {
+            ProxyAdvertisedData.Network(it)
+        }
+    } else {
+        val advertisedHash = getAdvertisedHash(serviceData)
+        val random = getAdvertisedRandom(serviceData)
+        if (advertisedHash != null && random != null) {
+            ProxyAdvertisedData.Node(advertisedHash, random)
+        } else {
+            null
+        }
+    }
 }
 
 fun isAdvertisingWithNetworkIdentity(serviceData: ByteArray?): Boolean {
