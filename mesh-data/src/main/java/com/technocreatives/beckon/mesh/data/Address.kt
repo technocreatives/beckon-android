@@ -22,7 +22,8 @@ value class VirtualAddress(@Serializable(with = UuidSerializer::class) val value
 
 @Serializable
 @JvmInline
-value class GroupAddress(@Serializable(with = HexToIntSerializer::class) val value: Int): SubscriptionAddress, PublishableAddress
+value class GroupAddress(@Serializable(with = HexToIntSerializer::class) val value: Int) :
+    SubscriptionAddress, PublishableAddress
 
 
 @Serializable
@@ -30,4 +31,8 @@ value class GroupAddress(@Serializable(with = HexToIntSerializer::class) val val
 value class UnicastAddress(
     @Serializable(with = HexToIntSerializer::class)
     val value: Int
-) : PublishableAddress // TODO Can be SubscriptionAddress as well
+) : PublishableAddress, Comparable<UnicastAddress> { // TODO Can be SubscriptionAddress as well
+    override fun compareTo(other: UnicastAddress): Int {
+        return value.compareTo(other.value)
+    }
+}
