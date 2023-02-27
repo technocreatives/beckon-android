@@ -60,7 +60,7 @@ fun MeshManagerApi.isNodeInTheMesh(
 ): Boolean {
     Timber.d("isNodeInTheMesh: ${scanRecord.deviceName}")
     val record = scanRecord.transform()
-    Timber.e("NetworkID in Hex: ${record.networkId?.value?.toHex()}")
+    Timber.d("NetworkID in Hex: ${record.networkId?.value?.toHex()}")
     val networkIds = meshNetwork!!.netKeys().map { it.networkId() }.joinToString(separator = "; ") { it.value.toHex() }
     Timber.d("NetworkId from meshData: $networkIds")
     record.networkId?.let {
