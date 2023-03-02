@@ -132,7 +132,7 @@ class BeckonMesh(
         val meshGroup = network.groups.firstOrNull { group -> group.address == address }
 
         ensureNotNull(meshGroup) { DeleteGroupError.GroupDoesNotExist }
-        ensure(network.getElements(meshGroup).isNotEmpty()) { DeleteGroupError.GroupHasElements }
+        ensure(network.getElements(meshGroup).isEmpty()) { DeleteGroupError.GroupHasElements }
         ensure(network.removeGroup(meshGroup)) { throw IllegalStateException("removeGroup returned false for $meshGroup") }
     }
 
