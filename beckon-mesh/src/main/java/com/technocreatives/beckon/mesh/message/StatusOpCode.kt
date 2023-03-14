@@ -40,6 +40,8 @@ enum class StatusOpCode(val value: Int) {
     ConfigModelSubscription(ConfigMessageOpCodes.CONFIG_MODEL_SUBSCRIPTION_STATUS),
     ConfigModelPublication(ConfigMessageOpCodes.CONFIG_MODEL_PUBLICATION_STATUS),
     ConfigNodeReset(ConfigMessageOpCodes.CONFIG_NODE_RESET_STATUS),
+    ConfigNodeIdentityGet(ConfigMessageOpCodes.CONFIG_NODE_IDENTITY_GET),
+    ConfigNodeIdentity(ConfigMessageOpCodes.CONFIG_NODE_IDENTITY_STATUS),
     ProxyFilterType(ProxyConfigMessageOpCodes.FILTER_STATUS)
     ;
 

@@ -31,6 +31,18 @@ data class GetCompositionData(override val dst: Int) :
 }
 
 @Serializable
+@SerialName("GetNodeIdentity")
+data class GetNodeIdentity(
+    override val dst: Int,
+    val networkKey: NetKey
+) : ConfigMessage<GetNodeIdentityResponse>() {
+    override val responseOpCode = StatusOpCode.ConfigNodeIdentity
+    override fun toMeshMessage() = ConfigNodeIdentityGet(networkKey.transform())
+    override fun fromResponse(message: MeshMessage): GetNodeIdentityResponse =
+        (message as ConfigNodeIdentityStatus).transform()
+}
+
+@Serializable
 @SerialName("GetDefaultTtl")
 data class GetDefaultTtl(override val dst: Int) :
     ConfigMessage<ConfigDefaultTtlResponse>() {
@@ -275,6 +287,23 @@ internal fun ConfigCompositionDataStatus.transform(): GetCompositionDataResponse
         versionIdentifier,
     )
 }
+
+@Serializable
+data class GetNodeIdentityResponse(
+    override val dst: Int,
+    override val src: Int,
+    val statusCode: Int,
+    val nodeIdentityState: Int,
+    val netKeyIndex: NetKeyIndex
+) : ConfigStatusMessage()
+
+internal fun ConfigNodeIdentityStatus.transform() = GetNodeIdentityResponse(
+    dst,
+    src,
+    statusCode,
+    nodeIdentityState,
+    NetKeyIndex(netKeyIndex)
+)
 
 @Serializable
 data class ConfigDefaultTtlResponse(
